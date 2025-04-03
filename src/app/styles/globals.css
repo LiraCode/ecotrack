@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --darks: #0a0a0a;
+  --black-2: #010101;
+  --body: #64748B;
+  --bodydark: #AEB7C0;
+  --bodydark1: #DEE4EE;
+  --bodydark2: #8A99AF;
+  --primary: #3C50E0;
+  --secondary: #80CAEE;
+  --stroke: #E2E8F0;
+  --gray: #EFF4FB;
+  --graydark: #333A48;
+  --gray-2: #F7F9FC;
+  --gray-3: #FAFAFA;
+  --whiten: #F1F5F9;
+  --whiter: #F5F7FD;
+  --boxdark: #0a111a;
+  --boxdark2: #041f2fcc;
+  --boxdark-2: #1A222C;
+  --strokedark: #49494954;
+  --form-strokedark: #3d4d60;
+  --form-input: #1d2a39;
+  --meta-1: #DC3545;
+  --meta-2: #EFF2F7;
+  --meta-3: #08B75B;
+  --meta-4: #313D4A;
+  --meta-5: #259AE6;
+  --meta-6: #FFBA00;
+  --meta-7: #FF6766;
+  --meta-8: #F0950C;
+  --meta-9: #E5E7EB;
+  --meta-10: #0FADCF;
+  --success: #219653;
+  --danger: #D34053;
+  --warning: #FFA70B;
+}
+
+@layer utilities {
+  .bg-background { background-color: var(--background); }
+  .bg-foreground { background-color: var(--foreground); }
+  .bg-primary { background-color: var(--primary); }
+  .bg-secondary { background-color: var(--secondary); }
+  .text-primary { color: var(--primary); }
+  .text-secondary { color: var(--secondary); }
+  .text-green { color: var(--meta-3); }
+  .border-primary { border-color: var(--primary); }
+  .border-secondary { border-color: var(--secondary); }
+  .meta-1 { background-color: var(--meta-1); }
+  .meta-2 { background-color: var(--meta-2); }
+  .meta-3 { background-color: var(--meta-3); }
+  .meta-4 { background-color: var(--meta-4); }
+  .meta-5 { background-color: var(--meta-5); }
+  .meta-6 { background-color: var(--meta-6); }
+  .meta-7 { background-color: var(--meta-7); }
+  .meta-8 { background-color: var(--meta-8); }
+  .meta-9 { background-color: var(--meta-9); }
+  .meta-10 { background-color: var(--meta-10); }
+  .success { background-color: var(--success); }
+  .danger { background-color: var(--danger); }
+  .warning { background-color: var(--warning); }
+  .white { color: var(--background); }
+  .green { color: var(--meta-3); }
+
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 2.75rem; /* 44px */
+    line-height: 3.4375rem; /* 55px */
+  }
+
+  h2 {
+    font-size: 2.625rem; /* 42px */
+    line-height: 3.625rem; /* 58px */
+  }
+
+  h3 {
+    font-size: 2.25rem; /* 36px */
+    line-height: 2.8125rem; /* 45px */
+  }
+
+  h4 {
+    font-size: 2.0625rem; /* 33px */
+    line-height: 2.8125rem; /* 45px */
+  }
+}

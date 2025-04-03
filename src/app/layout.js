@@ -1,8 +1,22 @@
-import { Geist, Geist_Mono, Roboto } from "next/font/google";
-import {appRouterCacheProvider} from  '@mui/material-nextjs/v15-appRouter'; 
+import { Geist, Geist_Mono, Roboto, Cabin_Sketch, Crimson_Pro  } from "next/font/google";
+import {AppRouterCacheProvider} from  '@mui/material-nextjs/v15-appRouter'; 
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
-import "./globals.css";
+import "@/app/styles/globals.css";
+
+const cabinSketch = Cabin_Sketch({
+  variable: "--font-cabin",
+  weight: "400",
+  subsets: ['latin'],
+  preload: false,
+});
+
+const crimsonPro = Crimson_Pro({
+  variable: "--font-crimson",
+  weight: ["400", "700"],
+  subsets: ['latin'],
+  preload: false,
+});
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -26,14 +40,14 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={roboto.variable}>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      ><appRouterCacheProvider>
+    <html lang="pt-BR">
+      <body  
+        className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased`}
+      ><AppRouterCacheProvider>
         <ThemeProvider theme={theme}>
         {children}
         </ThemeProvider>
-      </appRouterCacheProvider>
+      </AppRouterCacheProvider>
       </body>
     </html>
   );
