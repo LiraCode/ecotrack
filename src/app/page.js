@@ -39,6 +39,7 @@ export default function Home() {
 
       
       <Profile userType="cliente" userData={userDataCliente} />
+
 {/* <PerfilUsuario userType="colaborador" userData={userDataColaborador} /> */}
 {/* <PerfilUsuario userType="administrador" userData={userDataAdministrador} /> */}
   </div>

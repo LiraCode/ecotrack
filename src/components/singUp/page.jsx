@@ -28,6 +28,11 @@ export default function Cadastro({ userType }) {
     console.log('Dados enviados:', formData);
   };
 
+  const isCliente = userType === 'cliente';
+ const isColaborador = userType === 'colaborador';
+  const isAdmin = userType === 'administração';
+
+
   return (
     <>
       <Head>
@@ -75,7 +80,7 @@ export default function Cadastro({ userType }) {
                 />
                 <span className="focus-input50"></span>
               </div>
-              {userType !== 'administrador' && (
+              {!isAdmin  && (
                 <div className="wrap-input50 m-b-16">
                   <input
                     className="input50"
@@ -89,7 +94,7 @@ export default function Cadastro({ userType }) {
                   <span className="focus-input50"></span>
                 </div>
               )}
-              {userType === 'cliente' && (
+              {isCliente && (
                 <div className="wrap-input50 m-b-16">
                   <input
                     className="input50"

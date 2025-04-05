@@ -8,7 +8,31 @@ import '@/app/styles/main.css';
 export default function Login({ type }) {
   const isCliente = type === 'cliente';
   const isColaborador = type === 'colaborador';
-  const isAdmin = type === 'admin';
+  const isAdmin = type === 'administração';
+  if (!isCliente && !isColaborador && !isAdmin) {
+    return <div>Erro: Parametros obrigatórios Inválidos ou Ausentes.</div>;
+  }
+
+  const dataLogin = {
+    Login : 'teste',
+    Senha: '12345',
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Aqui você pode adicionar a lógica de autenticação implementar as apis de autenticação para cada tipo de usuário
+    //abaixo exemplo para testar o envio de dados remover apos implementar backend 
+    console.log('Dados enviados:', {
+      login: e.target.login.value,
+      senha: e.target.senha.value,
+    });
+  };
+      if (e.target.login.value === dataLogin.Login && e.target.senha.value === dataLogin.Senha) {
+        console.log('Login bem-sucedido!');
+      } else {
+        console.log('Login falhou!');
+      }
+    
 
   return (
     <>
