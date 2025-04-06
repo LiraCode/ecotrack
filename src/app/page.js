@@ -1,12 +1,9 @@
 'use client';
-import { AppBar, Toolbar } from "@mui/material";
-import Image from "next/image";
-import Login from "@/components/login/page";
-import Cadastro from "@/components/singUp/page";
 import Profile from "@/components/profile/page";
 import Header from "@/components/Header/page";
 import Sidebar from "@/components/Sidebar";
 import { useState } from "react";
+import RootLayout from "./layout";
 
 
 const userDataCliente = {
@@ -34,6 +31,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
     <div style={{ fontFamily: 'var(--font-geist-mono' }}>
+      <RootLayout>
       <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
       <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
@@ -41,7 +39,8 @@ export default function Home() {
       <Profile userType="cliente" userData={userDataCliente} />
 
 {/* <PerfilUsuario userType="colaborador" userData={userDataColaborador} /> */}
-{/* <PerfilUsuario userType="administrador" userData={userDataAdministrador} /> */}
+{/* <PerfilUsuario userType="administrativo" userData={userDataAdministrador} /> */}
+</RootLayout>
   </div>
     
   );

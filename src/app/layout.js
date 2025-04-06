@@ -3,6 +3,8 @@ import {AppRouterCacheProvider} from  '@mui/material-nextjs/v15-appRouter';
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 import "@/app/styles/globals.css";
+import "@/app/styles/awesome/all.css";
+import "@/app/styles/awesome/sharp-solid.css";
 
 const cabinSketch = Cabin_Sketch({
   variable: "--font-cabin",
@@ -33,10 +35,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
-  title: "Eco Track",
-  description: "Conectando gente com a natureza",
-};
 
 export default function RootLayout({ children }) {
   return (
