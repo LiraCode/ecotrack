@@ -1,0 +1,40 @@
+.postsContainer {
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    max-width: 900px;
+    margin: auto;
+  }
+  
+  .heading {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .postList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .postItem {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .imageWrapper {
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  
+  .coverImage {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+  
