@@ -60,7 +60,8 @@
   .meta-9 { background-color: var(--meta-9); }
   .meta-10 { background-color: var(--meta-10); }
   .success { background-color: var(--success); }
-  .danger { background-color: var(--danger); }
+  .bg-danger { background-color: var(--danger); }
+  .danger { color: var(--danger); }
   .warning { background-color: var(--warning); }
   .white { color: var(--background); }
   .green { color: var(--meta-3); }

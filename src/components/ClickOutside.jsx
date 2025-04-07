@@ -6,6 +6,10 @@ const ClickOutside = ({ children, exceptionRef, onClick, className }) => {
 
   useEffect(() => {
     const handleClickListener = (event) => {
+
+      // Ignora se o clique veio do botão de toggle
+    if (event.target && event.target.closest && event.target.closest("#hamburger-toggle")) return;
+
       let clickedInside = false;
       if (exceptionRef) {
         clickedInside =
