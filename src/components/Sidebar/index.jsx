@@ -1,84 +1,62 @@
-"use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
-import '@/app/styles/globals.css'
+import '@/app/styles/globals.css';
 
 const menuGroups = [
   {
-    name: " ",
+    name: "main",
     menuItems: [
       {
-        icon: (
-          
-<i className="fa-duotone fa-solid fa-house" style={{fontSize:"32px" , color: "#08B75B"}}></i>
-        ),
+        id: 1,
+        icon: <i className="fa-solid fa-house text-green-600 text-2xl"></i>,
         label: "Início",
-        route: "/",
+        route: "/"
       },
       {
-        icon: (
-          //<i class="fa-duotone fa-solid fa-calendar-plus"></i>
-          <i className="fa-solid fa-calendar-plus" style={{fontSize:"32px" , color: "#08B75B"}}></i>
-        ),
+        id: 2,
+        icon: <i className="fa-solid fa-calendar-plus text-green-600 text-2xl"></i>,
         label: "Agendar",
-        route: "#",
-        
+        route: "/agendamento"
       },
       {
-        icon: (
-          //<i class="fa-duotone fa-solid fa-calendar-plus"></i>
-          //<i class="fa-sharp fa-solid fa-recycle"></i>
-          <i className="fa-sharp fa-solid fa-recycle" style={{fontSize:"32px" , color: "#08B75B"}}></i>
-        ),
+        id: 3,
+        icon: <i className="fa-sharp fa-solid fa-recycle text-green-600 text-2xl"></i>,
         label: "Eco Pontos",
-        route: "#",
-        
+        route: "/locais"
       },
       {
         icon: (
-          //<i class="fa-duotone fa-solid fa-calendar-plus"></i>
-          <i className="fa-solid fa-user" style={{fontSize:"32px" , color: "#08B75B"}}></i>
+          <i className="fa-solid fa-user" style={{ fontSize: "32px", color: "#08B75B" }}></i>
         ),
         label: "Perfil",
-        route: "#",
-        
+        route: "/perfil",
       },
       {
         icon: (
-          //<i class="fa-solid fa-books"></i>
-          //<i class="fa-duotone fa-solid fa-gamepad-modern"></i>
-          <i className="fa-solid fa-gamepad-modern" style={{fontSize:"32px" , color: "#08B75B"}}></i>
+          <i className="fa-solid fa-gamepad-modern" style={{ fontSize: "32px", color: "#08B75B" }}></i>
         ),
         label: "Games",
-        route: "#",
-        
+        route: "/games",
       },
       {
         icon: (
-          //<i class="fa-solid fa-books"></i>
-          //<i class="fa-duotone fa-solid fa-gamepad-modern"></i>
-          <i className="fa-solid fa-books" style={{fontSize:"32px" , color: "#08B75B"}}></i>
+          <i className="fa-solid fa-books" style={{ fontSize: "32px", color: "#08B75B" }}></i>
         ),
         label: "Blog",
         route: "/posts",
-        
       },
       {
         icon: (
-          //<i class="fa-solid fa-shield-keyhole"></i>
-          //<i class="fa-duotone fa-solid fa-gamepad-modern"></i>
-          <i className="fa-solid fa-shield-keyhole" style={{fontSize:"32px" , color: "#08B75B"}}></i>
+          <i className="fa-solid fa-shield-keyhole" style={{ fontSize: "32px", color: "#08B75B" }}></i>
         ),
         label: "Login",
         route: "/cliente/login",
-        
       },
     ],
   },
-  
 ];
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -87,19 +65,19 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
-        className={`fixed left-0  z-9999 flex h-screen w-28 flex-col overflow-y-hidden meta-9 duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className="fixed left-0 top-0 z-50 h-screen overflow-y-hidden transition-all duration-300 ease-in-out"
+        style={{
+          width: sidebarOpen ? '240px' : '100px',
+          backgroundColor: '#e5e7eb',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
-
-        <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear green">
-          {/* Sidebar Menu */}
-          <nav className="mt-5 flex  lg:mt-5 ">
+        <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
+          <nav className="mt-5 flex">
             {menuGroups.map((group, groupIndex) => (
               <div key={groupIndex}>
-                
-
-                <ul className="mb-2 flex flex-col gap-2 text-sm ">
+                <ul className="mb-2 flex flex-col gap-2 text-sm">
                   {group.menuItems.map((menuItem, menuIndex) => (
                     <SidebarItem
                       key={menuIndex}
@@ -112,7 +90,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               </div>
             ))}
           </nav>
-          {/* Sidebar Menu */}
         </div>
       </aside>
     </ClickOutside>

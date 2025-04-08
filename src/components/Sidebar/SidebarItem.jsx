@@ -29,7 +29,7 @@ const SidebarItem = ({ item, pageName, setPageName }) => {
         <Link
           href={item.route}
           onClick={handleClick}
-          className={`${isItemActive ? " green"  : ""} group relative flex-col items-center  rounded-sm  font-medium green  `}
+          className={`${isItemActive ? "green"  : ""} group flex flex-col items-center justify-center rounded-sm font-medium`}
           style={{
            color: "green",
            textDecoration: "none" ,
