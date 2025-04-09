@@ -1,52 +1,55 @@
+  import Head from 'next/head';
+  import Image from 'next/image';
 
-import Head from 'next/head';
-import Image from 'next/image';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'font-awesome/css/font-awesome.min.css';
-import '@/app/styles/util.css';
-import '@/app/styles/main.css';
+  export default function Profile({ userType, userData }) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Green banner for title with rounded top */}
+          <div className="bg-green-500 text-white py-5 px-6 rounded-t-lg">
+            <h2 className="text-2xl font-bold text-center">
+              Perfil {userType.charAt(0).toUpperCase() + userType.slice(1)}
+            </h2>
+          </div>
 
-export default function Profile({ userType, userData }) {
-  return (
-    <>
-      <Head>
-        <title>Perfil do Usuário</title>
-      </Head>
-      <div className="limiter">
-        <div className="container-login100">
-          <div className="wrap-login100">
-            <div className="login100-form validate-form p-l-55 p-r-55 p-t-178">
-              <span className="login100-form-title">
-                Perfil {userType.charAt(0).toUpperCase() + userType.slice(1)}
-              </span>
-
-              <form className="login100-form validate-form p-l-55 p-r-55 p-t-10 m-b-50">
-              <div className="perfil-info">
-                <p><strong>Nome Completo:</strong> {userData.nomeCompleto}</p>
-                
-                <p><strong>Email:</strong> {userData.email}</p>
-               
+          <div className="p-8">
+            <div className="space-y-4 px-4">
+              <div className="flex flex-col">
+                <p className="text-gray-700">
+                  <span className="font-semibold">Nome Completo:</span> {userData.nomeCompleto}
+                </p>
+              
+                <p className="text-gray-700">           
+                  <span className="font-semibold">Email:</span> {userData.email}
+                </p>
+              
                 {/* Renderizar CPF para cliente ou colaborador */}
                 {(userType === 'cliente' || userType === 'colaborador') && (
-                  <p><strong>CPF:</strong> {userData.cpf}</p>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">CPF:</span> {userData.cpf}
+                  </p>
                 )}
 
                 {/* Renderizar endereço somente para cliente */}
                 {userType === 'cliente' && (
-                  <p><strong>Endereço:</strong> {userData.endereco}</p>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">Endereço:</span> {userData.endereco}
+                  </p>
                 )}
 
                 {/* Renderizar telefone para todos */}
-                <p><strong>Telefone:</strong> {userData.telefone}</p>
+                <p className="text-gray-700">
+                  <span className="font-semibold">Telefone:</span> {userData.telefone}
+                </p>
 
                 {/* Dados adicionais */}
-                <p><strong>Tipo de Usuário:</strong> {userType}</p>
-                </div>
-              </form>
+                <p className="text-gray-700">
+                  <span className="font-semibold">Tipo de Usuário:</span> {userType}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </>
-  );
-}
+    );
+  }

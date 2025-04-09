@@ -1,6 +1,7 @@
-'use client';
-import Profile from "@/components/profile/page";
-import AppLayout from "@/components/Layout/page";
+
+import AppLayout from '@/components/Layout/page';
+import Profile from '@/components/Profile/page';
+import React from 'react';
 
 const userDataCliente = {
   nomeCompleto: 'João Silva',

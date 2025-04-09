@@ -1,51 +1,24 @@
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import '@/app/styles/globals.css';
 
 const SidebarItem = ({ item, pageName, setPageName }) => {
-  const handleClick = () => {
-    const updatedPageName =
-      pageName !== item.label.toLowerCase() ? item.label.toLowerCase() : "";
-    return setPageName(updatedPageName);
-  };
-
-  const pathname = usePathname();
-
-  const isActive = (item) => {
-    if (item.route === pathname) return true;
-    if (item.children) {
-      return item.children.some((child) => isActive(child));
-    }
-    return false;
-  };
-
-  const isItemActive = isActive(item);
+  const { icon, label, route } = item;
+  const isActive = pageName === label;
 
   return (
-    <>
-      <li>
-        <div>
-        <Link
-          href={item.route}
-          onClick={handleClick}
-          className={`${isItemActive ? " green"  : ""} group relative flex-col items-center  rounded-sm  font-medium green  `}
-          style={{
-           color: "green",
-           textDecoration: "none" ,
-          }}
-        ><div>
-          {item.icon}
-          </div>
-          <div className="flex row items-center py-2 no-underline ">
-          {item.label}
-         
-          </div>
-        </Link>
-        </div>  
-      </li>
-
-    </>
+    <Link
+      href={route}
+      onClick={() => setPageName(label)}
+      className={`group relative flex w-full flex-col items-center rounded-sm py-2 px-2 font-medium duration-300 ease-in-out hover:bg-graydark 
+        ${isActive ? "bg-graydark text-secondary" : "text-bodydark1"}`}
+    >
+      <div className="flex flex-col items-center justify-center w-full">
+        <span className="mb-1 flex items-center justify-center">
+          {icon}
+        </span>
+        <span className="text-xs text-center w-full">{label}</span>
+      </div>
+    </Link>
   );
 };
 

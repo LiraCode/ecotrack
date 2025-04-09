@@ -28,6 +28,7 @@
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-leaflet": "^5.0.0",
     "select2": "^4.1.0-rc.0"
   },
   "devDependencies": {

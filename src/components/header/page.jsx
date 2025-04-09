@@ -65,7 +65,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
 
           <Link className="block flex-shrink-0 lg:hidden" href="/">
           </Link>
-          <LogoClickable color="#ffffff" width={60} height={60}/>
+          <LogoClickable color="#ffffff" width={56} height={56}/>
         </div>
 
         <div className="hidden sm:block">

@@ -24,7 +24,7 @@ const userDataAdministrador = {
 
 export default function Home() {
   return (
-    <div style={{ fontFamily: 'var(--font-geist-mono' }}>
+    <div style={{ fontFamily: 'var(----font-crimson' }}>
       
     <Login type="cliente"  />
     {/* <Login type="colaborador"  /> */}
