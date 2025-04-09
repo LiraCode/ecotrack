@@ -1,5 +1,5 @@
 'use client';
-import Header from "@/components/Header/page";
+import Header from "@/components/header/page";
 import Sidebar from "@/components/Sidebar";
 import { useState } from "react";
 import { Box } from "@mui/material";
