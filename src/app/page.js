@@ -1,5 +1,5 @@
 'use client';
-import Profile from "@/components/profile/page";
+import Profile from "@/components/Profile/page";
 import AppLayout from "@/components/Layout/page";
 
 const userDataCliente = {

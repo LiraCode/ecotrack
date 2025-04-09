@@ -1,5 +1,5 @@
 'use client';
-import Login from "@/components/login/page";
+import Login from "@/components/Login/page";
 
 const userDataCliente = {
   nomeCompleto: 'João Silva',

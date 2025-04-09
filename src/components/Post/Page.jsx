@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
-import Header from '@/components/header/page';
+import Header from '@/components/Header/page';
 import PostsContent from './PostsContent';
 import TrilhaContent from './TrilhaContent';
 import styles from '@/components/Post/post.module.css';
