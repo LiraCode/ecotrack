@@ -59,7 +59,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
   return (
     <Box sx={{ 
       p: isMobile ? 1 : 3,
-      backgroundColor: '#ffffff',
+      backgroundColor: 'gray.50',
       minHeight: '100vh',
       marginLeft: sidebarOpen && !isMobile ? '240px' : '0',
       width: sidebarOpen && !isMobile ? 'calc(100% - 240px)' : '100%',

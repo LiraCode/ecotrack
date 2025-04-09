@@ -33,7 +33,7 @@ const menuGroups = [
       {
         icon: <i className="fa-solid fa-gamepad-modern" style={{fontSize:"32px", color: "#08B75B"}}></i>,
         label: "Games",
-        route: "#",
+        route: "/cliente/metas",
       },
       {
         icon: <i className="fa-solid fa-books" style={{fontSize:"32px", color: "#08B75B"}}></i>,

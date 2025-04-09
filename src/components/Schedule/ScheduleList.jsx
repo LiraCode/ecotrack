@@ -14,7 +14,7 @@ export default function ScheduleList({
       width: '100%', 
       mt: isPastList ? 2 : 4,
       mb: 4,
-      backgroundColor: isPastList ? '#f5f5f5' : '#f9f9f9',
+      backgroundColor: isPastList ? '#DBECCF' : '#fff',
       borderRadius: '8px',
       padding: 2,
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
