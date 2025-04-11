@@ -7,30 +7,44 @@ import {
   Legend,
 } from 'chart.js';
 
-// Registrar os componentes necessários
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const CircularProgressBar = ({ progresso, total }) => {
+const CircularProgressBar = ({ progresso, total, expirado = false }) => {
+  const percentage = Math.round((progresso / total) * 100);
+  
   const data = {
-    labels: ['Alcançado', 'Restante'],
+    labels: ['Concluído', 'Faltou'],
     datasets: [
       {
         data: [progresso, total - progresso],
-        backgroundColor: ['#36A2EB', '#E0E0E0'],
-        hoverBackgroundColor: ['#36A2EB', '#E0E0E0'],
+        backgroundColor: [
+          '#4CAF50', // Verde para o progresso alcançado
+          expirado ? '#FF5252' : '#E0E0E0' // Vermelho vibrante se expirado
+        ],
+        borderWidth: 0,
       },
     ],
   };
 
   const options = {
     responsive: true,
-    maintainAspectRatio: false, // Permite que o gráfico se ajuste ao contêiner
+    maintainAspectRatio: false,
+    cutout: '70%',
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
   };
 
   return (
-    <div style={{ width: '100%', height: '150px', margin: '0 auto' }}>
+    <div className="relative" style={{ width: '100%', height: '150px' }}>
       <Doughnut data={data} options={options} />
-      <p className="text-center">{progresso} de {total} itens reciclados</p>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="text-center">
+          <span className="text-2xl font-bold text-gray-800">{percentage}%</span>
+        </div>
+      </div>
     </div>
   );
 };

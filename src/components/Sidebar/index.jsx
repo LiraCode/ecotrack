@@ -13,7 +13,7 @@ const menuGroups = [
       {
         icon: <i className="fa-duotone fa-solid fa-house" style={{fontSize:"32px", color: "#08B75B"}}></i>,
         label: "Início",
-        route: "/",
+        route: "/inicio",
       },
       {
         icon: <i className="fa-solid fa-calendar-plus" style={{fontSize:"32px", color: "#08B75B"}}></i>,
