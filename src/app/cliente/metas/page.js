@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header/page'
 import { Container, Grid, Paper, Typography, Button, Box, IconButton, Chip } from '@mui/material'
@@ -21,9 +21,8 @@ const MetasPage = () => {
       dataTermino: new Date(new Date().setDate(new Date().getDate() + 4)),
       concluido: false
     },
-    // Desafio expirado de exemplo
     {
-      id: 4,
+      id: 6,
       nome: 'Reciclar Metal',
       progresso: 40,
       total: 100,
@@ -36,6 +35,8 @@ const MetasPage = () => {
   
   const [desafiosConcluidos, setDesafiosConcluidos] = useState([])
   const [desafiosExpirados, setDesafiosExpirados] = useState([])
+  const [pendingAlert, setPendingAlert] = useState(null) 
+  const alertShownRef = useRef(false) 
   const [ranking, setRanking] = useState([
     { id: 1, nome: 'Maria', pontos: 850, posicao: 2 },
     { id: 2, nome: 'João', pontos: 1200, posicao: 1 },
@@ -46,8 +47,7 @@ const MetasPage = () => {
   const [meusPontos, setMeusPontos] = useState(300)
   const [abaAtiva, setAbaAtiva] = useState('andamento')
 
-
-  // Desafios disponíveis (incluindo papel e vidro)
+  // Desafios disponíveis
   const desafiosDisponiveis = [
     { id: 2, nome: 'Reciclar Papel', pontuacao: 50 },
     { id: 3, nome: 'Reciclar Vidro', pontuacao: 180 },
@@ -60,13 +60,50 @@ const MetasPage = () => {
   const isExpirado = (dataTermino) => new Date() > dataTermino
   const diasRestantes = (dataTermino) => Math.ceil((dataTermino - new Date()) / (1000 * 60 * 60 * 24))
 
+  // Função para mover desafios expirados
+  const moverDesafiosExpirados = () => {
+    const agora = new Date()
+    const [ativos, novosExpirados] = desafiosAtivos.reduce(
+      ([ativos, expirados], desafio) => {
+        return desafio.dataTermino < agora 
+          ? [ativos, [...expirados, desafio]] 
+          : [[...ativos, desafio], expirados]
+      },
+      [[], []]
+    )
+
+    if (novosExpirados.length > 0) {
+      setDesafiosAtivos(ativos)
+      setDesafiosExpirados(prev => [...prev, ...novosExpirados])
+      setPendingAlert(novosExpirados.length) 
+    }
+  }
+
+  // Efeito para verificar desafios expirados na montagem e atualização
+  useEffect(() => {
+    moverDesafiosExpirados()
+  }, []) 
+
+  // Efeito para mostrar alerta após a renderização
+  useEffect(() => {
+    if (pendingAlert !== null && !alertShownRef.current) {
+      const timer = setTimeout(() => {
+        alert(`${pendingAlert} desafio(s) expiraram e foram movidos para "Não concluídos"`)
+        setPendingAlert(null)
+        alertShownRef.current = true
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }
+  }, [pendingAlert])
+
   const participarDesafio = (desafio) => {
     const novoDesafio = {
       ...desafio,
       progresso: 0,
       total: 100,
       dataInicio: new Date(),
-      dataTermino: new Date(new Date().setDate(new Date().getDate() + 7)), // Sempre 1 semana
+      dataTermino: new Date(new Date().setDate(new Date().getDate() + 7)),
       concluido: false
     }
     
@@ -100,11 +137,9 @@ const MetasPage = () => {
     if (!desafio) return
 
     if (isExpirado(desafio.dataTermino)) {
-      // Move para expirados
       setDesafiosExpirados([...desafiosExpirados, desafio])
     }
     
-    // Remove dos ativos
     setDesafiosAtivos(desafiosAtivos.filter(d => d.id !== desafioId))
   }
 
@@ -131,20 +166,6 @@ const MetasPage = () => {
     
     setRanking(novoRanking)
   }
-
-  // Verifica e move desafios expirados automaticamente
-  useEffect(() => {
-    const agora = new Date()
-    const [ativos, expirados] = desafiosAtivos.reduce(([a, e], d) => {
-      return d.dataTermino < agora ? [a, [...e, d]] : [[...a, d], e]
-    }, [[], []])
-
-    if (expirados.length > 0) {
-      setDesafiosAtivos(ativos)
-      setDesafiosExpirados([...desafiosExpirados, ...expirados])
-      alert(`${expirados.length} desafio(s) expiraram e foram movidos para "Não concluídos"`)
-    }
-  }, [desafiosAtivos])
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -200,7 +221,7 @@ const MetasPage = () => {
                 </div>
               </div>
               
-              {/* Terceiro lugar (bronze) - COR ALTERADA */}
+              {/* Terceiro lugar (bronze) */}
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-amber-700 rounded-full flex items-center justify-center mb-2">
                   <span className="text-xl font-bold text-white">3</span>
@@ -375,7 +396,7 @@ const MetasPage = () => {
   <CircularProgressBar 
     progresso={desafio.progresso} 
     total={desafio.total}
-    expirado={true} // Força vermelho para desafios expirados
+    expirado={true} 
   />
   <Box mt={2} className="space-y-1 text-sm">
     <Typography>
