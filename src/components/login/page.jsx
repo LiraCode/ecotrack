@@ -114,7 +114,7 @@ export default function Login({ type }) {
               {isCliente ? (
                 <>
                   <span className="text-gray-600 mb-2">Não possui conta?</span>
-                  <a href="#" className="text-green-600 hover:text-green-800">Crie agora!</a>
+                  <a href="/cliente/cadastro/" className="text-green-600 hover:text-green-800">Crie agora!</a>
                 </>
               ) : (
                 <>

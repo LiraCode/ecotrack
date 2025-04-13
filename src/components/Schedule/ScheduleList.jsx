@@ -1,5 +1,6 @@
-import { Box, Typography, List, ListItem, ListItemText, Divider } from '@mui/material';
+import { Box, Typography, List, ListItem, ListItemText, Divider, Button } from '@mui/material';
 import { CheckCircle, Cancel } from '@mui/icons-material';
+
 
 export default function ScheduleList({ 
   title = "Próximos Agendamentos",
@@ -36,8 +37,8 @@ export default function ScheduleList({
         {schedules.length > 0 ? (
           schedules.map((schedule, index) => (
             <Box key={index}>
-              <ListItem 
-                button
+              <ListItem>
+              <Button
                 onClick={() => onViewSchedule(schedule.date)}
                 sx={{ 
                   borderRadius: '4px',
@@ -46,8 +47,7 @@ export default function ScheduleList({
                   },
                   mb: 1,
                   opacity: isPastList ? 0.8 : 1
-                }}
-              >
+                }}></Button>
                 <ListItemText
                   primary={schedule.type}
                   secondary={`Data: ${schedule.date}`}
