@@ -30,8 +30,8 @@ export const useMetasState = () => {
   const [pendingAlert, setPendingAlert] = useState(null) 
   const alertShownRef = useRef(false) 
   const [ranking, setRanking] = useState([
-    { id: 1, nome: 'Maria', pontos: 850, posicao: 2 },
-    { id: 2, nome: 'João', pontos: 1200, posicao: 1 },
+    { id: 1, nome: 'João', pontos: 1200, posicao: 1 },
+    { id: 2, nome: 'Maria', pontos: 850, posicao: 2 },
     { id: 3, nome: 'Ana', pontos: 700, posicao: 3 },
     { id: 4, nome: 'Carlos', pontos: 650, posicao: 4 },
     { id: 5, nome: 'Você', pontos: 300, posicao: 5 },

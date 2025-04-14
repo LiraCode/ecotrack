@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext } from 'react'
 import { useMetasState } from '@/hooks/useMetasState'
+import AppLayout from '@/components/Layout/page'
 
 const MetasContext = createContext(null)
 
@@ -9,7 +10,9 @@ export const MetasProvider = ({ children }) => {
   
   return (
     <MetasContext.Provider value={metasState}>
+      <AppLayout>
       {children}
+      </AppLayout>
     </MetasContext.Provider>
   )
 }

@@ -54,12 +54,12 @@ export default function HomePage() {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <Container maxWidth="4xl" sx={{ minWidth: '330px', display: 'flex', flexDirection: 'column', alignItems: 'center',mt: 4 }}>
       {/* Hero Section */}
       <HeroSection />
 
       {/* Main Content Tabs */}
-      <Box sx={{ width: '100%', mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ Width: {sm:'30vh', xs:'40vh', lg:'90vh'}, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
           <Tabs 
             value={activeTab} 
@@ -69,8 +69,10 @@ export default function HomePage() {
             centered
             sx={{ 
               '& .MuiTab-root': { 
+
                 fontWeight: 'bold',
-                fontSize: '1rem',
+                padding: { xs: '1px 5px', sm: '0px s0px' },
+                ontSize: { xs: '10px', sm: '10px' },
                 color: '#555',
                 '&.Mui-selected': { color: '#2e8b57' }
               },
@@ -79,7 +81,7 @@ export default function HomePage() {
           >
             <Tab label="Início" />
             <Tab label="Ecopontos" />
-            <Tab label="Guia de Resíduos" />
+            <Tab label="Info Resíduos" />
           </Tabs>
         </Box>
 

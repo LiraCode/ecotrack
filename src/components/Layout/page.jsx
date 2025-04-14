@@ -23,10 +23,10 @@ export default function AppLayout({ children }) {
           component="main" 
           sx={{ 
             flexGrow: 1, 
-            p: 3, 
+            p: 0, 
             overflow: 'auto',
             transition: 'margin-left 0.3s',
-            marginLeft: sidebarOpen ? '240px' : '0'
+            marginLeft: sidebarOpen ? {lg:'240px', sm:'90px', xs:'90px'} : '0'
           }}
         >
           {/* Page content */}

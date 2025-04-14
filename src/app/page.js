@@ -5,7 +5,7 @@ import AppLayout from "@/components/Layout/page";
 export default function Home() {
   return (
      <AppLayout>
-      <div className="lg:ml-[100px] lg:mr-[0px] lg:mt-0 mt-16 flex flex-col w-90vh h-95vh ">
+      <div className="lg:ml-[100px] lg:mr-[0px] lg:mt-0 mt-1  w-92vh h-95vh justify-center items-center">
           <HomePage  />
         </div>
       </AppLayout>
