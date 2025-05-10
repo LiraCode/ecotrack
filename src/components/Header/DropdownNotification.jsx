@@ -2,35 +2,36 @@
 import { useState } from "react";
 import Link from "next/link";
 import ClickOutside from "@/components/ClickOutside";
-// import { useAuthContext } from "@/libs/context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
+import { useEffect } from "react";
 
 const DropdownNotification = () => {
-  // const { userAuth } = useAuthContext();
-  // const uid = userAuth?.uid;
+  const { user, logout } = useAuth();
+  const uid = user?.uid;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const userFetch = async (id, token) => {
-    const user = await fetch(`/api/user/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const userData = await user.json();
-    return userData;
-  };
+  // const userFetch = async (id, token) => {
+  //   const user = await fetch(`/api/user/${id}`, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   });
+  //   const userData = await user.json();
+  //   return userData;
+  // };
 
-  const notificationFetch = async (id, token) => {
-    const notificationsResponse = await fetch(`/api/notifications/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return notificationsResponse;
-  };
+  // const notificationFetch = async (id, token) => {
+  //   const notificationsResponse = await fetch(`/api/notifications/${id}`, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   });
+  //   return notificationsResponse;
+  // };
 
   // useEffect(() => {
   //   const fetchNotificationsAndUser = async () => {
@@ -39,7 +40,7 @@ const DropdownNotification = () => {
   //       return;
   //     }
   //     try {
-  //       const token = await userAuth?.getIdToken();
+  //       const token = await user?.getIdToken();
   //       const notificationsResponse = await notificationFetch(uid, token);
   //       const notificationsData = await notificationsResponse.json();
   //       const userData = await userFetch(uid, token);
@@ -67,23 +68,23 @@ const DropdownNotification = () => {
   //   };
 
   //   fetchNotificationsAndUser();
-  // }, [uid, userAuth]);
+  // }, [uid, user]);
 
-  // const convertDate = (date) => {
-  //   const options = { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric" };
-  //   return new Date(date).toLocaleDateString("pt-BR", options);
-  // };
+  const convertDate = (date) => {
+    const options = { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric" };
+    return new Date(date).toLocaleDateString("pt-BR", options);
+  };
 
-  // const markAsRead = async () => {
-  //   try {
-  //     if (uid) {
-  //       await fetch(`/api/notifications/readded/${uid}`, { method: "POST" });
-  //       setNotifying(false);
-  //     }
-  //   } catch (error) {
-  //     console.error("Erro ao marcar notificações como lidas:", error);
-  //   }
-  // };
+  const markAsRead = async () => {
+    try {
+      if (uid) {
+        await fetch(`/api/notifications/readded/${uid}`, { method: "POST" });
+        setNotifying(false);
+      }
+    } catch (error) {
+      console.error("Erro ao marcar notificações como lidas:", error);
+    }
+  };
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">

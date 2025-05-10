@@ -4,10 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ClickOutside from "@/components/ClickOutside";
-// import { useAuthContext } from "../../libs/context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
+import { useEffect } from "react";
 
 
-// const userFetch = async (id: string, token: string) => {
+// const userFetch = async (id, token) => {
 //   const user = await fetch(`/api/user/${id}`, {
 //     headers: {
 //       Authorization: `Bearer ${token}`,
@@ -18,33 +19,28 @@ import ClickOutside from "@/components/ClickOutside";
 //   return userData;
 // }
  
-// interface UserData {
-//   role?: string;
-//   userId: string
-//   jobPosition?: string;
-//   readded?: Array<string>;
-//   phone?: string;
-//   bio?: string;
-// }
+
 
 const DropdownUser = () => {
    const [dropdownOpen, setDropdownOpen] = useState(false);
-  // const { userAuth, logout } = useAuthContext();
+  const { user, signOut } = useAuth();
   
   // const [dados, setDados] = useState(null);
-  // const Email = userAuth?.email;
-  // const Name = userAuth?.displayName;
-
+  const Email = user?.email;
+  const Name = user?.displayName;
+  const urlPhoto = user?.photoURL;
   // useEffect(() => {
-  //   if (userAuth) {
+  //   if (user) {
   //     const userFetching = async () => {
-  //       const token = await userAuth.getIdToken();
-  //       const userData = await userFetch(userAuth.uid, token);
+  //       const token = await user.getIdToken();
+  //       console.log("token", token);
+
+  //       const userData = await userFetch(user.uid, token);
   //       setDados(userData);
   //     };
   //     userFetching();
   //   }
-  // }, [userAuth]);
+  // }, [user]);
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
@@ -55,15 +51,15 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-white">
-            {"Usuário"}
+            { Email || "Usuário" }
           </span>
-          <span className="text-white block text-xs">{"cargo"}</span>
+          <span className="text-white block text-xs">{ Name || "Não Logado"  }</span>
         </span>
 
         <span className="h-12 w-12 rounded-full">
         <div className="relative w-12 h-12 sm:w-14 sm:h-14" style={{borderRadius:"50%"}}>
           <Image
-            src={ "/images/generic_user.png"} 
+            src={ urlPhoto || "/images/generic_user.png"} 
             style={{  borderRadius: "50%", objectFit: "cover" }}
             fill={true}
             sizes="128px,128px"
@@ -92,12 +88,12 @@ const DropdownUser = () => {
       {/* <!-- Dropdown Start --> */}
       {dropdownOpen && (
         <div
-          className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border  text-white shadow-default border-strokedark bg-boxdark`}
+          className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border  meta-3 text-white shadow-default border-strokedark bg-boxdark`}
         >
           <ul className="flex flex-col gap-5 px-6 py-7.5 border-b border-strokedark">
             <li>
               <Link
-                href="/profile"
+                href="/cliente/perfil"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
               >
                 <svg
@@ -122,7 +118,7 @@ const DropdownUser = () => {
             </li>
             <li>
               <Link
-                href="/settings"
+                href="/"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
               >
                 <svg
@@ -146,8 +142,8 @@ const DropdownUser = () => {
               </Link>
             </li>
           </ul>
-          {userAuth && (
-            <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => logout()} >
+          {user && (
+            <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => signOut()} >
               <svg
                 className="fill-current"
                 width="22"

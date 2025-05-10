@@ -8,7 +8,7 @@ import {
   signInWithEmailAndPassword
 } from 'firebase/auth';
 import { useRouter, usePathname } from 'next/navigation';
-import { auth } from '@/config/firebase/firebase';
+import { auth } from '@/config/firebase';
 
 // Rotas que requerem autenticação
 const protectedRoutes = [

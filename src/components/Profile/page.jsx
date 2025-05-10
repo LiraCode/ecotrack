@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 export default function Profile({ userType, userData }) {
   // Default profile image path
-  const profileImage = userData.profileImage || '/images/generic_user.png';
+  const profileImage = userData.urlPhoto || '/images/generic_user.png';
 
   return (
     <Box className="w-full h-full flex items-center justify-center p-4">
@@ -47,7 +47,7 @@ export default function Profile({ userType, userData }) {
             )}
 
             {/* Renderizar endereço somente para cliente */}
-            {userType === 'cliente' && (
+            {userType === 'Cliente' && (
               <Typography variant="body1" className="text-gray-700 text-center">
                 <span className="font-semibold">Endereço:</span> {userData.endereco}
               </Typography>
