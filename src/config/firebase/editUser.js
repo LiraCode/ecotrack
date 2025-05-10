@@ -1,6 +1,6 @@
 // User Actions
 import { updateProfile } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth } from './firebase';
 
 const updateCurrentUser = async (displayName, photoURL) => {
   if (auth.currentUser) {
