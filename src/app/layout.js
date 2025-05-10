@@ -5,6 +5,7 @@ import React from 'react';
 
 import { Geist, Geist_Mono, Roboto, Cabin_Sketch, Crimson_Pro } from 'next/font/google';
 import ClientProviders from './ClientProviders';
+import { AuthProvider } from '../context/AuthContext'
 
 const cabinSketch = Cabin_Sketch({
   variable: '--font-cabin',
@@ -45,7 +46,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased bg-gray-50`}
       >
         <ClientProviders>
+          <AuthProvider>
           {children}
+          </AuthProvider>
         </ClientProviders>
       </body>
     </html>
