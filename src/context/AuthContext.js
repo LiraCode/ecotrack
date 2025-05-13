@@ -23,6 +23,7 @@ const publicRoutes = [
   '/responsavel/login',
   '/administrador/login',
   '/cliente/cadastro',
+  '/administracao/login',
   '/posts',
   '/posts/:slug',
   '/api/users'
@@ -68,8 +69,8 @@ export const AuthContextProvider = ({ children }) => {
         let userType = 'cliente';
         if (pathname.includes('/colaborador')) {
           userType = 'colaborador';
-        } else if (pathname.includes('/administrador')) {
-          userType = 'administrador';
+        } else if (pathname.includes('/administracao')) {
+          userType = 'administracao';
         }
         
         // Redirecionar para a página de login apropriada
@@ -96,8 +97,10 @@ export const AuthContextProvider = ({ children }) => {
       
       case 'colaborador':
        url = 'responsible'
-      case 'administrador':
+        break;
+      case 'Administrador':
         url = 'admin'
+        break;
       default:
        url = 'users'
         
@@ -128,6 +131,7 @@ const signIn = async (email, password, type) => {
   try {
     const response = await signInWithEmailAndPassword(auth, email, password);
     const user = response.user;
+    console.log('type', type);
     // Fetch user data from the database
    
     const userData = await fetchUserData(user.uid, response.user.acessToken, type);

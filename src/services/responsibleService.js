@@ -1,6 +1,4 @@
-// Serviço para gerenciar responsáveis
 
-// Função para criar um novo responsável
 export const createResponsible = async (responsibleData) => {
   try {
     console.log("Iniciando criação de responsável:", responsibleData.email);

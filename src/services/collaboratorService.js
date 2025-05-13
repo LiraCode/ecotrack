@@ -1,6 +1,4 @@
-// Serviço para gerenciar colaboradores
 
-// Função para criar um novo colaborador
 export const createCollaborator = async (collaboratorData) => {
   try {
     console.log("Iniciando criação de colaborador:", collaboratorData.email);

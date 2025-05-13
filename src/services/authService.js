@@ -6,7 +6,6 @@ import {
   sendPasswordResetEmail
 } from "firebase/auth";
 import { auth } from "@/config/firebase/firebase";
-import mongoose from "mongoose";
 
 // Função para registrar um novo usuário
 export const registerUser = async (email, password, userData) => {

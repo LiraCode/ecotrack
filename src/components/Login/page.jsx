@@ -87,7 +87,7 @@ export default function Login({ type }) {
           } else if (isColaborador) {
             router.push('/colaborador/dashboard');
           } else if (isAdmin) {
-            router.push('/administrador/dashboard');
+            router.push('/administracao/');
           }
         }, 1000);
       }

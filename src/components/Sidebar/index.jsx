@@ -1,137 +1,161 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
-import { useState } from "react";
 import '@/app/styles/globals.css';
 import { useAuth } from "@/context/AuthContext";
 
-
-
-
-
-// Define menu items in a more organized structure
 const menuGroups = [
   {
     name: " ",
     menuItems: [
       { 
-        icon: <i className="fa-duotone fa-solid fa-house" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-duotone fa-solid fa-house" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Início",
         route: "/",
         role: "all",
       },
       {
-        icon: <i className="fa-solid fa-calendar-plus" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-calendar-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Agendar",
         route: "/agendamento",
         role: "user",
       },
       {
-        icon: <i className="fa-sharp fa-solid fa-recycle" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-sharp fa-solid fa-recycle" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Eco Pontos",
         route: "/locais",
-        role:"all",
+        role: "all",
       },
       {
-        icon: <i className="fa-solid fa-user" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-user" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Perfil",
         route: "/cliente/perfil",
         role: "user",
       },
       {
-        icon: <i className="fa-solid fa-gamepad-modern" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-gamepad-modern" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Games",
         route: "/cliente/metas",
         role: "user",
       },
       {
-        icon: <i className="fa-solid fa-books" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-books" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Blog",
         route: "/posts",
         role: "all",
       },
       {
-        icon: <i className="fa-solid fa-shield-keyhole" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-shield-keyhole" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Acesso Cliente",
         route: "/cliente/login",
         role: "not-logged",
       },
       {
-        icon: <i className="fa-solid fa-handshake-simple" style={{fontSize:"32px", color: "#08B75B"}}></i>,
+        icon: <i className="fa-solid fa-handshake-simple" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Acesso Parceiros",
         route: "/",
         role: "not-logged",
+      },
+      {
+        icon: <i className="fa-solid fa-user-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
+        label: "Add Admin / Funcionário",
+        route: "administracao/cadastro",
+        role: "admin",
+      },
+      {
+        
+        icon: <i className="fa-solid fa-trash-can-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
+        label: "add tipos de resíduos",
+        route: "/administracao/residuos/",
+        role: "admin",
       }
     ],
   },
 ];
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
-  // Use local state instead of localStorage to avoid hydration issues
-  const [pageName, setPageName] = useState("dashboard");
   const { user } = useAuth();
-  const [role, setRole] = useState("all"); // Initialize with "all" as default
-  const [loggedRole, setLoggedRole] = useState("not-logged"); // Initialize with "not-logged" as default
-  
+  const [pageName, setPageName] = useState("dashboard");
+  const [role, setRole] = useState(""); // Estado inicial, será atualizado no useEffect
+  const [loggedRole, setLoggedRole] = useState("not-logged"); // Se necessário para outro uso
+  const [loading, setLoading] = useState(true); // Estado para controlar o carregamento
+
   const isUser = async () => {
     try {
       const token = user?.accessToken || null;
       if (!user || !token) return false;
-      const response = await fetch('/api/users/user', {
-        method: 'GET',
+      const response = await fetch("/api/users", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
           uid: user.uid,
-        }
+        },
       });
       const data = await response.json();
       return data.success;
     } catch (error) {
-      console.error('Erro ao verificar permissões do user:', error);
+      console.error("Erro ao verificar permissões do user:", error);
       return false;
     }
   };
 
   const isAdmin = async () => {
     try {
-      const token = user?.accessToken || null;
-      if (!user || !token) return false;
-      const response = await fetch('/api/admin', {
-        method: 'GET',
+      const response = await fetch("/api/admin", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          uid: user.uid,
-        }
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user?.accessToken || ""}`,
+          uid: user?.uid || "",
+        },
       });
-      const data = await response.json();
-      return data.success;
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Resposta da API admin:", data);
+        return data.success;
+      }
+      return false;
     } catch (error) {
-      console.error('Erro ao verificar permissões do admin:', error);
+      console.error("Erro ao verificar permissões de admin:", error);
       return false;
     }
   };
- 
 
-  // Use useEffect to call the async function and update the role state
+  // Verifica e atualiza o papel do usuário
   useEffect(() => {
     const checkUserRole = async () => {
-      const isUserRole = await isUser();
-      const userRole = isUserRole ? 'user' : 'all';
-      setLoggedRole(user ? "logged" : "not-logged");
-      setRole(userRole);
-      if (userRole === "all" && user) {
-        const adminRole = await isAdmin();
-        setRole(adminRole ? "admin" : "responsible");
-        
+      setLoading(true);
+      if (!user) {
+        setRole("all");
+        setLoading(false);
+        return;
       }
+      const isUserResult = await isUser();
+      if (isUserResult) {
+        console.log("Usuário identificado como: user");
+        setRole("user");
+        setLoading(false);
+        return;
+      }
+      const isAdminResult = await isAdmin();
+      console.log("Resultado da verificação de admin:", isAdminResult);
+      if (isAdminResult) {
+        console.log("Usuário identificado como: admin");
+        setRole("admin");
+      } else {
+        console.log("Usuário identificado como: responsible");
+        setRole("responsible");
+      }
+      setLoading(false);
     };
+
     checkUserRole();
-    
-  }, [user]); // Re-run when user changes
-  // Update pageName from localStorage after component mounts
+    console.log("Role atual:", role);
+  }, [user]);
+
+  // Atualiza o pageName a partir do localStorage quando o componente monta
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -144,8 +168,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       }
     }
   }, []);
-  
-  // Update localStorage when pageName changes
+
+  // Atualiza o localStorage sempre que pageName muda
   const handleSetPageName = (value) => {
     setPageName(value);
     if (typeof window !== "undefined") {
@@ -157,6 +181,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     }
   };
 
+  // Enquanto carrega, pode renderizar uma interface de carregamento
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
@@ -165,20 +194,27 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         }`}
       >
         <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear green aling-center">
-          {/* Sidebar Menu */}
           <nav className="mt-5 flex flex-col items-center w-full lg:mt-5">
             {menuGroups.map((group, groupIndex) => (
               <div key={groupIndex} className="w-full">
                 <ul className="mb-2 flex flex-col gap-2 text-sm w-full">
-                  {group.menuItems.filter(item => item.role === role || item.role === "all" || item.role === loggedRole).map((menuItem, menuIndex) => (
-                    <li key={menuIndex} className="flex justify-center w-full align-center">
-                      <SidebarItem
-                        item={menuItem}
-                        pageName={pageName}
-                        setPageName={handleSetPageName}
-                      />
-                    </li>
-                  ))}
+                  {group.menuItems
+                    .filter((item) =>
+                      item.role === role ||
+                      item.role === "all" ||
+                      (role === "all"
+                        ? item.role === "not-logged"
+                        : item.role === "logged")
+                    )
+                    .map((menuItem, menuIndex) => (
+                      <li key={menuIndex} className="flex justify-center w-full align-center">
+                        <SidebarItem
+                          item={menuItem}
+                          pageName={pageName}
+                          setPageName={handleSetPageName}
+                        />
+                      </li>
+                    ))}
                 </ul>
               </div>
             ))}
@@ -188,4 +224,5 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     </ClickOutside>
   );
 };
+
 export default Sidebar;
