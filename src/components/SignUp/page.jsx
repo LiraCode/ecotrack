@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LogoClickable from '@/components/Icons/logoClick/page';
 import { useAuth } from '@/context/AuthContext';
-import { registerUser } from '@/services/authService';
+import { registerAdmin, registerResponsible, registerUser } from '@/services/authService';
 
 export default function Cadastro({ userType }) {
   const router = useRouter();
@@ -29,7 +29,9 @@ export default function Cadastro({ userType }) {
 
   // Redirecionar se o usuário já estiver logado
   useEffect(() => {
-    if (user) {
+    console.log('User:', userType);
+    if (user && userType === 'clientes') {
+
       router.push(`/`);
     }
   }, [user, router, userType]);
@@ -53,10 +55,21 @@ export default function Cadastro({ userType }) {
       setLoading(true);
       
       // Adicionar o tipo de usuário aos dados
-      const userData = { ...formData, userType };
+      const role = userType === 'cliente' ? 'User' : userType === 'responsável' ? 'Responsável' : 'Administrador';
+      const userData = userType === 'cliente'?{ ...formData, userType }: { ...formData, role };
+     
+      var result = null;
       
       // Registrar usuário no Firebase e MongoDB
-      const result = await registerUser(formData.email, formData.senha, userData);
+      console.log('User Type:', userType);
+      if (userType === 'cliente') {
+         result = await registerUser(formData.email, formData.senha, userData);
+      } else if (userType === 'responsável') {
+         result = await registerResponsible(formData.email, formData.senha, userData);
+      } else if (userType === 'administração') {
+        formData.role === 'administrador' ? console.log(userData): formData.role = 'employee'; 
+         result = await registerAdmin(formData.email, formData.senha, userData);
+      }
       
       if (result.success) {
         // Redirecionar para a página de login ou dashboard
@@ -73,8 +86,9 @@ export default function Cadastro({ userType }) {
   };
 
   const isCliente = userType === 'cliente';
-  const isColaborador = userType === 'colaborador';
+  const isColaborador = userType === 'responsável';
   const isAdmin = userType === 'administração';
+  
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -246,6 +260,22 @@ export default function Cadastro({ userType }) {
               minLength={6}
             />
           </div>
+          {isAdmin && (
+            <div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isAdmin"
+                  className="mr-2"
+                  value={formData.role = 'administrador'}
+                  onChange={handleChange}
+                />
+                <label className="text-sm text-gray-600">
+                  esse cadastro é para um administrador?
+                </label>
+              </div>
+            </div>
+          )}
 
           <div className="pt-4">
             <button 

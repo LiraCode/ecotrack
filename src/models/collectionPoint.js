@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-import AddressSchema from './address';
 
 
 // Collection Point Schema
@@ -9,6 +8,7 @@ const CollectionPointSchema = new mongoose.Schema({
     description: { type: String, required: true, default: '' },
     responsibleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Responsible', required: true },
     typeOfWasteId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Waste', required: true }],
+    address: { type: mongoose.Schema.Types.ObjectId, ref: 'Address', required: true },
 });
 
 // Export the model

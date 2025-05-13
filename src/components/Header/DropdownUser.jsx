@@ -23,7 +23,7 @@ import { useEffect } from "react";
 
 const DropdownUser = () => {
    const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   
   // const [dados, setDados] = useState(null);
   const Email = user?.email;
@@ -143,7 +143,7 @@ const DropdownUser = () => {
             </li>
           </ul>
           {user && (
-            <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => signOut()} >
+            <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => logout()} >
               <svg
                 className="fill-current"
                 width="22"

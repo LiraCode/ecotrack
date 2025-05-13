@@ -10,46 +10,16 @@ export async function POST(request) {
     
     const addressData = await request.json();
     
-    // Verificar se o uid foi fornecido
-    if (!addressData.uid) {
-      return NextResponse.json(
-        { error: 'UID não fornecido' },
-        { status: 400 }
-      );
-    }
-    
-    // Buscar usuário pelo UID do Firebase (armazenado como firebaseId)
-    const user = await User.findOne({ firebaseId: addressData.uid });
-    console.log("Buscando usuário pelo UID:", addressData.uid);
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
-      );
-    }
-    
-    console.log("Usuário encontrado:", user._id);
-    
-    // Se este endereço for definido como padrão, desmarcar outros endereços padrão
-    if (addressData.isDefault) {
-      await Address.updateMany(
-        { clientId: user._id, isDefault: true },
-        { $set: { isDefault: false } }
-      );
-    }
-    
     // Criar novo endereço
     const newAddress = new Address({
-      clientId: user._id,
-      number: addressData.number || '',
-      complement: addressData.complement || '',
-      street: addressData.street || '',
-      neighborhood: addressData.neighborhood || '',
-      city: addressData.city || '',
-      state: addressData.state || '',
-      zipCode: addressData.zipCode || '',
-      isDefault: addressData.isDefault || false
+      street: addressData.street ,
+      number: addressData.number ,
+      complement: addressData.complement ,
+      neighborhood: addressData.neighborhood ,
+      city: addressData.city ,
+      state: addressData.state,
+      zipCode: addressData.zipCode,
+      isDefault: addressData.isDefault || true
     });
     
     await newAddress.save();

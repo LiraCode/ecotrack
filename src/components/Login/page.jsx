@@ -9,8 +9,8 @@ export default function Login({ type }) {
   const { signIn } = useAuth();
   
   const isCliente = type === 'cliente';
-  const isColaborador = type === 'colaborador';
-  const isAdmin = type === 'administração';
+  const isColaborador = type === 'responsável';
+  const isAdmin = type === 'Administrador';
   
   if (!isCliente && !isColaborador && !isAdmin) {
     return <div>Erro: Parâmetros obrigatórios inválidos ou ausentes.</div>;
@@ -117,6 +117,8 @@ export default function Login({ type }) {
         return 'Muitas tentativas de login. Tente novamente mais tarde.';
       case 'auth/network-request-failed':
         return 'Erro de conexão. Verifique sua internet.';
+      case 'auth/isNotUser':
+        return 'Área exclusiva para clientes. seu login não é válido.';
       default:
         return 'Credenciais inválidas. Verifique seu login e senha.';
     }

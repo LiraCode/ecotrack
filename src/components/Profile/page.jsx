@@ -6,6 +6,7 @@ export default function Profile({ userType, userData }) {
   // Default profile image path
   const profileImage = userData.urlPhoto || '/images/generic_user.png';
 
+
   return (
     <Box className="w-full h-full flex items-center justify-center p-4">
       <Card className="w-full max-w-md mx-auto shadow-lg overflow-hidden">

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/config/firebase/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -12,21 +12,20 @@ export const useAuth = () => useContext(AuthContext);
 // Rotas de login para cada tipo de usuário
 const loginRoutes = {
   cliente: '/cliente/login',
-  colaborador: '/colaborador/login',
-  administrador: '/administrador/login'
+  responsavel: '/responsavel/login',
+  administrador: '/administracao/login'
 };
 
 // Rotas públicas que não precisam de autenticação
 const publicRoutes = [
   '/',
   '/cliente/login',
-  '/colaborador/login',
+  '/responsavel/login',
   '/administrador/login',
   '/cliente/cadastro',
-  '/colaborador/cadastro',
-  '/administrador/cadastro',
   '/posts',
   '/posts/:slug',
+  '/api/users'
   
 
 
@@ -39,10 +38,15 @@ export const AuthContextProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+
+  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
+       
+        
       } else {
         setUser(null);
       }
@@ -72,22 +76,77 @@ export const AuthContextProvider = ({ children }) => {
         router.push(loginRoutes[userType] || loginRoutes.cliente);
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [loading, pathname, user, router]);
 
-  const logout = async (userType = 'cliente') => {
+  const logout = async () => {
     try {
       await signOut(auth);
-      router.push(loginRoutes[userType] || loginRoutes.cliente);
+      router.push('/');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }
   };
 
+ 
+
+  const fetchUserData = async (uid, token, type) => {
+  try {
+    let url = '';
+     switch(type) {
+      
+      case 'colaborador':
+       url = 'responsible'
+      case 'administrador':
+        url = 'admin'
+      default:
+       url = 'users'
+        
+    }
+    // Make sure to include the uid as a query parameter
+    const response = await fetch('/api/' + url, {
+      method: 'GET',
+      headers: {  
+        'Content-Type': 'application/json',
+        // Include authorization token if needed
+        authorization: `Bearer ${token}`,
+        // Include the uid in the request with the query parameter
+        uid: uid,
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return null; 
+  }
+};
+
+
+const signIn = async (email, password, type) => { 
+  try {
+    const response = await signInWithEmailAndPassword(auth, email, password);
+    const user = response.user;
+    // Fetch user data from the database
+   
+    const userData = await fetchUserData(user.uid, response.user.acessToken, type);
+    if(!userData) {
+      console.log('Usuário não encontrado:', user.uid);
+      return { error: 'auth/isNotUser' };
+    }
+    return response;
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    return { error };
+  }
+};
+
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{ user, loading, logout, signIn, fetchUserData }}>
       {!loading && children}
     </AuthContext.Provider>
   );
 };
-
 export default AuthContext;

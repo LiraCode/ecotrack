@@ -13,26 +13,19 @@ export async function POST(request) {
     // Obter dados da requisição
     const userData = await request.json();
     console.log("Dados recebidos:", JSON.stringify(userData));
-    
-    // Validar dados básicos
-    if (!userData.name || !userData.email) {
-      console.error("Dados obrigatórios ausentes");
-      return NextResponse.json(
-        { error: 'Nome e email são obrigatórios' },
-        { status: 400 }
-      );
-    }
+
     
     // Criar novo usuário no MongoDB
     try {
-      console.log("Tentando criar usuário no MongoDB");
+      console.log("Tentando criar usuário no MongoDB com endereços:", userData.address);
       const newUser = new User({
-        firebaseId: userData.uid, // Usar uid do Firebase como firebaseId
-        cpf: userData.cpf || '',
+        firebaseId: userData.firebaseId,
+        cpf: userData.cpf,
         name: userData.name,
         email: userData.email,
-        phone: userData.phone || '',
-        type: userData.type || 'user'
+        phone: userData.phone,
+        role: userData.role,
+        address: userData.address,
       });
       
       await newUser.save();
@@ -75,7 +68,9 @@ export async function GET(request) {
     
     // Obter o UID da query string
     const { searchParams } = new URL(request.url);
-    const uid = searchParams.get('uid');
+    const uid = searchParams.get('uid')? searchParams.get('uid') : request.headers.get('uid');
+    console.log("UID recebido:", uid);
+    
     
     if (!uid) {
       return NextResponse.json(
@@ -85,7 +80,7 @@ export async function GET(request) {
     }
     
     // Buscar usuário pelo UID do Firebase (armazenado como firebaseId)
-    const user = await User.findOne({ firebaseId: uid }).populate('addresses');
+    const user = await User.findOne({ firebaseId: uid });
     
     if (!user) {
       return NextResponse.json(

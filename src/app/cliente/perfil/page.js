@@ -10,22 +10,61 @@ export default function Home() {
   const [userData, setUserData] = useState({
     nomeCompleto: '',
     email: '',
-    cpf: '123.456.789-00',
-    endereco: 'implementar no mongoDB',
-    telefone: '(11) 98765-4321',
-    urlPhoto: ''
+    telefone: '',
+    cpf: '',
+    tipo: '',
+    endereco: ''
   });
+  const token = user?.accessToken;
+  
 
   useEffect(() => {
-    if (user) {
-      setUserData(prevData => ({
-        ...prevData,
-        nomeCompleto: user.displayName || '',
-        email: user.email || '',
-        urlPhoto: user.photoURL || 'public/Images/generic_user.png'
-      }));
-    }
-  }, [user]);
+    const getUserData = async () => {
+      try {
+        if (!user || !token) return;
+
+        const response = await fetch('/api/users/user', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            uid: user.uid,
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao buscar dados do usuário');
+        }
+
+        const data = await response.json();
+        
+        if (data.success && data.user) {
+          // Format address data if it exists
+          let formattedAddress = '';
+          if (data.user.address && data.user.address.length > 0) {
+            const primaryAddress = data.user.address[0];
+            formattedAddress = `${primaryAddress.street}, ${primaryAddress.number}, ${primaryAddress.neighborhood}, ${primaryAddress.city}, ${primaryAddress.state}, ${primaryAddress.zipCode}`;
+          }
+          
+          setUserData(prevData => ({
+            ...prevData,
+            ...data.user,
+            nomeCompleto: data.user.name || user.displayName || '',
+            email: data.user.email || user.email || '',
+            urlPhoto: user.photoURL || '/Images/generic_user.png',
+            cpf: data.user.cpf || '',
+            telefone: data.user.phone || user.phoneNumber || '',
+            endereco: formattedAddress,
+            type: data.user.type || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+      }
+    };
+
+    getUserData();
+  }, [user, token]);
 
   return (
     <AppLayout>

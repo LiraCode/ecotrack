@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 
 const AddressSchema = new mongoose.Schema({
-    clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     street: { type: String, required: true },
     number: { type: String, required: true },
     complement: { type: String },
