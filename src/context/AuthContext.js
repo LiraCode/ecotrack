@@ -20,7 +20,7 @@ const loginRoutes = {
 const publicRoutes = [
   '/',
   '/cliente/login',
-  '/responsavel/login',
+  '/parceiro/login',
   '/administrador/login',
   '/cliente/cadastro',
   '/administracao/login',
@@ -33,51 +33,91 @@ const publicRoutes = [
   // Adicione outras rotas públicas aqui
 ];
 
+const adminExtraRoutes = [
+  'client/cadastro',
+  'parceiro/cadastro'  
+];
+
 export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
   const router = useRouter();
   const pathname = usePathname();
 
-
+  
   
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setUser(user);
+         setUser(prevUser => ({ ...user, role: role }));
+
+         if(!role) {
+          setRole( await checkRole(user.accessToken));
+          }
+        
+        
        
         
       } else {
         setUser(null);
+        setRole(null);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [role]);
 
   // Verificar se a rota atual precisa de autenticação
-  useEffect(() => {
-    if (!loading) {
-      const isPublicRoute = publicRoutes.some(route => 
+ useEffect(() => {
+  if (!loading) {
+    // Permitir as rotas públicas
+    const isPublicRoute = publicRoutes.some(route =>
+      pathname === route || pathname.startsWith(`${route}/`)
+    );
+    if (isPublicRoute) {
+      return;
+    }
+
+    // Se o usuário não estiver logado, determinar o tipo com base na URL e redirecionar
+    if (!user) {
+      let userType = "cliente";
+      if (pathname.includes("/parceiro")) {
+        userType = "parceiro";
+      } else if (pathname.includes("/administracao")) {
+        userType = "administracao";
+      }
+      router.push(loginRoutes[userType] || loginRoutes.cliente);
+      return;
+    }
+
+    // Se o usuário estiver logado, verificar o papel e limitar o acesso às pastas permitidas
+    if (user.role === "Administrador") {
+      // Apenas os administradores podem acessar rotas que iniciam com "/administracao"
+      if (!pathname.startsWith("/administracao") && !adminExtraRoutes) {
+        router.push("/administracao");
+      }
+    } else if (user.role === "Responsável") {
+      // Apenas os responsáveis devem acessar rotas que iniciam com "/parceiro"
+      if (!pathname.startsWith("/parceiro")) {
+        router.push("/parceiro");
+      }
+    } else if (user.role === "User") {
+      // Clientes têm acesso somente a um conjunto de rotas permitidas
+      const allowedClientRoutes = ["/", "/agendamento", "/cliente/perfil", "/cliente/metas", "/posts"];
+      const isAllowed = allowedClientRoutes.some(route =>
         pathname === route || pathname.startsWith(`${route}/`)
       );
-
-      if (!user && !isPublicRoute) {
-        // Determinar o tipo de usuário com base na URL
-        let userType = 'cliente';
-        if (pathname.includes('/colaborador')) {
-          userType = 'colaborador';
-        } else if (pathname.includes('/administracao')) {
-          userType = 'administracao';
-        }
-        
-        // Redirecionar para a página de login apropriada
-        router.push(loginRoutes[userType] || loginRoutes.cliente);
+      if (!isAllowed) {
+        // Caso a rota atual não esteja na lista, redireciona para a página default do cliente
+        router.push("/");
       }
     }
-  }, [loading, pathname, user, router]);
+  }
+}, [loading, pathname, user, router]);
+
 
   const logout = async () => {
     try {
@@ -90,55 +130,46 @@ export const AuthContextProvider = ({ children }) => {
 
  
 
-  const fetchUserData = async (uid, token, type) => {
+  const  checkRole = async (token) => {
   try {
-    let url = '';
-     switch(type) {
-      
-      case 'colaborador':
-       url = 'responsible'
-        break;
-      case 'Administrador':
-        url = 'admin'
-        break;
-      default:
-       url = 'users'
-        
-    }
+    
     // Make sure to include the uid as a query parameter
-    const response = await fetch('/api/' + url, {
+    const response = await fetch('/api/auth/checkrole' , {
       method: 'GET',
       headers: {  
         'Content-Type': 'application/json',
         // Include authorization token if needed
         authorization: `Bearer ${token}`,
-        // Include the uid in the request with the query parameter
-        uid: uid,
       },
     });
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);
     }
     const data = await response.json();
-    return data;
+    if (data.error) {
+      console.error('Erro ao obter a role do usuário:', data.error);
+    } else {
+      return data.role;
+    }
   } catch (error) {
-    return null; 
+    console.error('Erro ao buscar role do usuário:', error.message);
   }
-};
+}
 
 
 const signIn = async (email, password, type) => { 
   try {
     const response = await signInWithEmailAndPassword(auth, email, password);
+    // get user from response
     const user = response.user;
-    console.log('type', type);
-    // Fetch user data from the database
+    const acessToken = user.accessToken;
    
-    const userData = await fetchUserData(user.uid, response.user.acessToken, type);
+    const userData = await checkRole( acessToken);
     if(!userData) {
-      console.log('Usuário não encontrado:', user.uid);
+      console.log("Erro ao obter dados do usuário:", userData);
       return { error: 'auth/isNotUser' };
     }
+    setRole(userData);
     return response;
   } catch (error) {
     console.error('Erro ao fazer login:', error);
@@ -148,7 +179,7 @@ const signIn = async (email, password, type) => {
 
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, signIn, fetchUserData }}>
+    <AuthContext.Provider value={{ user, loading, logout, signIn, checkRole }}>
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -92,10 +92,12 @@ export const registerUser = async (email, password, userData) => {
     return { success: false, error: error.message };
   }
 };
+
 // Função para registrar um responsável
 export const registerResponsible = async (email, password, responsibleData) => {
   try {
     console.log("Iniciando registro de responsável:", email);
+    console.log("Dados do responsável:", responsibleData);
     
     // Criar usuário no Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -105,16 +107,16 @@ export const registerResponsible = async (email, password, responsibleData) => {
     
     // Atualizar o perfil do usuário com o nome
     await updateProfile(user, {
-      displayName: responsibleData.name
+      displayName: responsibleData.nomeCompleto
     });
     
     // Preparar dados para enviar à API
     const dataForAPI = {
       firebaseId: user.uid,
       cpf: responsibleData.cpf,
-      name: responsibleData.name,
+      name: responsibleData.nomeCompleto,
       email: responsibleData.email,
-      phone: responsibleData.phone
+      phone: responsibleData.telefone
     };
     
     // Enviar dados para o MongoDB através da API

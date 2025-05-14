@@ -267,7 +267,7 @@ export default function Cadastro({ userType }) {
                   type="checkbox"
                   name="isAdmin"
                   className="mr-2"
-                  value={formData.role = 'administrador'}
+                  value={formData.role = 'Administrador'}
                   onChange={handleChange}
                 />
                 <label className="text-sm text-gray-600">

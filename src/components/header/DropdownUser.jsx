@@ -26,9 +26,34 @@ const DropdownUser = () => {
   const { user, logout } = useAuth();
   
   // const [dados, setDados] = useState(null);
-  const Email = user?.email;
+  const role = user?.role;
+
   const Name = user?.displayName;
   const urlPhoto = user?.photoURL;
+  let rota = "" ;
+  let page = "/perfil";
+  let url = "";
+
+  switch (role) {
+    case "Administrador":
+      rota = "/administracao";
+      break;
+    case "responsavel":
+      rota = "/parceiro"; // Removed extra semicolon here
+      break;
+    case "User":
+      rota = "/cliente";
+      break;
+    default:
+      rota = "#";
+}
+
+  if (rota !== "#") { // Changed condition here
+     url = rota.concat(page);
+  } else {
+    url = "#";
+  }
+
   // useEffect(() => {
   //   if (user) {
   //     const userFetching = async () => {
@@ -51,9 +76,9 @@ const DropdownUser = () => {
       >
         <span className="hidden text-right lg:block">
           <span className="block text-sm font-medium text-white">
-            { Email || "Usuário" }
+            {   Name || "Usuário" }
           </span>
-          <span className="text-white block text-xs">{ Name || "Não Logado"  }</span>
+          <span className="text-white block text-xs">{ role || "Não Logado"  }</span>
         </span>
 
         <span className="h-12 w-12 rounded-full">
@@ -93,7 +118,7 @@ const DropdownUser = () => {
           <ul className="flex flex-col gap-5 px-6 py-7.5 border-b border-strokedark">
             <li>
               <Link
-                href="/cliente/perfil"
+                href= {url}
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
               >
                 <svg

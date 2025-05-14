@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ResponsibleSchema = new mongoose.Schema({
+const ResponsableSchema = new mongoose.Schema({
     firebaseId: { type: String, unique: true, required: true },
     cpf: { type: String, unique: true, required: true },
     name: { type: String, required: true },
@@ -10,4 +10,4 @@ const ResponsibleSchema = new mongoose.Schema({
     
 });
 
-module.exports = mongoose.models.Responsible || mongoose.model('Responsible', ResponsibleSchema);
+module.exports = mongoose.models.Responsable || mongoose.model('Responsable', ResponsableSchema);

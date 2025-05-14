@@ -19,7 +19,7 @@ const menuGroups = [
         icon: <i className="fa-solid fa-calendar-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Agendar",
         route: "/agendamento",
-        role: "user",
+        role: "User",
       },
       {
         icon: <i className="fa-sharp fa-solid fa-recycle" style={{ fontSize: "32px", color: "#08B75B" }} />,
@@ -31,7 +31,7 @@ const menuGroups = [
         icon: <i className="fa-solid fa-user" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Perfil",
         route: "/cliente/perfil",
-        role: "user",
+        role: "User",
       },
       {
         icon: <i className="fa-solid fa-gamepad-modern" style={{ fontSize: "32px", color: "#08B75B" }} />,
@@ -61,14 +61,14 @@ const menuGroups = [
         icon: <i className="fa-solid fa-user-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Add Admin / Funcionário",
         route: "administracao/cadastro",
-        role: "admin",
+        role: "Administrador",
       },
       {
         
         icon: <i className="fa-solid fa-trash-can-plus" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "add tipos de resíduos",
         route: "/administracao/residuos/",
-        role: "admin",
+        role: "Administrador",
       }
     ],
   },
@@ -77,83 +77,26 @@ const menuGroups = [
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user } = useAuth();
   const [pageName, setPageName] = useState("dashboard");
-  const [role, setRole] = useState(""); // Estado inicial, será atualizado no useEffect
-  const [loggedRole, setLoggedRole] = useState("not-logged"); // Se necessário para outro uso
   const [loading, setLoading] = useState(true); // Estado para controlar o carregamento
+  const [role, setRole] = useState("");
 
-  const isUser = async () => {
-    try {
-      const token = user?.accessToken || null;
-      if (!user || !token) return false;
-      const response = await fetch("/api/users", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          uid: user.uid,
-        },
-      });
-      const data = await response.json();
-      return data.success;
-    } catch (error) {
-      console.error("Erro ao verificar permissões do user:", error);
-      return false;
-    }
-  };
 
-  const isAdmin = async () => {
-    try {
-      const response = await fetch("/api/admin", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${user?.accessToken || ""}`,
-          uid: user?.uid || "",
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Resposta da API admin:", data);
-        return data.success;
-      }
-      return false;
-    } catch (error) {
-      console.error("Erro ao verificar permissões de admin:", error);
-      return false;
-    }
-  };
-
-  // Verifica e atualiza o papel do usuário
   useEffect(() => {
-    const checkUserRole = async () => {
-      setLoading(true);
-      if (!user) {
-        setRole("all");
-        setLoading(false);
-        return;
-      }
-      const isUserResult = await isUser();
-      if (isUserResult) {
-        console.log("Usuário identificado como: user");
-        setRole("user");
-        setLoading(false);
-        return;
-      }
-      const isAdminResult = await isAdmin();
-      console.log("Resultado da verificação de admin:", isAdminResult);
-      if (isAdminResult) {
-        console.log("Usuário identificado como: admin");
-        setRole("admin");
-      } else {
-        console.log("Usuário identificado como: responsible");
-        setRole("responsible");
-      }
+    // Verifica o estado do usuário e define o role
+    if (user) {
+      setRole(user.role);
+      setLoading(false); 
+    
+    } else {
+      setRole("all");
       setLoading(false);
-    };
+    }
+  
 
-    checkUserRole();
-    console.log("Role atual:", role);
   }, [user]);
+
+  
+
 
   // Atualiza o pageName a partir do localStorage quando o componente monta
   useEffect(() => {
@@ -202,7 +145,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                     .filter((item) =>
                       item.role === role ||
                       item.role === "all" ||
-                      (role === "all"
+                      (!user
                         ? item.role === "not-logged"
                         : item.role === "logged")
                     )

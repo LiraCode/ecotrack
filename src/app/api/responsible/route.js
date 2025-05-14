@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Responsible from '@/models/responsible';
+import Responsible from '@/models/responsable';
 
 export async function POST(request) {
   try {
@@ -13,6 +13,7 @@ export async function POST(request) {
     // Obter dados da requisição
     const responsibleData = await request.json();
     console.log("Dados recebidos:", JSON.stringify(responsibleData));
+    console.log("dados recebidos:", responsibleData);
     
     // Validar dados básicos
     if (!responsibleData.name || !responsibleData.email || !responsibleData.cpf || !responsibleData.phone || !responsibleData.firebaseId) {
