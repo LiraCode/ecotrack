@@ -54,7 +54,7 @@ const menuGroups = [
       {
         icon: <i className="fa-solid fa-handshake-simple" style={{ fontSize: "32px", color: "#08B75B" }} />,
         label: "Acesso Parceiros",
-        route: "/",
+        route: "/parceiro/login",
         role: "not-logged",
       },
       {
