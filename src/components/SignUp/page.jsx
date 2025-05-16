@@ -57,6 +57,20 @@ export default function Cadastro({ userType }) {
       // Adicionar o tipo de usuário aos dados
       const role = userType === 'cliente' ? 'User' : userType === 'responsável' ? 'Responsável' : 'Administrador';
       const userData = userType === 'cliente'?{ ...formData, userType }: { ...formData, role };
+      let url = null;
+      switch(role){
+        case 'User':
+          url = 'client'
+          break;
+        case 'Responsável':
+          url = "parceiro";
+          break;
+        case 'Administrador':
+          url = "adminisracao"
+          break;
+        default:
+          url = null;
+      }
      
       var result = null;
       
@@ -290,7 +304,7 @@ export default function Cadastro({ userType }) {
           <div className="text-center pt-4 pb-2">
             <p className="text-sm text-gray-600">
               Já tem uma conta?{' '}
-              <Link href={`/${userType}/login`} className="text-green-500 hover:text-green-600 font-medium">
+              <Link href={`/${url}/login`} className="text-green-500 hover:text-green-600 font-medium">
                 Faça login
               </Link>
             </p>

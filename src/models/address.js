@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const AddressSchema = new mongoose.Schema({
     street: { type: String, required: true },
     number: { type: String, required: true },
-    complement: { type: String },
+    complement: { type: String, default: '' },
     neighborhood: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },

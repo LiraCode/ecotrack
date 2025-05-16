@@ -24,6 +24,7 @@ const publicRoutes = [
   '/administrador/login',
   '/cliente/cadastro',
   '/administracao/login',
+  '/locais',
   '/posts',
   '/posts/:slug',
   '/api/users'
@@ -96,7 +97,7 @@ export const AuthContextProvider = ({ children }) => {
     // Se o usuário estiver logado, verificar o papel e limitar o acesso às pastas permitidas
     if (user.role === "Administrador") {
       // Apenas os administradores podem acessar rotas que iniciam com "/administracao"
-      if (!pathname.startsWith("/administracao") && !adminExtraRoutes) {
+      if (!pathname.startsWith("/administracao") && !adminExtraRoutes && !publicRoutes) {
         router.push("/administracao");
       }
     } else if (user.role === "Responsável") {

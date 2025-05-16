@@ -65,14 +65,14 @@ export default function ScheduleDialog({
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <IconButton 
                       edge="end" 
-                      onClick={() => onToggleComplete(schedule.date, schedule.type)}
+                      onClick={() => onToggleComplete(schedule.date, schedule.name )}
                       sx={{ color: schedule.completed ? '#4caf50' : '#f44336' }}
                     >
                       {schedule.completed ? <CheckCircle /> : <Cancel />}
                     </IconButton>
                     <IconButton 
                       edge="end" 
-                      onClick={() => onDelete(schedule.date, schedule.type)}
+                      onClick={() => onDelete(schedule.date, schedule.name)}
                       sx={{ color: '#f44336' }}
                     >
                       <Delete />
@@ -87,10 +87,15 @@ export default function ScheduleDialog({
                 }}
               >
                 <ListItemText
-                  primary={schedule.type}
+                  primary={<>
+                  <Typography variant='h6' sx={{ whiteSpace: 'pre-line' }}>
+                      {`${schedule.name} \n`}
+                    </Typography><Typography variant='h7' sx={{ whiteSpace: 'pre-line' }}>{` Tipo de Material: ${schedule.type}`}</Typography>
+                 </>
+                    }
                   secondary={
                     <Typography variant="body2" color="textSecondary">
-                      Status: {schedule.completed ? 'Concluído' : 'Pendente'}
+                      Status: {schedule.status}
                     </Typography>
                   }
                   sx={{

@@ -7,3 +7,5 @@ const ScoreSchema = new mongoose.Schema({
     status: { type: String, required: true, enum: ['active', 'inactive', 'expired','completed'], default: 'active' },
     expirationDate: { type: Date, required: true }
 });
+// Score Model
+module.exports = mongoose.models.Score || mongoose.model('Score', ScoreSchema);

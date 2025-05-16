@@ -1,23 +1,24 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Typography, useMediaQuery, useTheme, Button } from '@mui/material';
 import { CalendarToday, Add } from '@mui/icons-material';
 import Calendar from '../Calendar/Calendar';
 import ScheduleList from './ScheduleList';
 import NewScheduleDialog from './NewScheduleDialog';
 import ScheduleDialog from './ScheduleDialog';
+import { useAuth } from "@/context/AuthContext";
+
 
 export default function AgendamentoPage({ sidebarOpen = false }) {
-  const theme = useTheme();
+    const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [schedules, setSchedules] = useState([
-    { date: '28/03/2025', type: 'Coleta de Resíduos de Metal', completed: true },
-    { date: '05/04/2025', type: 'Coleta de Plástico', completed: false }
-  ]);
+  const [schedules, setSchedules] = useState([]);
   const [openNewDialog, setOpenNewDialog] = useState(false);
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [selectedFullDate, setSelectedFullDate] = useState(new Date());
   const [showPastSchedules, setShowPastSchedules] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const formatDate = (date) => {
     if (!date) return '';
@@ -27,15 +28,50 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     return `${day}/${month}/${year}`;
   };
 
-  const handleAddSchedule = (type) => {
-    const newSchedule = {
-      date: formatDate(selectedFullDate),
-      type,
-      completed: false
-    };
-    setSchedules(prev => [...prev, newSchedule]);
+  useEffect(() => {
+    fetchSchedules();
+  }, [user]);
+
+  const fetchSchedules = async () => {
+    if (!user) return;
+
+    try {
+      const response = await fetch('/api/schedule', {
+        headers: {
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data);
+        const formattedSchedules = data.map(schedule => ({
+          id: schedule._id,
+          name: schedule.collectionPointId.name,
+          date: new Date(schedule.date).toLocaleDateString('pt-BR'),
+          type: schedule.wastes.map(w => w.wasteId.type || w.wasteId.name).join(', '),
+          completed: schedule.status === 'Concluído',
+          status: schedule.status,
+          collector: schedule.collector,
+          wastes: schedule.wastes,
+          addressId: schedule.addressId
+        }));
+        setSchedules(formattedSchedules);
+        console.log( "teste",formattedSchedules);
+      } else {
+        console.error('Failed to fetch schedules');
+      }
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+   const handleAddSchedule = async (newSchedule) => {
+    await fetchSchedules(); // Refresh schedules after adding new one
+  };
+  
   const handleToggleComplete = (date, type) => {
     setSchedules(prev => prev.map(s => 
       s.date === date && s.type === type 
@@ -44,10 +80,27 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     ));
   };
 
-  const handleDeleteSchedule = (date, type) => {
-    setSchedules(prev => prev.filter(s => 
-      !(s.date === date && s.type === type)
-    ));
+  const handleDeleteSchedule = async (date, type) => {
+    try {
+      const scheduleToDelete = schedules.find(s => 
+        s.date === date && s.type === type
+      );
+
+      if (!scheduleToDelete) return;
+
+      const response = await fetch(`/api/schedule/${scheduleToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        await fetchSchedules(); // Refresh schedules after deletion
+      }
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+    }
   };
 
   // Função para abrir o diálogo de novo agendamento
@@ -158,9 +211,23 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         </Box>
         
         {/* Lista de agendamentos futuros */}
+       <ScheduleList 
+        title="Próximos Agendamentos"
+        schedules={schedules.filter(s => !s.completed)}
+        setSchedules={setSchedules} 
+        isMobile={isMobile}
+        onViewSchedule={(date) => {
+          const [day, month, year] = date.split('/').map(Number);
+          setSelectedFullDate(new Date(year, month - 1, day));
+          setOpenViewDialog(true);
+        }}
+      />
+        
+        {/* Lista de agendamentos anteriores (concluídos) */}
+        {showPastSchedules && (
         <ScheduleList 
-          title="Próximos Agendamentos"
-          schedules={schedules.filter(s => !s.completed)} 
+          title="Agendamentos Anteriores"
+          schedules={schedules.filter(s => s.completed)}
           setSchedules={setSchedules} 
           isMobile={isMobile}
           onViewSchedule={(date) => {
@@ -168,23 +235,9 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
             setSelectedFullDate(new Date(year, month - 1, day));
             setOpenViewDialog(true);
           }}
+          isPastList={true}
         />
-        
-        {/* Lista de agendamentos anteriores (concluídos) */}
-        {showPastSchedules && (
-          <ScheduleList 
-            title="Agendamentos Anteriores"
-            schedules={schedules.filter(s => s.completed)} 
-            setSchedules={setSchedules} 
-            isMobile={isMobile}
-            onViewSchedule={(date) => {
-              const [day, month, year] = date.split('/').map(Number);
-              setSelectedFullDate(new Date(year, month - 1, day));
-              setOpenViewDialog(true);
-            }}
-            isPastList={true}
-          />
-        )}
+      )}
       </Box>
 
       {/* Diálogos */}
