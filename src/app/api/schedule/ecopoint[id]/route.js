@@ -23,28 +23,6 @@ async function verifyFirebaseToken(req) {
   }
 }
 
- // Verificar autenticação do usuário
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Token de autenticação não fornecido" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-    let decodedToken;
-
-    try {
-      decodedToken = await auth.verifyIdToken(token);
-    } catch (error) {
-      console.error("Erro ao verificar token:", error);
-      return NextResponse.json(
-        { error: "Token inválido ou expirado" },
-        { status: 401 }
-      );
-    }
-
 // Função auxiliar para verificar se o ID é válido
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);

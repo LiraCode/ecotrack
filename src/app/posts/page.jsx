@@ -10,7 +10,7 @@ export default function PostsPage() {
 
   return (
     <AppLayout>
-        <div className="lg:ml-[100px] lg:mr-[0px] lg:mt-0 mt-16 flex flex-col w-90vh h-95vh">
+        <div className="xs:ml-[100px] lg:mt-0 mt-4  flex  justify-center items-center h-95vh">
       <div className={styles.contentContainer}>
         {/* Abas de navegação */}
         <div className={styles.tabsContainer}>

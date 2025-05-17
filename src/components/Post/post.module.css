@@ -3,7 +3,18 @@
   display: flex;
   flex-direction: column;
   min-height: (100vh - 64px); /* Altura total menos a altura do header */
+  min-width: (100vw - 10vw); /* Largura total menos a largura da sidebar */
   position: relative;
+}
+
+.postContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: (100vw - 20vw);
+  padding: 3rem;
 }
 
 .sidebarmargin {
@@ -11,6 +22,40 @@
   transition: margin-left 0.3s ease;
 }
 
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.postFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eaeaea;
+}
+
+.postDate {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.postCategories {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.categoryTag {
+  background-color: #e6f7e6;
+  color: #2e7d32;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 1.2rem;
+}
 /* Header ajustado */
 .headerWrapper {
   position: fixed;
