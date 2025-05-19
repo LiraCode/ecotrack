@@ -104,6 +104,7 @@ export async function PUT(request, { params }) {
     
     // Buscar o agendamento existente
     const existingSchedule = await CollectionScheduling.findById(id);
+    console.log('Existing Schedule:', existingSchedule);
     if (!existingSchedule) {
       return NextResponse.json({ message: 'Agendamento não encontrado' }, { status: 404 });
     }

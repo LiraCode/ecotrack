@@ -1,39 +1,72 @@
-'use client';
-import { Box, Grid } from "@mui/material";
-import LatestPosts from "../components/LatestPosts";
-import WasteClassification from "../components/WasteClassification";
-import UpcomingSchedules from "../components/UpcomingSchedules";
-import GoalsList from "../components/GoalsList";
-import ImpactStats from "../components/ImpactStats";
+import React from 'react';
+import { Box, Grid, Paper } from '@mui/material';
+import LatestPosts from '../components/LatestPosts';
+import UpcomingSchedules from '../components/UpcomingSchedules';
+import GoalsList from '../components/GoalsList';
+import WasteTypePreview from '../components/WasteTypePreview';
+import ImpactStats from './ImpactStats';
 
-export default function HomeTab({ latestPosts, upcomingSchedules, goals, handleOpenDialog, onViewAllWasteTypes }) {
+const HomeTab = ({ 
+  latestPost, 
+  loading, 
+  upcomingSchedules, 
+  loadingSchedules, 
+  goals, 
+  loadingGoals,
+  impactStats,
+  handleOpenDialog, 
+  onViewAllWasteTypes 
+}) => {
+  // Estilo comum para todos os componentes
+  const componentStyle = {
+    width: '100%',
+    maxWidth: '800px',
+    mx: 'auto'  // margin horizontal auto para centralizar
+  };
+
   return (
-    <Box sx={{ py: 4, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Grid container spacing={4} justifyContent="center">
-        {/* Left Column */}
-        <Grid item xs={12} md={8} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Latest Blog Posts */}
-          <LatestPosts posts={latestPosts} />
-          
-          {/* Waste Classification Preview */}
-          <WasteClassification 
-            handleOpenDialog={handleOpenDialog} 
-            onViewAllClick={onViewAllWasteTypes}
-          />
-        </Grid>
-
-        {/* Right Column */}
-        <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Upcoming Schedules */}
-          <UpcomingSchedules schedules={upcomingSchedules} />
-          
-          {/* Goals */}
-          <GoalsList goals={goals} />
-          
-          {/* Quick Stats */}
-          <ImpactStats />
-        </Grid>
-      </Grid>
+    <Box sx={{ 
+      width: '100%', 
+      mt: 4,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      {/* Estatísticas de Impacto */}
+      <Box sx={componentStyle}>
+        <ImpactStats impactStats={impactStats} />
+      </Box>
+      
+      {/* Últimas Postagens */}
+      <Box sx={componentStyle}>
+        {latestPost && <LatestPosts post={latestPost} loading={loading} />}
+      </Box>
+      
+      {/* Próximos Agendamentos */}
+      <Box sx={componentStyle}>
+        <UpcomingSchedules 
+          schedules={upcomingSchedules} 
+          loading={loadingSchedules} 
+        />
+      </Box>
+      
+      {/* Metas Sustentáveis */}
+      <Box sx={componentStyle}>
+        <GoalsList 
+          goals={goals} 
+          loading={loadingGoals} 
+        />
+      </Box>
+      
+      {/* Tipos de Resíduos */}
+      {/* <Box sx={componentStyle}>
+        <WasteTypePreview 
+          handleOpenDialog={handleOpenDialog} 
+          onViewAllWasteTypes={onViewAllWasteTypes} 
+        />
+      </Box> */}
     </Box>
   );
-}
+};
+
+export default HomeTab;

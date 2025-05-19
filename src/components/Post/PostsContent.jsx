@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from './post.module.css';
 // Use isomorphic-dompurify for both client and server environments
 import DOMPurify from 'dompurify';
@@ -66,21 +67,22 @@ export default function PostsContent({ posts }) {
             </header>
             
             {post.image && (
-              <div 
-                className={styles.postImage}
-                onClick={() => setExpandedPost(expandedPost === post._id ? null : post._id)}
-                role="button"
-                tabIndex={0}
-              >
-                <Image
-                  src={post.image}
-                  alt={`Visualizar: ${post.title}`}
-                  width={800}
-                  height={400}
-                  className={styles.imageElement}
-                />
-                <div className={styles.imageOverlay}>Clique para ver mais</div>
-              </div>
+              <Link href={`/posts/${post._id}`} passHref>
+                <div 
+                  className={styles.postImage}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <Image
+                    src={post.image}
+                    alt={`Visualizar: ${post.title}`}
+                    width={800}
+                    height={400}
+                    className={styles.imageElement}
+                  />
+                  <div className={styles.imageOverlay}>Clique para ver mais</div>
+                </div>
+              </Link>
             )}
             
             <div className={styles.postBody}>
@@ -127,6 +129,11 @@ export default function PostsContent({ posts }) {
                   ))}
                 </div>
               )}
+              
+              {/* Adicionar botão para ver post completo */}
+              <Link href={`/posts/${post._id}`} className={styles.readMoreLink}>
+                Ver post completo
+              </Link>
             </div>
           </article>
         ))}

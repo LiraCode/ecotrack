@@ -1,100 +1,124 @@
 'use client'
-import { Button, Grid, Typography } from '@mui/material'
+import { useState, useEffect } from 'react'
+import { Tabs, Tab, Box } from '@mui/material'
 import DesafioAtivo from './DesafioAtivo'
 import DesafioConcluido from './DesafioConcluido'
 import DesafioExpirado from './DesafioExpirado'
+import { useToast } from '@/components/ui/use-toast'
+import { useAuth } from '@/context/AuthContext'
+import { getAuthToken } from '@/services/authService'
+import { checkExpiredScores } from '@/services/scoreService'
 
 const MetasTabs = ({ 
   abaAtiva, 
   setAbaAtiva, 
   desafiosAtivos, 
   desafiosConcluidos, 
-  desafiosExpirados,
-  concluirDesafio,
-  removerDesafio,
-  atualizarProgresso
+  desafiosExpirados, 
+  removerDesafio
 }) => {
-  return (
-    <>
-      {/* Abas de navegação */}
-      <div className="flex space-x-4 mb-4 border-b">
-        <Button 
-          variant="text" 
-          color={abaAtiva === 'andamento' ? 'primary' : 'inherit'}
-          onClick={() => setAbaAtiva('andamento')}
-        >
-          Em Andamento
-        </Button>
-        <Button 
-          variant="text" 
-          color={abaAtiva === 'concluidos' ? 'primary' : 'inherit'}
-          onClick={() => setAbaAtiva('concluidos')}
-        >
-          Concluídos
-        </Button>
-        <Button 
-          variant="text" 
-          color={abaAtiva === 'expirados' ? 'primary' : 'inherit'}
-          onClick={() => setAbaAtiva('expirados')}
-        >
-          Não Concluídos
-        </Button>
-      </div>
+  const { toast } = useToast()
+  const { user } = useAuth()
 
-      {/* Conteúdo das abas */}
+  // Verificar scores expirados
+  useEffect(() => {
+    const verifyExpiredScores = async () => {
+      try {
+        const result = await checkExpiredScores()
+        
+        if (result.success && result.expiredCount > 0) {
+          console.log(`${result.expiredCount} metas foram marcadas como expiradas`)
+          toast({
+            title: "Metas expiradas",
+            description: `${result.expiredCount} meta(s) foram marcadas como expiradas`,
+            variant: "warning"
+          })
+        }
+      } catch (error) {
+        console.error('Erro ao verificar metas expiradas:', error)
+      }
+    }
+    
+    if (user) {
+      verifyExpiredScores()
+    }
+  }, [user, toast])
+
+  const handleChangeTab = (event, newValue) => {
+    setAbaAtiva(newValue)
+  }
+
+  return (
+    <Box className="mb-8">
+      <Tabs
+        value={abaAtiva}
+        onChange={handleChangeTab}
+        variant="fullWidth"
+        indicatorColor="primary"
+        textColor="primary"
+        className="mb-4"
+      >
+        <Tab value="andamento" label="Em Andamento" />
+        <Tab value="concluidos" label="Concluídos" />
+        <Tab value="expirados" label="Expirados" />
+      </Tabs>
+
       {abaAtiva === 'andamento' && (
-        <Grid container spacing={3} className="mb-8">
-          {desafiosAtivos.length > 0 ? (
-            desafiosAtivos.map(desafio => (
-              <Grid item xs={12} sm={6} md={4} key={desafio.id}>
-                <DesafioAtivo 
-                  desafio={desafio}
-                  concluirDesafio={concluirDesafio}
-                  removerDesafio={removerDesafio}
-                  atualizarProgresso={atualizarProgresso}
-                />
-              </Grid>
-            ))
+        <div className="space-y-4">
+          {desafiosAtivos.length === 0 ? (
+            <div className="text-center p-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">Você não tem desafios em andamento.</p>
+              <p className="text-gray-500">Participe de um desafio abaixo!</p>
+            </div>
           ) : (
-            <Typography className="w-full text-center py-4 text-gray-500">
-              Nenhum desafio em andamento
-            </Typography>
+            desafiosAtivos.map((desafio) => (
+              <DesafioAtivo
+                key={desafio.id}
+                desafio={desafio}
+                onRemover={removerDesafio}
+              
+              />
+            ))
           )}
-        </Grid>
+        </div>
       )}
 
       {abaAtiva === 'concluidos' && (
-        <Grid container spacing={3} className="mb-8">
-          {desafiosConcluidos.length > 0 ? (
-            desafiosConcluidos.map(desafio => (
-              <Grid item xs={12} sm={6} md={4} key={desafio.id}>
-                <DesafioConcluido desafio={desafio} />
-              </Grid>
-            ))
+        <div className="space-y-4">
+          {desafiosConcluidos.length === 0 ? (
+            <div className="text-center p-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">Você ainda não concluiu nenhum desafio.</p>
+            </div>
           ) : (
-            <Typography className="w-full text-center py-4 text-gray-500">
-              Nenhum desafio concluído ainda
-            </Typography>
+            desafiosConcluidos.map((desafio) => (
+              <DesafioConcluido
+                key={desafio.id}
+                desafio={desafio}
+                onRemover={removerDesafio}
+              />
+            ))
           )}
-        </Grid>
+        </div>
       )}
 
       {abaAtiva === 'expirados' && (
-        <Grid container spacing={3} className="mb-8">
-          {desafiosExpirados.length > 0 ? (
-            desafiosExpirados.map(desafio => (
-              <Grid item xs={12} sm={6} md={4} key={desafio.id}>
-                <DesafioExpirado desafio={desafio} />
-              </Grid>
-            ))
+        <div className="space-y-4">
+          {desafiosExpirados.length === 0 ? (
+            <div className="text-center p-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">Você não tem desafios expirados.</p>
+            </div>
           ) : (
-            <Typography className="w-full text-center py-4 text-gray-500">
-              Nenhum desafio expirado
-            </Typography>
+            desafiosExpirados.map((desafio) => (
+              <DesafioExpirado
+                key={desafio.id}
+                desafio={desafio}
+                onRemover={removerDesafio}
+              />
+            ))
           )}
-        </Grid>
+        </div>
       )}
-    </>
+    </Box>
   )
 }
 

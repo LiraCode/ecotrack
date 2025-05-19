@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Post from '@/models/post';
-import "@/models/admin"; // Import Admin model to ensure it's registered
+import "@/models/admin";
 import "@/models/user";
 import connectToDB from '@/lib/db';
 import { auth } from '@/config/firebase/firebaseAdmin';
@@ -10,19 +10,10 @@ export async function GET() {
     try {
         await connectToDB();
 
-        // Fetch posts with populated author and sort by creation date
-        const posts = await Post.find({ status: 'active' })
-            .populate({
-                path: 'author',
-                select: '-password -__v', // Exclude sensitive fields
-                match: { status: 'active' }
-            })
-            .populate({
-                path: 'comments.author',
-                select: '-password -__v', // Exclude sensitive fields
-                match: { status: 'active' }
-            })
-            .sort({ createdAt: -1 });
+        // Buscar posts ordenados por data (mais recente primeiro)
+        const posts = await Post.find({})
+            .sort({ createdAt: -1 }) // Ordenar por data de criação decrescente
+            .limit(10); // Limitar a 10 posts para melhor performance
 
         return NextResponse.json(posts);
     } catch (error) {

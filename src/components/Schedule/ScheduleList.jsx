@@ -1,5 +1,5 @@
 import { Box, Typography, List, ListItem, ListItemText, Divider, Button } from '@mui/material';
-import { CheckCircle, Cancel } from '@mui/icons-material';
+import { CheckCircle, Cancel, AccessTime } from '@mui/icons-material';
 
 
 export default function ScheduleList({ 
@@ -74,10 +74,15 @@ export default function ScheduleList({
                     },
                   }}
                 />
-                {schedule.completed ? (
+                {schedule.completed  ? (
                   <CheckCircle sx={{ color: "#4caf50" }} />
                 ) : (
-                  <Cancel sx={{ color: "#f44336" }} />
+                  schedule.status !== "Cancelado" ? (
+                    <AccessTime sx={{ color: "orange" }} />
+                  ) : (
+                    <Cancel sx={{ color: "#f44336" }} />
+                  )
+                 
                 )}
               </ListItem>
               {index < schedules.length - 1 && <Divider />}

@@ -1,5 +1,18 @@
 const mongoose = require('mongoose');
 
+// Define o esquema de geolocalização
+const PointSchema = new mongoose.Schema({
+    type: {
+        type: String,
+        enum: ['Point'],
+        default: 'Point',
+        required: true
+    },
+    coordinates: {
+        type: [Number], // [longitude, latitude]
+        required: true
+    }
+});
 
 // Collection Point Schema
 const CollectionPointSchema = new mongoose.Schema({
@@ -9,6 +22,14 @@ const CollectionPointSchema = new mongoose.Schema({
     responsableId: { type: mongoose.Schema.Types.ObjectId, ref: 'Responsable', required: true },
     typeOfWasteId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Waste', required: true }],
     address: { type: mongoose.Schema.Types.ObjectId, ref: 'Address', required: true },
+    // Adicionando campos de latitude e longitude diretamente
+    lat: { type: Number },
+    lng: { type: Number },
+    // Adicionando campo de localização para consultas geoespaciais
+    location: {
+        type: PointSchema,
+        index: '2dsphere' // Índice para consultas geoespaciais
+    }
 });
 
 // Export the model

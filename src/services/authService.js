@@ -487,3 +487,20 @@ export const updateResponsibleData = async (responsibleData) => {
     return { success: false, error: error.message };
   }
 };
+
+// Obter token de autenticação do usuário atual
+export const getAuthToken = async () => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.warn("Nenhum usuário autenticado");
+      return null;
+    }
+    
+    const token = await currentUser.getIdToken();
+    return token;
+  } catch (error) {
+    console.error("Erro ao obter token de autenticação:", error);
+    return null;
+  }
+};

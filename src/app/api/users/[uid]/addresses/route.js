@@ -47,6 +47,7 @@ export async function GET(request, context) {
     
     // Buscar o usuário pelo firebaseId
     const targetUser = await User.findOne({ firebaseId: uid });
+    console.log("targetUser:", targetUser);
     
     if (!targetUser) {
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });

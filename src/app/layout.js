@@ -6,6 +6,7 @@ import React from 'react';
 import { Geist, Geist_Mono, Roboto, Cabin_Sketch, Crimson_Pro } from 'next/font/google';
 import ClientProviders from './ClientProviders';
 import { AuthContextProvider } from '@/context/AuthContext';
+import { Toaster } from "@/components/ui/toaster"
 
 const cabinSketch = Cabin_Sketch({
   variable: '--font-cabin',
@@ -50,6 +51,7 @@ export default function RootLayout({
           {children}
           </AuthContextProvider>
         </ClientProviders>
+        <Toaster />
       </body>
     </html>
   );

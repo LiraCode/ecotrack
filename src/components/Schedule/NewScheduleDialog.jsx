@@ -23,8 +23,9 @@ import {
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs from "dayjs"
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
+import 'dayjs/locale/pt-br'; // Importar localização pt-br
+import { LocalizationProvider, DatePicker, TimePicker } from "@mui/x-date-pickers";
 import WasteTypeSelector from '@/components/Waste/WasteTypeSelector';
 import { useAuth } from '@/context/AuthContext';
 
@@ -47,6 +48,8 @@ export default function NewScheduleDialog({
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [selectedTime, setSelectedTime] = useState(dayjs().hour(10).minute(0));
+  const [timeError, setTimeError] = useState('');
 
   // Fetch eco-points and user addresses when component mounts
   useEffect(() => {
@@ -76,7 +79,7 @@ export default function NewScheduleDialog({
       
       if (response.ok) {
         const data = await response.json();
-        console.log("Eco-points:", data);
+        //console.log("Eco-points:", data);
         setEcoPoints(data || []);
       } else {
         console.error('Failed to fetch eco-points:', await response.text());
@@ -129,6 +132,7 @@ export default function NewScheduleDialog({
     setError('');
     setEcoPointsError('');
     setAddressError('');
+    setTimeError('');
     onClose();
   };
 
@@ -151,6 +155,12 @@ export default function NewScheduleDialog({
       return;
     }
     
+    // Validate time selection
+    if (!selectedTime) {
+      setTimeError('Por favor, selecione um horário');
+      return;
+    }
+    
     // Find the selected eco-point object
     const ecoPoint = ecoPoints.find(ep => ep._id === selectedEcoPoint);
     
@@ -167,13 +177,19 @@ export default function NewScheduleDialog({
       };
     });
     
+    // Combine date and time into a single datetime
+    const combinedDateTime = dayjs(selectedDate)
+      .hour(selectedTime.hour())
+      .minute(selectedTime.minute())
+      .second(0);
+    
     // Create scheduling data
     const schedulingData = {
-  collectionPointId: selectedEcoPoint,
-  date: selectedDate ? new Date(selectedDate).toJSON() : null, // Convert date properly
-  wastes: wastes,
-  addressId: selectedAddress
-};
+      collectionPointId: selectedEcoPoint,
+      date: combinedDateTime.toISOString(), // Convert date properly with time
+      wastes: wastes,
+      addressId: selectedAddress
+    };
     
     try {
       setLoading(true);
@@ -226,6 +242,11 @@ export default function NewScheduleDialog({
     setAddressError('');
   };
 
+  const handleTimeChange = (newTime) => {
+    setSelectedTime(newTime);
+    setTimeError('');
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -262,21 +283,42 @@ export default function NewScheduleDialog({
         ) : (
           
           <>
-             <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", my: 4 }}>
-        <DatePicker
-          label="Selecione uma data"
-          value={selectedDate}
-          onChange={(newDate) => setSelectedDate(dayjs(newDate))}
-          renderInput={(params) => <TextField {...params} />}
-        />
-        {selectedDate && (
-          <Typography variant="body1" sx={{ mt: 2 }}>
-            Data selecionada: <strong>{selectedDate.format("DD/MM/YYYY")}</strong>
-          </Typography>
-        )}
-      </Box>
-    </LocalizationProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
+              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", my: 4 }}>
+                {/* Date Picker */}
+                <DatePicker
+                  label="Selecione uma data"
+                  value={selectedDate}
+                  onChange={(newDate) => setSelectedDate(dayjs(newDate))}
+                  format="DD/MM/YYYY"
+                  sx={{ mb: 2, width: '100%' }}
+                />
+                
+                {/* Time Picker - Novo componente */}
+                <TimePicker
+                  label="Selecione um horário"
+                  value={selectedTime}
+                  onChange={handleTimeChange}
+                  ampm={false} // Desabilita AM/PM para usar formato 24h
+                  sx={{ mt: 2, width: '100%' }}
+                />
+                
+                {timeError && (
+                  <FormHelperText error sx={{ mt: 1 }}>
+                    {timeError}
+                  </FormHelperText>
+                )}
+                
+                {selectedDate && selectedTime && (
+                  <Typography variant="body1" sx={{ mt: 2 }}>
+                    Data e hora selecionadas: <strong>
+                      {selectedDate.format("DD/MM/YYYY")} às {selectedTime.format("HH:mm")}
+                    </strong>
+                  </Typography>
+                )}
+              </Box>
+            </LocalizationProvider>
+            
             {/* Eco-Point Selection - First step */}
             <FormControl fullWidth error={!!ecoPointsError} sx={{ mb: ecoPointsError ? 1 : 2 }}>
               <InputLabel id="eco-point-label">Eco Ponto</InputLabel>
@@ -328,8 +370,7 @@ export default function NewScheduleDialog({
                       <MenuItem key={waste._id} value={waste._id}>
                         <Checkbox checked={selectedMaterials.indexOf(waste._id) > -1} />
                         <ListItemText 
-                          primary={waste.name || waste.type} 
-                          secondary={waste.description} 
+                          primary={waste.name || waste.type}
                         />
                       </MenuItem>
                     ))}

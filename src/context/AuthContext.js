@@ -281,8 +281,31 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  const updateUserProfile = async (profileData) => {
+    try {
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+      
+      // Atualizar o perfil no Firebase Auth
+      await updateProfile(user, profileData);
+      
+      // Atualizar o estado do usuário no contexto
+      setUser((prevUser) => ({
+        ...prevUser,
+        displayName: profileData.displayName || prevUser.displayName,
+        photoURL: profileData.photoURL || prevUser.photoURL
+      }));
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao atualizar perfil:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, logout, signIn, checkRole }}>
+    <AuthContext.Provider value={{ user, loading, logout, signIn, checkRole, updateUserProfile }}>
       {!loading && children}
     </AuthContext.Provider>
   );

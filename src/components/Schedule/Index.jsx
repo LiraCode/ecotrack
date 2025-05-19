@@ -7,6 +7,7 @@ import ScheduleList from './ScheduleList';
 import NewScheduleDialog from './NewScheduleDialog';
 import ScheduleDialog from './ScheduleDialog';
 import { useAuth } from "@/context/AuthContext";
+import { cancelScheduling } from '../../services/schedulingService';
 
 
 export default function AgendamentoPage({ sidebarOpen = false }) {
@@ -44,7 +45,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
+        //console.log(data);
         const formattedSchedules = data.map(schedule => ({
           id: schedule._id,
           name: schedule.collectionPointId.name,
@@ -57,7 +58,6 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
           addressId: schedule.addressId
         }));
         setSchedules(formattedSchedules);
-        console.log( "teste",formattedSchedules);
       } else {
         console.error('Failed to fetch schedules');
       }
@@ -72,36 +72,41 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     await fetchSchedules(); // Refresh schedules after adding new one
   };
   
-  const handleToggleComplete = (date, type) => {
-    setSchedules(prev => prev.map(s => 
-      s.date === date && s.type === type 
-        ? { ...s, completed: !s.completed } 
-        : s
-    ));
-  };
 
-  const handleDeleteSchedule = async (date, type) => {
-    try {
-      const scheduleToDelete = schedules.find(s => 
-        s.date === date && s.type === type
-      );
+  const handleCancelSchedule = async (date, name) => {
+  // Encontre o ID do agendamento com base na data e nome
+  const scheduleToCancel = schedules.find(
+    schedule => schedule.date === date && schedule.name === name
+  );
 
-      if (!scheduleToDelete) return;
-
-      const response = await fetch(`/api/schedule/${scheduleToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${user.accessToken}`,
-        },
-      });
-
-      if (response.ok) {
-        await fetchSchedules(); // Refresh schedules after deletion
-      }
-    } catch (error) {
-      console.error('Error deleting schedule:', error);
-    }
-  };
+  
+  if (!scheduleToCancel || !scheduleToCancel.id) {
+    console.error('Agendamento não encontrado ou sem ID');
+    return;
+  }
+  
+  // Chame o serviço para cancelar o agendamento
+  console.log('ID do agendamento a ser cancelado:', scheduleToCancel.id);
+  const result = await cancelScheduling(scheduleToCancel.id);
+  
+  if (result.success) {
+    // Atualize o estado local para refletir o cancelamento
+    setSchedules(prevSchedules => 
+      prevSchedules.map(schedule => 
+        schedule.date === date && schedule.name === name
+          ? { ...schedule, canceled: true }
+          : schedule
+      )
+    );
+    
+    // Opcional: Mostre uma mensagem de sucesso
+    // toast.success('Agendamento cancelado com sucesso!');
+  } else {
+    // Opcional: Mostre uma mensagem de erro
+    // toast.error(`Erro ao cancelar agendamento: ${result.error}`);
+    console.error('Erro ao cancelar agendamento:', result.error);
+  }
+};
 
   // Função para abrir o diálogo de novo agendamento
   const handleOpenNewDialog = () => {
@@ -254,8 +259,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         onClose={() => setOpenViewDialog(false)}
         selectedDate={formatDate(selectedFullDate)}
         schedules={schedules}
-        onToggleComplete={handleToggleComplete}
-        onDelete={handleDeleteSchedule}
+        onCancel={handleCancelSchedule}
         onAddNew={() => {
           setOpenViewDialog(false);
           setOpenNewDialog(true);
