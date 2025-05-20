@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { Typography, Paper, Box } from '@mui/material'
-import CardTitle from '../UI/cardTitleLeft'
+import CardTitle from '../ui/cardTitleLeft'
 
 
 const MetasHeader = ({ meusPontos = 0 }) => {

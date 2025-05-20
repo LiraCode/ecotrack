@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import AppLayout from '@/components/Layout/page';
 import EcoPointsList from '@/components/EcoPoints/EcoPointsList';
-import PageTitle from '@/components/UI/PageTitle';
+import PageTitle from '@/components/ui/PageTitle';
 import MapContainer from '@/components/EcoPoints/MapContainer';
 
 const MapWithNoSSR = dynamic(
