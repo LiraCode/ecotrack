@@ -55,8 +55,16 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
           status: schedule.status,
           collector: schedule.collector,
           wastes: schedule.wastes,
-          addressId: schedule.addressId
+          addressId: schedule.addressId,
+          time: schedule.date,
+          street: schedule.addressId.street,
+          number: schedule.addressId.number,
+          neighborhood: schedule.addressId.neighborhood,
+          city: schedule.addressId.city,
+          state: schedule.addressId.state,
+          zipCode: schedule.addressId.zipCode
         }));
+        
         setSchedules(formattedSchedules);
       } else {
         console.error('Failed to fetch schedules');

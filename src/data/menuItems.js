@@ -55,7 +55,7 @@ const menuGroups = [
         ),
         label: "Eco Pontos",
         route: "/locais",
-        role: "User",
+        role: "all",
       },
       {
         icon: (

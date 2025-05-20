@@ -55,7 +55,7 @@ export async function GET(request) {
       query.userId = user._id;
     } 
     // Se for um responsável por ecoponto, mostrar apenas agendamentos do seu ecoponto
-    else if (user.role === 'responsible') {
+    else if (user.role === 'Responsável') {
       // Buscar ecopontos associados a este responsável
       const ecopoints = await CollectionPoint.find({ responsibleId: user._id });
       const ecopointIds = ecopoints.map(ep => ep._id);
@@ -68,7 +68,10 @@ export async function GET(request) {
     }
     
     // Aplicar filtros adicionais se fornecidos
-    if (userId && (user.role === 'admin' || user.role === 'Responsável')) {
+    if (
+      userId &&
+      (user.role === "Administrador" || user.role === "Responsável")
+    ) {
       query.userId = userId;
     }
     

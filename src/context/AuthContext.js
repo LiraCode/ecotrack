@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, signOut, signInWithEmailAndPassword, setPersistence, browserLocalPersistence, updateProfile } from 'firebase/auth';
 import { auth } from '@/config/firebase/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -283,19 +283,23 @@ export const AuthContextProvider = ({ children }) => {
 
   const updateUserProfile = async (profileData) => {
     try {
-      if (!user) {
+      if (!auth.currentUser) {
         throw new Error('Usuário não autenticado');
       }
       
-      // Atualizar o perfil no Firebase Auth
-      await updateProfile(user, profileData);
+      // Usar updateProfile diretamente no auth.currentUser
+      await updateProfile(auth.currentUser, profileData);
       
       // Atualizar o estado do usuário no contexto
-      setUser((prevUser) => ({
-        ...prevUser,
-        displayName: profileData.displayName || prevUser.displayName,
-        photoURL: profileData.photoURL || prevUser.photoURL
-      }));
+      setUser((prevUser) => {
+        if (!prevUser) return prevUser;
+        
+        return {
+          ...prevUser,
+          displayName: profileData.displayName || prevUser.displayName,
+          photoURL: profileData.photoURL || prevUser.photoURL
+        };
+      });
       
       return { success: true };
     } catch (error) {

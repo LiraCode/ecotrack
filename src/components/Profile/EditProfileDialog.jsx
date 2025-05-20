@@ -1,12 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  TextField, 
+import { useState, useEffect, useRef } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
   Typography,
   Box,
   Divider,
@@ -15,21 +15,28 @@ import {
   Grid,
   Tabs,
   Tab,
-  Alert
+  Alert,
+  Avatar
 } from '@mui/material';
-import { Close, Edit, Add, Delete } from '@mui/icons-material';
+import { Close, Edit, Add, Delete, PhotoCamera } from '@mui/icons-material';
 import { useAuth } from '@/context/AuthContext';
 import AddressForm from './AddressForm';
 import AddressList from './AddressList';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/config/firebase/firebase';
+import { data } from 'autoprefixer';
 
-export default function EditProfileDialog({ 
-  open, 
+
+
+export default function EditProfileDialog({
+  open,
   onClose,
-  isMobile 
+  isMobile,
 }) {
   const { user, updateUserProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -42,37 +49,38 @@ export default function EditProfileDialog({
   const [editingAddress, setEditingAddress] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [photoURL, setPhotoURL] = useState('');
+  const fileInputRef = useRef(null);
 
   // Buscar dados do usuário quando o diálogo é aberto
   useEffect(() => {
     if (open && user) {
       fetchUserData();
       fetchUserAddresses();
+      setPhotoURL(user.photoURL || '');
     }
   }, [open, user]);
 
   const fetchUserData = async () => {
     if (!user) return;
-    
+
     try {
       setFetchLoading(true);
-      const response = await fetch(`/api/users/${user.uid}/profile/user`, {
+      const response = await fetch(`/api/users/user`, {
         headers: {
           Authorization: `Bearer ${user.accessToken}`,
+          uid: user.uid
         },
       });
-      
       if (response.ok) {
         const data = await response.json();
+        console.log("teste", data.user);
         setUserData({
-          name: data.name || '',
-          email: data.email || user.email || '',
-          phone: data.phone || '',
-          cpf: data.cpf || ''
+          name: data.user.name || '',
+          email: data.user.email || user.email || '',
+          phone: data.user.phone || '',
+          cpf: data.user.cpf || ''
         });
-        
-        // Log para debug
-        console.log("Dados do usuário carregados:", data);
       } else {
         console.error('Failed to fetch user data:', await response.text());
         setErrorMessage('Erro ao carregar dados do usuário');
@@ -87,7 +95,7 @@ export default function EditProfileDialog({
 
   const fetchUserAddresses = async () => {
     if (!user) return;
-    
+
     try {
       setFetchLoading(true);
       const response = await fetch(`/api/users/${user.uid}/profile/addresses`, {
@@ -95,13 +103,9 @@ export default function EditProfileDialog({
           Authorization: `Bearer ${user.accessToken}`,
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
-        // Log para debug
-        console.log("Endereços carregados:", data);
-        
         setAddresses(data || []);
       } else {
         console.error('Failed to fetch user addresses:', await response.text());
@@ -140,7 +144,7 @@ export default function EditProfileDialog({
     try {
       setLoading(true);
       setErrorMessage('');
-      
+
       const response = await fetch(`/api/users/${user.uid}/profile/user`, {
         method: 'PUT',
         headers: {
@@ -149,13 +153,12 @@ export default function EditProfileDialog({
         },
         body: JSON.stringify(userData),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        // Atualizar o perfil no contexto de autenticação se necessário
-        if (updateUserProfile) {
-          await updateUserProfile({ displayName: userData.name });
-        }
+        console.log("Profile updated:", data.user);
+        updateUserProfile({displayName: data.name});
+
         setSuccessMessage('Perfil atualizado com sucesso!');
       } else {
         const errorData = await response.json();
@@ -169,6 +172,59 @@ export default function EditProfileDialog({
     }
   };
 
+  // Função para lidar com o clique no botão de upload de foto
+  const handlePhotoButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
+  // Função para lidar com a seleção de arquivo
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Verificar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      setErrorMessage('Por favor, selecione uma imagem válida.');
+      return;
+    }
+
+    // Verificar tamanho do arquivo (limite de 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('A imagem deve ter menos de 5MB.');
+      return;
+    }
+
+    try {
+      setPhotoLoading(true);
+      setErrorMessage('');
+
+      // Criar referência para o arquivo no Firebase Storage
+      const storageRef = ref(storage, `profile_photos/${user.uid}/${Date.now()}_${file.name}`);
+
+      // Fazer upload do arquivo
+      const snapshot = await uploadBytes(storageRef, file);
+
+      // Obter URL do arquivoA
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // Atualizar photoURL usando a função do contexto
+      const result = await updateUserProfile({ photoURL: downloadURL });
+
+      if (result.success) {
+        // Atualizar estado local
+        setPhotoURL(downloadURL);
+        setSuccessMessage('Foto de perfil atualizada com sucesso!');
+      } else {
+        setErrorMessage('Erro ao atualizar foto de perfil. Tente novamente mais tarde.');
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      setErrorMessage('Erro ao atualizar foto de perfil. Tente novamente mais tarde.');
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
   const handleAddAddress = () => {
     setEditingAddress(null);
     setShowAddressForm(true);
@@ -179,19 +235,18 @@ export default function EditProfileDialog({
     setShowAddressForm(true);
   };
 
-
   const handleDeleteAddress = async (addressId) => {
     try {
       setLoading(true);
       setErrorMessage('');
-      
+
       const response = await fetch(`/api/addresses/${addressId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.accessToken}`
         },
       });
-      
+
       if (response.ok) {
         // Atualizar a lista de endereços após a exclusão
         setAddresses(addresses.filter(addr => addr._id !== addressId));
@@ -212,13 +267,13 @@ export default function EditProfileDialog({
     try {
       setLoading(true);
       setErrorMessage('');
-      
+
       // Determinar se estamos editando ou adicionando um novo endereço
       const method = editingAddress ? 'PUT' : 'POST';
-      const url = editingAddress 
-        ? `/api/addresses/${editingAddress._id}` 
+      const url = editingAddress
+        ? `/api/addresses/${editingAddress._id}`
         : '/api/addresses';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -230,13 +285,13 @@ export default function EditProfileDialog({
           userId: user.uid
         }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         if (editingAddress) {
           // Atualizar o endereço existente na lista
-          setAddresses(addresses.map(addr => 
+          setAddresses(addresses.map(addr =>
             addr._id === editingAddress._id ? data.address : addr
           ));
           setSuccessMessage('Endereço atualizado com sucesso!');
@@ -245,7 +300,7 @@ export default function EditProfileDialog({
           setAddresses([...addresses, data.address]);
           setSuccessMessage('Endereço adicionado com sucesso!');
         }
-        
+
         // Fechar o formulário de endereço
         setShowAddressForm(false);
         setEditingAddress(null);
@@ -267,14 +322,14 @@ export default function EditProfileDialog({
   };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       fullWidth
       maxWidth="md"
       fullScreen={isMobile}
     >
-      <DialogTitle sx={{ 
+      <DialogTitle sx={{
         backgroundColor: '#f5f5f5',
         display: 'flex',
         justifyContent: 'space-between',
@@ -285,7 +340,7 @@ export default function EditProfileDialog({
             Editar Perfil
           </Typography>
         </Box>
-        <Button 
+        <Button
           onClick={handleClose}
           sx={{ minWidth: 'auto', p: 0.5 }}
           disabled={loading}
@@ -293,7 +348,7 @@ export default function EditProfileDialog({
           <Close />
         </Button>
       </DialogTitle>
-      
+
       <DialogContent sx={{ pt: 2, mt: 1 }}>
         {fetchLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -307,26 +362,66 @@ export default function EditProfileDialog({
                 {successMessage}
               </Alert>
             )}
-            
+
             {errorMessage && (
               <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMessage('')}>
                 {errorMessage}
               </Alert>
             )}
-            
+
             {/* Abas para alternar entre perfil e endereços */}
-            <Tabs 
-              value={activeTab} 
+            <Tabs
+              value={activeTab}
               onChange={handleTabChange}
               sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
             >
               <Tab label="Dados Pessoais" />
               <Tab label="Endereços" />
             </Tabs>
-            
+
             {/* Aba de Dados Pessoais */}
             {activeTab === 0 && (
               <Box>
+                {/* Seção de foto de perfil */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+                  <Box sx={{ position: 'relative' }}>
+                    <Avatar
+                      src={photoURL || (user && user.photoURL) || ''}
+                      alt={userData.name || 'Perfil'}
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        border: '3px solid #2e7d32',
+                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                      }}
+                    />
+                    <IconButton
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        right: 0,
+                        backgroundColor: '#2e7d32',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#1b5e20',
+                        },
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}
+                      onClick={handlePhotoButtonClick}
+                      disabled={photoLoading}
+                    >
+                      {photoLoading ? <CircularProgress size={24} color="inherit" /> : <PhotoCamera />}
+                    </IconButton>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      style={{ display: 'none' }}
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                  </Box>
+                </Box>
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <TextField
@@ -360,7 +455,7 @@ export default function EditProfileDialog({
                       onChange={handleInputChange}
                       margin="normal"
                       variant="outlined"
-                      disabled // Email não pode ser alterado, apenas pelo Firebase Auth
+                      disabled={true} // Email não pode ser alterado diretamente
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -375,89 +470,91 @@ export default function EditProfileDialog({
                     />
                   </Grid>
                 </Grid>
-                
-                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSubmitProfile}
-                    disabled={loading}
-                    sx={{ 
-                      backgroundColor: '#2e7d32',
-                      '&:hover': {
-                        backgroundColor: '#1b5e20',
-                      }
-                    }}
-                  >
-                    {loading ? (
-                      <>
-                        <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                        Salvando...
-                      </>
-                    ) : 'Salvar Alterações'}
-                  </Button>
-                </Box>
+
+
               </Box>
             )}
-            
+
             {/* Aba de Endereços */}
-            {activeTab === 1 && !showAddressForm && (
+            {activeTab === 1 && (
               <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" component="h2">
-                    Meus Endereços
-                  </Typography>
-                  <Box>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={fetchAddresses}
-                      sx={{ mr: 1 }}
-                      disabled={loading}
-                    >
-                      Atualizar
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<AddIcon />}
-                      onClick={handleAddAddress}
-                    >
-                      Adicionar Endereço
-                    </Button>
-                  </Box>
-                </Box>
-                
-                <AddressList 
-                  addresses={addresses}
-                  onEdit={handleEditAddress}
-                  onDelete={handleDeleteAddress}
-                  loading={loading}
-                />
+                {showAddressForm ? (
+                  <AddressForm
+                    initialData={editingAddress}
+                    onSubmit={handleAddressFormSubmit}
+                    onCancel={handleCancelAddressForm}
+                    loading={loading}
+                  />
+                ) : (
+                  <>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={handleAddAddress}
+                        sx={{
+                          backgroundColor: '#2e7d32',
+                          '&:hover': {
+                            backgroundColor: '#1b5e20',
+                          }
+                        }}
+                      >
+                        Adicionar Endereço
+                      </Button>
+                    </Box>
+
+                    {addresses.length > 0 ? (
+                      <AddressList
+                        addresses={addresses}
+                        onEdit={handleEditAddress}
+                        onDelete={handleDeleteAddress}
+                        loading={loading}
+                      />
+                    ) : (
+                      <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                        Você ainda não possui endereços cadastrados.
+                      </Typography>
+                    )}
+                  </>
+                )}
               </Box>
-            )}
-            
-            {/* Formulário de Endereço (para adicionar ou editar) */}
-            {activeTab === 1 && showAddressForm && (
-              <AddressForm 
-                initialData={editingAddress}
-                onSubmit={handleAddressFormSubmit}
-                onCancel={handleCancelAddressForm}
-                loading={loading}
-              />
             )}
           </>
         )}
       </DialogContent>
-      
+
       <DialogActions sx={{ p: 2, pt: 0 }}>
-        <Button 
+        <Button
           onClick={handleClose}
           sx={{ color: '#666' }}
-          disabled={loading || fetchLoading}
+          disabled={loading || photoLoading}
         >
-          Fechar
+          Cancelar
         </Button>
+
+        {/* Mostrar botão de salvar apenas na aba de Dados Pessoais e quando não estiver mostrando o formulário de endereço */}
+        {activeTab === 0 && (
+          <Button
+            onClick={handleSubmitProfile}
+            variant="contained"
+            sx={{
+              backgroundColor: '#2e7d32',
+              '&:hover': {
+                backgroundColor: '#1b5e20',
+              }
+            }}
+            disabled={loading || photoLoading}
+          >
+            {loading ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                Salvando...
+              </>
+            ) : 'Salvar Alterações'}
+          </Button>
+        )}
+
+        {/* Não mostrar botões adicionais na aba de Endereços, pois o AddressForm já deve ter seus próprios botões */}
       </DialogActions>
     </Dialog>
   );

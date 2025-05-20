@@ -4,7 +4,6 @@ import {
   Paper,
   Typography,
   IconButton,
-  Divider,
   Chip,
   Grid,
   CircularProgress
@@ -12,7 +11,22 @@ import {
 import { Edit, Delete, Home, LocationOn } from '@mui/icons-material';
 
 export default function AddressList({ addresses, onEdit, onDelete, loading }) {
-  if (addresses.length === 0) {
+  // Função específica para editar endereço que não depende de eventos
+  const editAddress = (address) => {
+    console.log("AddressList - Editando endereço:", address);
+
+    // Chamar diretamente a função onEdit com o endereço
+    if (typeof onEdit === 'function') {
+      // Chamar com um timeout para garantir que qualquer outro evento seja processado primeiro
+      setTimeout(() => {
+        onEdit(address);
+      }, 0);
+    } else {
+      console.error("A função onEdit não foi fornecida ou não é uma função");
+    }
+  };
+
+  if (!addresses || addresses.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
         <LocationOn sx={{ fontSize: 60, color: '#ccc', mb: 2 }} />
@@ -27,7 +41,7 @@ export default function AddressList({ addresses, onEdit, onDelete, loading }) {
     <Box>
       {addresses.map((address, index) => (
         <Paper
-          key={address._id}
+          key={address._id || index}
           elevation={1}
           sx={{
             p: 2,
@@ -54,30 +68,35 @@ export default function AddressList({ addresses, onEdit, onDelete, loading }) {
                   </Typography>
                 </Box>
               </Box>
-              
+
               {address.isDefault && (
-                <Chip 
-                  label="Endereço Principal" 
-                  size="small" 
-                  sx={{ 
-                    backgroundColor: '#e8f5e9', 
+                <Chip
+                  label="Endereço Principal"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#e8f5e9',
                     color: '#2e7d32',
                     mt: 1
-                  }} 
+                  }}
                 />
               )}
             </Grid>
-            
+
             <Grid item xs={12} sm={3} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Box>
-                <IconButton 
-                  onClick={() => onEdit(address)}
+                {/* Botão de edição com função simplificada */}
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log("Botão de edição clicado para endereço:", address);
+                    onEdit(address);
+                  }}
                   disabled={loading}
                   sx={{ color: '#2196f3' }}
                 >
                   <Edit />
                 </IconButton>
-                <IconButton 
+                <IconButton
                   onClick={() => onDelete(address._id)}
                   disabled={loading}
                   sx={{ color: '#f44336' }}
@@ -88,7 +107,8 @@ export default function AddressList({ addresses, onEdit, onDelete, loading }) {
             </Grid>
           </Grid>
         </Paper>
-      ))}
-    </Box>
+      ))
+      }
+    </Box >
   );
 }

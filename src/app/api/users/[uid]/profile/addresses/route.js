@@ -26,10 +26,10 @@ export async function GET(request, { params }) {
   try {
     // Conectar ao MongoDB
     await connectDB();
-    
+
     // Obter o UID dos parâmetros da rota
     const { uid } = await params;
-    
+
     // Verificar autenticação
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
@@ -38,15 +38,15 @@ export async function GET(request, { params }) {
         { status: 401 }
       );
     }
-    
+
     // Verificar se o usuário está acessando seus próprios dados ou é um admin
     if (uid !== decodedToken.uid) {
       // Verificar se o usuário é um administrador
-      const adminUser = await User.findOne({ 
-        firebaseId: decodedToken.uid, 
-        role: 'admin' 
+      const adminUser = await User.findOne({
+        firebaseId: decodedToken.uid,
+        role: 'admin'
       });
-      
+
       if (!adminUser) {
         return NextResponse.json(
           { error: 'Acesso não autorizado' },
@@ -54,25 +54,29 @@ export async function GET(request, { params }) {
         );
       }
     }
-    
+
     // Buscar usuário pelo UID do Firebase
     const user = await User.findOne({ firebaseId: uid });
-    
+    console.log('##################################################### \n Usuário encontrado:', user, '\n ##############################');
+
     if (!user) {
       return NextResponse.json(
-        { error: 'Usuário não encontrado' },
+        { error: 'Usuário não encontrado' }, 
         { status: 404 }
       );
     }
-    
-    // Buscar endereços do usuário
-    const addresses = await Address.find({ userId: user._id })
-      .sort({ isDefault: -1, createdAt: -1 });
-    
+
+    // Buscar endereços do usuário usando a referência na coleção de usuários
+    // Corrigindo aqui: Buscar os endereços usando os IDs armazenados no array 'address' do usuário
+    const addresses = await Address.find({ 
+      _id: { $in: user.address } 
+    });
+
+    console.log('Endereços encontrados:', addresses);
     return NextResponse.json(addresses);
   } catch (error) {
     console.error('Erro ao buscar endereços:', error);
-    
+
     return NextResponse.json(
       { error: 'Erro ao buscar endereços', details: error.message },
       { status: 500 }
@@ -80,15 +84,16 @@ export async function GET(request, { params }) {
   }
 }
 
+
 // POST - Adicionar novo endereço
 export async function POST(request, { params }) {
   try {
     // Conectar ao MongoDB
     await connectDB();
-    
+
     // Obter o UID dos parâmetros da rota
     const { uid } = await params;
-    
+
     // Verificar autenticação
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
@@ -97,15 +102,15 @@ export async function POST(request, { params }) {
         { status: 401 }
       );
     }
-    
+
     // Verificar se o usuário está adicionando endereço para si mesmo ou é um admin
     if (uid !== decodedToken.uid) {
       // Verificar se o usuário é um administrador
-      const adminUser = await User.findOne({ 
-        firebaseId: decodedToken.uid, 
-        role: 'admin' 
+      const adminUser = await User.findOne({
+        firebaseId: decodedToken.uid,
+        role: 'admin'
       });
-      
+
       if (!adminUser) {
         return NextResponse.json(
           { error: 'Acesso não autorizado' },
@@ -113,20 +118,20 @@ export async function POST(request, { params }) {
         );
       }
     }
-    
+
     // Buscar usuário pelo UID do Firebase
     const user = await User.findOne({ firebaseId: uid });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       );
     }
-    
+
     // Obter dados do corpo da requisição
     const addressData = await request.json();
-    
+
     // Validar dados obrigatórios
     const requiredFields = ['street', 'number', 'neighborhood', 'city', 'state', 'zipCode'];
     for (const field of requiredFields) {
@@ -137,7 +142,7 @@ export async function POST(request, { params }) {
         );
       }
     }
-    
+
     // Se este endereço for definido como padrão, remover o padrão de outros endereços
     if (addressData.isDefault) {
       await Address.updateMany(
@@ -145,7 +150,7 @@ export async function POST(request, { params }) {
         { $set: { isDefault: false } }
       );
     }
-    
+
     // Criar o novo endereço
     const newAddress = new Address({
       userId: user._id,
@@ -158,21 +163,21 @@ export async function POST(request, { params }) {
       zipCode: addressData.zipCode,
       isDefault: addressData.isDefault || false
     });
-    
+
     await newAddress.save();
-    
+
     // Se for o primeiro endereço ou for definido como padrão, atualizar o endereço padrão do usuário
     if (addressData.isDefault || (await Address.countDocuments({ userId: user._id })) === 1) {
       await User.findByIdAndUpdate(user._id, { defaultAddressId: newAddress._id });
     }
-    
+
     return NextResponse.json(
       { success: true, address: newAddress },
       { status: 201 }
     );
   } catch (error) {
     console.error('Erro ao criar endereço:', error);
-    
+
     return NextResponse.json(
       { error: 'Erro ao criar endereço', details: error.message },
       { status: 500 }
@@ -185,10 +190,10 @@ export async function DELETE(request, { params }) {
   try {
     // Conectar ao MongoDB
     await connectDB();
-    
+
     // Obter o UID dos parâmetros da rota
     const { uid } = await params;
-    
+
     // Verificar autenticação
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
@@ -197,15 +202,15 @@ export async function DELETE(request, { params }) {
         { status: 401 }
       );
     }
-    
+
     // Apenas administradores podem excluir todos os endereços de um usuário
     if (uid !== decodedToken.uid) {
       // Verificar se o usuário é um administrador
-      const adminUser = await User.findOne({ 
-        firebaseId: decodedToken.uid, 
-        role: 'admin' 
+      const adminUser = await User.findOne({
+        firebaseId: decodedToken.uid,
+        role: 'admin'
       });
-      
+
       if (!adminUser) {
         return NextResponse.json(
           { error: 'Acesso não autorizado' },
@@ -213,30 +218,30 @@ export async function DELETE(request, { params }) {
         );
       }
     }
-    
+
     // Buscar usuário pelo UID do Firebase
     const user = await User.findOne({ firebaseId: uid });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: 'Usuário não encontrado' },
         { status: 404 }
       );
     }
-    
+
     // Remover todos os endereços do usuário
     const result = await Address.deleteMany({ userId: user._id });
-    
+
     // Remover referência ao endereço padrão do usuário
     await User.findByIdAndUpdate(user._id, { $unset: { defaultAddressId: 1 } });
-    
+
     return NextResponse.json({
       success: true,
       message: `${result.deletedCount} endereços removidos com sucesso`
     });
   } catch (error) {
     console.error('Erro ao remover endereços:', error);
-    
+
     return NextResponse.json(
       { error: 'Erro ao remover endereços', details: error.message },
       { status: 500 }

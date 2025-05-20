@@ -9,7 +9,6 @@ import {
   FormControlLabel,
   Checkbox,
   Grid,
-  Typography,
   CircularProgress,
   Alert
 } from '@mui/material';
@@ -36,35 +35,37 @@ export default function EditAddressDialog({
     isDefault: false
   });
 
-  // Efeito para carregar os dados do endereço quando o diálogo for aberto
+  // Efeito para inicializar o formulário quando o diálogo é aberto
   useEffect(() => {
-    if (open && address && !isNew) {
-      // Log para debug
-      console.log("Dados de endereço recebidos no diálogo:", address);
-      
-      // Atualizar o estado com os dados do endereço
-      setFormData({
-        street: address.street || '',
-        number: address.number || '',
-        complement: address.complement || '',
-        neighborhood: address.neighborhood || '',
-        city: address.city || '',
-        state: address.state || '',
-        zipCode: address.zipCode || '',
-        isDefault: address.isDefault || false
-      });
-    } else if (open && isNew) {
-      // Resetar o formulário para um novo endereço
-      setFormData({
-        street: '',
-        number: '',
-        complement: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        isDefault: false
-      });
+    console.log("EditAddressDialog - Diálogo aberto:", open);
+    console.log("EditAddressDialog - Endereço recebido:", address);
+    
+    if (open) {
+      if (!isNew && address) {
+        // Preencher o formulário com os dados do endereço existente
+        setFormData({
+          street: address.street || '',
+          number: address.number || '',
+          complement: address.complement || '',
+          neighborhood: address.neighborhood || '',
+          city: address.city || '',
+          state: address.state || '',
+          zipCode: address.zipCode || '',
+          isDefault: address.isDefault || false
+        });
+      } else {
+        // Resetar o formulário para um novo endereço
+        setFormData({
+          street: '',
+          number: '',
+          complement: '',
+          neighborhood: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          isDefault: false
+        });
+      }
     }
   }, [open, address, isNew]);
 
@@ -95,28 +96,33 @@ export default function EditAddressDialog({
         ...formData
       };
 
+      console.log("Dados a serem enviados:", addressData);
+
       // Determinar se é uma criação ou atualização
       let response;
       if (isNew) {
         // Criar novo endereço
-        response = await fetch(`/api/users/${user.uid}/profile/addresses`, {
-          method: 'POST',
+        response = await fetch(`/api/users/${user.uid}/Profile/addresses`, {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.accessToken}`,
           },
-          body: JSON.stringify(addressData)
+          body: JSON.stringify(addressData),
         });
       } else {
         // Atualizar endereço existente
-        response = await fetch(`/api/users/${user.uid}/profile/addresses/${address._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`
-          },
-          body: JSON.stringify(addressData)
-        });
+        response = await fetch(
+          `/api/users/${user.uid}/profile/addresses/${address._id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${user.accessToken}`,
+            },
+            body: JSON.stringify(addressData),
+          }
+        );
       }
 
       if (!response.ok) {
@@ -125,6 +131,7 @@ export default function EditAddressDialog({
       }
 
       const savedAddress = await response.json();
+      console.log("Endereço salvo com sucesso:", savedAddress);
       
       // Chamar a função de callback com o endereço salvo
       if (onSave) {

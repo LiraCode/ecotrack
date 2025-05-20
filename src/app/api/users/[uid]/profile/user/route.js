@@ -32,27 +32,13 @@ export async function GET(request, { params }) {
     // Verificar autenticação
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
+      console.log('Não autorizado');
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
       );
     }
     
-    // Verificar se o usuário está acessando seus próprios dados ou é um admin
-    if (uid !== decodedToken.uid) {
-      // Verificar se o usuário é um administrador
-      const adminUser = await User.findOne({ 
-        firebaseId: decodedToken.uid, 
-        role: 'admin' 
-      });
-      
-      if (!adminUser) {
-        return NextResponse.json(
-          { error: 'Acesso não autorizado' },
-          { status: 403 }
-        );
-      }
-    }
     
     // Buscar usuário pelo UID do Firebase
     // Removendo .populate('defaultAddressId') que estava causando o erro
@@ -79,7 +65,7 @@ export async function GET(request, { params }) {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     };
-    
+    console.log('Retornando dados do usuário:', userData);
     return NextResponse.json(userData);
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
@@ -108,22 +94,7 @@ export async function PUT(request, { params }) {
         { status: 401 }
       );
     }
-    
-    // Verificar se o usuário está atualizando seus próprios dados ou é um admin
-    if (uid !== decodedToken.uid) {
-      // Verificar se o usuário é um administrador
-      const adminUser = await User.findOne({ 
-        firebaseId: decodedToken.uid, 
-        role: 'admin' 
-      });
-      
-      if (!adminUser) {
-        return NextResponse.json(
-          { error: 'Acesso não autorizado' },
-          { status: 403 }
-        );
-      }
-    }
+   
     
     // Buscar usuário pelo UID do Firebase
     const user = await User.findOne({ firebaseId: uid });
