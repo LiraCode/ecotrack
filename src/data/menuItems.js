@@ -148,12 +148,13 @@ const menuGroups = [
       {
         icon: (
           <i
-            className="fa-solid fa-trash-can-plus"
+          
+            className="fa-solid fa-gear"
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
         ),
-        label: "Ecopontos",
-        route: "/parceiro/ecoponto/",
+        label: "Gerenciamento",
+        route: "/parceiro/perfil/",
         role: "Responsável",
       },
     ],

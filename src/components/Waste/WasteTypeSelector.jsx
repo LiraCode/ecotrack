@@ -40,6 +40,12 @@ export default function WasteTypeSelector({
     fetchWasteTypes();
   }, []);
 
+  // Helper function to get waste type name by ID
+  const getWasteTypeName = (id) => {
+    const wasteType = wasteTypes.find(waste => waste._id === id);
+    return wasteType ? wasteType.type : id;
+  };
+
   return (
     <FormControl fullWidth error={error} sx={{ mb: error ? 1 : 2 }}>
       <InputLabel id="waste-type-label">{label}</InputLabel>
@@ -50,16 +56,15 @@ export default function WasteTypeSelector({
         onChange={onChange}
         renderValue={(selected) => {
           if (multiple) {
-            return selected.join(', ');
+            return selected.map(id => getWasteTypeName(id)).join(', ');
           }
-          const selectedWaste = wasteTypes.find(waste => waste._id === selected);
-          return selectedWaste ? selectedWaste.type : '';
+          return getWasteTypeName(selected);
         }}
         label={label}
       >
         {wasteTypes.map((waste) => (
-          <MenuItem key={waste._id} value={multiple ? waste.type : waste._id}>
-            {multiple && <Checkbox checked={value.indexOf(waste.type) > -1} />}
+          <MenuItem key={waste._id} value={waste._id}>
+            {multiple && <Checkbox checked={value.indexOf(waste._id) > -1} />}
             <ListItemText 
               primary={waste.type} 
               secondary={waste.description || ''} 

@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
-import Responsible from '@/models/responsable';
+import Responsable from '@/models/responsable';
 
 export async function GET(request, { params }) {
   try {
     // Conectar ao MongoDB
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     
     // Buscar responsável pelo ID
-    const responsible = await Responsible.findById(id);
+    const responsable = await Responsable.findById(id);
     
-    if (!responsible) {
+    if (!responsable) {
       return NextResponse.json(
         { error: 'Responsável não encontrado' },
         { status: 404 }
@@ -20,7 +20,7 @@ export async function GET(request, { params }) {
     }
     
     return NextResponse.json(
-      { success: true, responsible },
+      { success: true, responsable },
       { status: 200 }
     );
   } catch (error) {
@@ -39,16 +39,16 @@ export async function PUT(request, { params }) {
     await connectDB();
     
     const { id } = params;
-    const responsibleData = await request.json();
+    const responsableData = await request.json();
     
     // Atualizar responsável no MongoDB
-    const updatedResponsible = await Responsible.findByIdAndUpdate(
+    const updatedResponsable = await Responsable.findByIdAndUpdate(
       id,
-      { $set: responsibleData },
+      { $set: responsableData },
       { new: true }
     );
     
-    if (!updatedResponsible) {
+    if (!updatedResponsable) {
       return NextResponse.json(
         { error: 'Responsável não encontrado' },
         { status: 404 }
@@ -56,7 +56,7 @@ export async function PUT(request, { params }) {
     }
     
     return NextResponse.json(
-      { success: true, responsible: updatedResponsible },
+      { success: true, responsable: updatedResponsable },
       { status: 200 }
     );
   } catch (error) {
@@ -85,9 +85,9 @@ export async function DELETE(request, { params }) {
     const { id } = params;
     
     // Excluir responsável
-    const deletedResponsible = await Responsible.findByIdAndDelete(id);
+    const deletedResponsable = await Responsable.findByIdAndDelete(id);
     
-    if (!deletedResponsible) {
+    if (!deletedResponsable) {
       return NextResponse.json(
         { error: 'Responsável não encontrado' },
         { status: 404 }

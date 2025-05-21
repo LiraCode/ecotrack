@@ -1,149 +1,114 @@
+  import { auth } from '@/config/firebase/firebase';
+  import { updateProfile } from 'firebase/auth';
+  import { getAuthToken } from './authService';
 
-export const createResponsible = async (responsibleData) => {
-  try {
-    console.log("Iniciando criação de responsável:", responsibleData.email);
+  // Obter dados do responsável atual
+  export const getResponsibleProfile = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Usuário não autenticado');
+      }
     
-    // Enviar dados para a API
-    const response = await fetch('/api/responsible', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(responsibleData),
-    });
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Não foi possível obter o token de autenticação');
+      }
     
-    const responseData = await response.json();
+      const response = await fetch(`/api/responsible?uid=${currentUser.uid}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
     
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao criar responsável');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar perfil do responsável');
+      }
+    
+      const data = await response.json();
+      return { success: true, responsible: data.responsible };
+    } catch (error) {
+      console.error('Erro ao buscar perfil do responsável:', error);
+      return { success: false, error: error.message };
     }
-    
-    console.log("Responsável criado com sucesso");
-    return { success: true, responsible: responseData.responsible };
-  } catch (error) {
-    console.error("Erro ao criar responsável:", error);
-    return { success: false, error: error.message };
-  }
-};
+  };
 
-// Função para buscar um responsável pelo CPF
-export const getResponsibleByCpf = async (cpf) => {
-  try {
-    const response = await fetch(`/api/responsible?cpf=${cpf}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  // Atualizar perfil do responsável
+  export const updateResponsibleProfile = async (profileData) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Usuário não autenticado');
+      }
     
-    const responseData = await response.json();
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Não foi possível obter o token de autenticação');
+      }
     
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao buscar responsável');
+      const response = await fetch(`/api/responsible/${currentUser.uid}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+    
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao atualizar perfil do responsável');
+      }
+    
+      const data = await response.json();
+    
+      // Atualizar o displayName no Firebase Auth se o nome foi alterado
+      if (profileData.name && profileData.name !== currentUser.displayName) {
+        await updateProfile(currentUser, {
+          displayName: profileData.name
+        });
+      }
+    
+      return { success: true, responsible: data.responsible };
+    } catch (error) {
+      console.error('Erro ao atualizar perfil do responsável:', error);
+      return { success: false, error: error.message };
     }
-    
-    return { success: true, responsible: responseData.responsible };
-  } catch (error) {
-    console.error("Erro ao buscar responsável:", error);
-    return { success: false, error: error.message };
-  }
-};
+  };
 
-// Função para buscar um responsável pelo email
-export const getResponsibleByEmail = async (email) => {
-  try {
-    const response = await fetch(`/api/responsible?email=${email}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  // Obter ecopontos associados ao responsável
+  export const getResponsibleOrganizations = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Usuário não autenticado');
+      }
     
-    const responseData = await response.json();
+      const token = await getAuthToken();
+      if (!token) {
+        throw new Error('Não foi possível obter o token de autenticação');
+      }
     
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao buscar responsável');
+      const response = await fetch(`/api/responsible/${currentUser.uid}/organizations`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar ecopontos do responsável');
+      }
+    
+      const data = await response.json();
+      return { success: true, organizations: data.organizations };
+    } catch (error) {
+      console.error('Erro ao buscar ecopontos do responsável:', error);
+      return { success: false, error: error.message };
     }
-    
-    return { success: true, responsible: responseData.responsible };
-  } catch (error) {
-    console.error("Erro ao buscar responsável:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// Função para buscar todos os responsáveis
-export const getAllResponsibles = async () => {
-  try {
-    const response = await fetch('/api/responsible', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const responseData = await response.json();
-    
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao buscar responsáveis');
-    }
-    
-    return { success: true, responsibles: responseData.responsibles };
-  } catch (error) {
-    console.error("Erro ao buscar responsáveis:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// Função para atualizar um responsável
-export const updateResponsible = async (id, responsibleData) => {
-  try {
-    const response = await fetch(`/api/responsible/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(responsibleData),
-    });
-    
-    const responseData = await response.json();
-    
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao atualizar responsável');
-    }
-    
-    return { success: true, responsible: responseData.responsible };
-  } catch (error) {
-    console.error("Erro ao atualizar responsável:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// Função para excluir um responsável
-export const deleteResponsible = async (id) => {
-  try {
-    const response = await fetch(`/api/responsible/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const responseData = await response.json();
-    
-    if (!response.ok) {
-      console.error("Erro na resposta da API:", responseData);
-      throw new Error(responseData.error || 'Falha ao excluir responsável');
-    }
-    
-    return { success: true, message: responseData.message };
-  } catch (error) {
-    console.error("Erro ao excluir responsável:", error);
-    return { success: false, error: error.message };
-  }
-};
+  };

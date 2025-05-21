@@ -3,12 +3,40 @@ import CollectionPoint from '@/models/collectionPoint';
 import Address from '@/models/address';
 import { NextResponse } from 'next/server';
 
+// GET - Buscar um ecoponto específico
+export async function GET(request, { params }) {
+  try {
+    const { id } = await params;
+    await connectToDB();
+    
+    // Buscar o ecoponto pelo ID
+    const collectionPoint = await CollectionPoint.findById(id)
+      .populate('address')
+      .populate('typeOfWasteId')
+      .populate('responsableId');
+    
+    if (!collectionPoint) {
+      return NextResponse.json(
+        { message: 'Ecoponto não encontrado' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({ success: true, collectionPoint });
+  } catch (error) {
+    console.error('Error fetching collection point:', error);
+    return NextResponse.json(
+      { message: 'Erro ao buscar ecoponto', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT - Atualizar um ecoponto específico
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await connectToDB();
-
     // Obter dados do corpo da requisição
     const body = await request.json();
     const { address, ...collectionPointData } = body;
@@ -50,7 +78,7 @@ export async function PUT(request, { params }) {
 // DELETE - Remover um ecoponto específico
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await connectToDB();
 
     // Buscar o ecoponto
