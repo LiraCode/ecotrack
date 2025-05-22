@@ -1,7 +1,9 @@
 // src/config/firebase/firebaseAdmin.js
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-var serviceAccount = require("../../../firebaseCredential.json");
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+
 
 // Verificar se estamos no lado do servidor
 if (typeof window !== 'undefined') {

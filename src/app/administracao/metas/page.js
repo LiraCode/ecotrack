@@ -135,7 +135,7 @@ export default function AdminMetasPage() {
       }
     };
     
-    if (user && user.role === 'admin') {
+    if (user && user.role === 'Administrador') {
       console.log("Usuário admin detectado, carregando dados...");
       loadData();
     } else {
