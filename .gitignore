@@ -41,7 +41,7 @@ serviceAccount*.json
 *firebase*admin*.json
 
 # Specific files (adicione os nomes exatos dos seus arquivos)
-firebasecredential.json
+firebaseCredential.json
 firebaseCredential.json*
 firebase-adminsdk.json
 
