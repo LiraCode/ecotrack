@@ -1,5 +1,6 @@
 import connectToDB from '@/lib/db';
 import CollectionScheduling from '@/models/collectionScheduling';
+import  '@/models/waste';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
