@@ -31,7 +31,7 @@ export async function PUT(request, { params }) {
     }
     
     // Extrair o ID do parâmetro de rota
-    const { id } = params;
+    const { id } = await params;
     
     if (!id) {
       return NextResponse.json(

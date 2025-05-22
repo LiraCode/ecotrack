@@ -24,7 +24,7 @@ export async function GET(request, { params }) {
     // Conectar ao MongoDB
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     
     // Buscar responsável pelo ID
     const responsible = await Responsable.findById(id);
@@ -61,7 +61,7 @@ export async function PUT(request, { params }) {
     // Conectar ao MongoDB
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     const responsibleData = await request.json();
     
     // Buscar responsável para obter o firebaseId
@@ -171,7 +171,7 @@ export async function DELETE(request, { params }) {
     // Conectar ao MongoDB
     await connectDB();
     
-    const { id } = params;
+    const { id } = await params;
     
     // Buscar responsável para obter o firebaseId antes de excluir
     const responsible = await Responsable.findById(id);

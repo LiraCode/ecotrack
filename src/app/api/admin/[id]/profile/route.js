@@ -5,7 +5,7 @@ import { auth } from '@/config/firebase/firebaseAdmin';
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar autenticação
     const authHeader = request.headers.get('authorization');

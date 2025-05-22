@@ -31,7 +31,7 @@ function isValidObjectId(id) {
 // GET - Buscar agendamentos de um ecoponto específico
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!isValidObjectId(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });

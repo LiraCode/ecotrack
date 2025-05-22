@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
     await connectToDB();
     
     // Obter o ID do usuário dos parâmetros da rota
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar autenticação do usuário
     const authHeader = request.headers.get("authorization");
@@ -76,7 +76,7 @@ export async function POST(request, { params }) {
     await connectToDB();
     
     // Obter o ID do usuário dos parâmetros da rota
-    const { id } = params;
+    const { id } = await params;
     
     // Verificar autenticação do usuário
     const authHeader = request.headers.get("authorization");

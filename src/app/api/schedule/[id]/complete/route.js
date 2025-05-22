@@ -57,7 +57,7 @@ async function checkClientExpiredScores(clientId) {
 // PUT - Marcar agendamento como concluído e atualizar scores
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!isValidObjectId(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });

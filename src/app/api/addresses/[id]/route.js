@@ -33,7 +33,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    const { id } = params;
+    const { id } = await params;
     
     // Validar o ID do endereço
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -51,9 +51,10 @@ export async function GET(request, { params }) {
     const user = await User.findOne({ firebaseId: decodedToken.uid });
     
     // Verificar se o endereço pertence ao usuário ou se o usuário é admin
-    if (!user || (address.userId.toString() !== user._id.toString() && user.role !== 'admin')) {
+    if (!user || (address.userId.toString() !== user._id.toString() && user.role !== 'Administrador')) {
       return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
     }
+    
     
     return NextResponse.json(address);
   } catch (error) {
@@ -76,7 +77,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    const { id } = params;
+    const { id } = await params;
     
     // Validar o ID do endereço
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -151,7 +152,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    const { id } = params;
+    const { id } = await params;
     
     // Validar o ID do endereço
     if (!mongoose.Types.ObjectId.isValid(id)) {
