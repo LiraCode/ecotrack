@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
 import User from '@/models/user';
+import  '@/models/address';
 import { auth } from '@/config/firebase/firebaseAdmin';
 
 // Função auxiliar para verificar o token do Firebase

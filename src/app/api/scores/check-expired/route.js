@@ -1,5 +1,6 @@
 import connectToDB from '@/lib/db';
 import Score from '@/models/score';
+import '@/models/goal';
 import User from '@/models/user';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
