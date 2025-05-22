@@ -145,14 +145,10 @@ export const registerResponsible = async (email, password, responsibleData) => {
   }
 };
 
-export const registerAdmin = async (email, password, adminData) => {
+export const registerAdmin = async (token, email, password, adminData) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    await updateProfile(user, {
-      displayName: adminData.nomeCompleto
-    });
-
+    
+   
     const dataForAPI = {
       firebaseId: user.uid,
       name: adminData.nomeCompleto,
@@ -161,17 +157,17 @@ export const registerAdmin = async (email, password, adminData) => {
       role: adminData.role
     };
     console.log("Enviando dados para a API de administradores:", dataForAPI);
-    const response = await fetch('/api/admin', {
-      method: 'POST',
+    const response = await fetch("/api/admin", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.accessToken}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(dataForAPI),
     });
-
+    
     const responseData = await response.json();
-
+    
     if (!response.ok) {
       console.error("Erro na resposta da API:", responseData);
       throw new Error(responseData.error || 'Falha ao salvar dados do administrador');

@@ -70,6 +70,30 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     return <div>Carregando...</div>;
   }
 
+  // Helper function to check if a menu item should be displayed based on role
+  const shouldDisplayMenuItem = (item) => {
+    // If user is not logged in, show items for not-logged users
+    if (!user) {
+      return (
+        item.role === "not-logged" || 
+        item.role === "all" || 
+        (Array.isArray(item.role) && (item.role.includes("not-logged") || item.role.includes("all")))
+      );
+    }
+    
+    // If user is logged in, show items for logged users with appropriate role
+    return (
+      item.role === "logged" || 
+      item.role === "all" || 
+      item.role === role || 
+      (Array.isArray(item.role) && (
+        item.role.includes("logged") || 
+        item.role.includes("all") || 
+        item.role.includes(role)
+      ))
+    );
+  };
+
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
@@ -83,13 +107,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               <div key={groupIndex} className="w-full">
                 <ul className="mb-2 flex flex-col gap-2 text-sm w-full">
                   {group.menuItems
-                    .filter((item) =>
-                      item.role === role ||
-                      item.role === "all" ||
-                      (!user
-                        ? item.role === "not-logged"
-                        : item.role === "logged")
-                    )
+                    .filter(shouldDisplayMenuItem)
                     .map((menuItem, menuIndex) => (
                       <li key={menuIndex} className="flex justify-center w-full align-center">
                         <SidebarItem

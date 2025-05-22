@@ -1,37 +1,25 @@
 // src/config/firebase/firebaseAdmin.js
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+var serviceAccount = require("../../../firebaseCredential.json");
 
-// Retrieve environment variables
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKeyEnv = process.env.FIREBASE_PRIVATE_KEY;
+// Verificar se estamos no lado do servidor
+if (typeof window !== 'undefined') {
+    throw new Error('Firebase Admin SDK deve ser usado apenas no lado do servidor');
+}
 
-// Check if Firebase app has already been initialized
-if (!getApps().length) {
-    // Validate that essential environment variables are set
-    if (!projectId || !clientEmail || !privateKeyEnv) {
-        const missingVars = [
-            !projectId ? 'FIREBASE_PROJECT_ID' : null,
-            !clientEmail ? 'FIREBASE_CLIENT_EMAIL' : null,
-            !privateKeyEnv ? 'FIREBASE_PRIVATE_KEY' : null,
-        ].filter(Boolean).join(', ');
+// Obter as credenciais da variável de ambiente
 
-        const errorMessage = `Firebase Admin SDK Initialization Failed: Missing required environment variable(s): ${missingVars}. Please ensure they are correctly set in your environment.`;
-        console.error(errorMessage);
-        throw new Error(errorMessage);
-    }
+try {
 
-    // Process the private key to replace escaped newlines
-    const privateKey = privateKeyEnv.replace(/\\n/g, '\n');
-
+// Inicializar o Firebase Admin SDK
+if (getApps().length === 0) {
     initializeApp({
-        credential: cert({
-            projectId: projectId,
-            clientEmail: clientEmail,
-            privateKey: privateKey,
-        }),
+      credential: cert(serviceAccount)
     });
+}
+} catch (error) {
+    console.error('Erro ao inicializar o Firebase Admin SDK:', error);
 }
 
 const auth = getAuth();

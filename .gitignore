@@ -33,6 +33,18 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+
+# Firebase credentials
+*firebase*credential*.json
+serviceAccount*.json
+*firebase*config*.json
+*firebase*admin*.json
+
+# Specific files (adicione os nomes exatos dos seus arquivos)
+firebasecredential.json
+firebaseCredential.json*
+firebase-adminsdk.json
+
 # vercel
 .vercel
 

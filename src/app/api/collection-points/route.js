@@ -14,7 +14,6 @@ export async function GET() {
       .populate('responsableId')
       .populate('typeOfWasteId')
       .populate('address');
-      console.log('Collection Points:', collectionPoints);
     
     return NextResponse.json(collectionPoints);
   } catch (error) {
