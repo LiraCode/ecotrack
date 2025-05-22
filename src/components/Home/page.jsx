@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from "react";
-import { 
+import {
   Box, Container, Tabs, Tab
 } from "@mui/material";
 import useLocalStorage from "@/hooks/useLocalStorage";
@@ -10,12 +10,14 @@ import HomeTab from "./sections/HomeTab";
 import EcopointsTab from "./sections/EcopointsTab";
 import WasteGuideTab from "./sections/WasteGuideTab";
 import WasteDetailDialog from "./dialogs/WasteDetailDialog";
+import { useAuth } from "@/context/AuthContext"; // Importar o contexto de autenticação
 
 export default function HomePage() {
+  const { user, isAuthenticated } = useAuth(); // Obter informações do usuário
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedWaste, setSelectedWaste] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
-  
+
   // Estados para dados dinâmicos
   const [latestPost, setLatestPost] = useState(null);
   const [upcomingSchedules, setUpcomingSchedules] = useState([]);
@@ -26,12 +28,12 @@ export default function HomePage() {
     collectionsCount: 0,
     loading: true
   });
-  
+
   // Estados de carregamento
   const [loading, setLoading] = useState(true);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [loadingGoals, setLoadingGoals] = useState(true);
-   
+
   const handleOpenDialog = (wasteType) => {
     setSelectedWaste(wasteType);
     setOpenDialog(true);
@@ -49,6 +51,9 @@ export default function HomePage() {
     setActiveTab(2);
   };
 
+  // Verificar se o usuário está logado e é do tipo "user"
+  const isUserLoggedIn = user && user.role === 'User';
+
   // Função para buscar os posts
   useEffect(() => {
     const fetchPosts = async () => {
@@ -60,13 +65,13 @@ export default function HomePage() {
             "Content-Type": "application/json",
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
-        
+
         const posts = await response.json();
-        
+
         // Verificar se há posts e pegar o primeiro (mais recente)
         if (posts && posts.length > 0) {
           setLatestPost(posts[0]);
@@ -85,29 +90,39 @@ export default function HomePage() {
     fetchPosts();
   }, []);
 
-  // Função para buscar os agendamentos próximos
+  // Função para buscar os agendamentos próximos - apenas para usuários logados do tipo "user"
   useEffect(() => {
     const fetchUpcomingSchedules = async () => {
       try {
         setLoadingSchedules(true);
-        
-        // Obter token de autenticação do localStorage (se necessário)
+
+        // Verificar se o usuário está logado e é do tipo "user"
+        if (!isUserLoggedIn) {
+          // Se não estiver logado ou não for user, definir dados vazios
+          setUpcomingSchedules([]);
+          return;
+        }
+
+        // Obter token de autenticação do localStorage
         const token = localStorage.getItem('ecotrack_token');
-        
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado');
+        }
+
         const response = await fetch("/api/schedule?limit=2&sort=date", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            ...(token && { "Authorization": `Bearer ${token}` })
+            "Authorization": `Bearer ${token}`
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Formatar os dados para o formato esperado pelo componente
         const formattedSchedules = data.map(schedule => {
           // Converter a data para um formato legível
@@ -117,13 +132,13 @@ export default function HomePage() {
             month: 'short',
             year: 'numeric'
           });
-          
+
           // Extrair o horário
           const formattedTime = scheduleDate.toLocaleTimeString('pt-BR', {
             hour: '2-digit',
             minute: '2-digit'
           });
-          
+
           return {
             id: schedule._id,
             location: schedule.collectionPointId?.name || "Ecoponto",
@@ -132,15 +147,11 @@ export default function HomePage() {
             type: schedule.wastes?.map(w => w.wasteId?.name || "Resíduo").join(", ") || "Diversos"
           };
         });
-        
+
         setUpcomingSchedules(formattedSchedules);
       } catch (error) {
         console.error("Error fetching upcoming schedules:", error);
-        // Usar dados de exemplo em caso de erro
-        setUpcomingSchedules([
-          { id: 1, location: "Ecoponto - Pajuçara", date: "15 Jun 2023", time: "14:00", type: "Eletrônicos" },
-          { id: 2, location: "Ecoponto - Tabuleiro", date: "22 Jun 2023", time: "10:30", type: "Plástico e Papel" }
-        ]);
+        setUpcomingSchedules([]);
       } finally {
         setLoadingSchedules(false);
       }
@@ -148,22 +159,27 @@ export default function HomePage() {
 
     // Chamar a função imediatamente
     fetchUpcomingSchedules();
-  }, []);
+  }, [isUserLoggedIn]); // Adicionar isUserLoggedIn como dependência
 
-  // Função para buscar as metas do usuário
+  // Função para buscar as metas do usuário - apenas para usuários logados do tipo "user"
   useEffect(() => {
     const fetchGoals = async () => {
       try {
         setLoadingGoals(true);
-        
+
+        // Verificar se o usuário está logado e é do tipo "user"
+        if (!isUserLoggedIn) {
+          // Se não estiver logado ou não for user, definir dados vazios
+          setGoals([]);
+          return;
+        }
+
         // Obter token de autenticação do localStorage
         const token = localStorage.getItem('ecotrack_token');
-        
-        // Se não houver token, usar dados de exemplo
         if (!token) {
-          throw new Error('Usuário não autenticado');
+          throw new Error('Token de autenticação não encontrado');
         }
-        
+
         const response = await fetch("/api/goals?limit=3", {
           method: "GET",
           headers: {
@@ -171,41 +187,35 @@ export default function HomePage() {
             "Authorization": `Bearer ${token}`
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
-        
+
         const responseData = await response.json();
-        
+
         // Verificar a estrutura da resposta e extrair o array de metas
-        // A resposta pode estar em diferentes formatos, então vamos verificar
-        const goalsArray = Array.isArray(responseData) 
-          ? responseData 
+        const goalsArray = Array.isArray(responseData)
+          ? responseData
           : responseData.goals || responseData.data || [];
-        
+
         // Verificar se goalsArray é realmente um array
         if (!Array.isArray(goalsArray)) {
           console.error("Resposta da API não contém um array de metas:", responseData);
           throw new Error('Formato de resposta inválido');
         }
-        
+
         // Formatar os dados para o formato esperado pelo componente
         const formattedGoals = goalsArray.map(goal => ({
           id: goal._id || goal.id,
           title: goal.description || goal.title,
           completed: goal.completed || false
         }));
-        
+
         setGoals(formattedGoals);
       } catch (error) {
         console.error("Error fetching goals:", error);
-        // Usar dados de exemplo em caso de erro
-        setGoals([
-          { id: 1, title: "Reduzir o uso de plástico em 50% até 2025", completed: false },
-          { id: 2, title: "Reciclar 10kg de papel este mês", completed: false },
-          { id: 3, title: "Descartar corretamente 5 itens eletrônicos", completed: true }
-        ]);
+        setGoals([]);
       } finally {
         setLoadingGoals(false);
       }
@@ -213,7 +223,7 @@ export default function HomePage() {
 
     // Chamar a função imediatamente
     fetchGoals();
-  }, []);
+  }, [isUserLoggedIn]); // Adicionar isUserLoggedIn como dependência
 
   // Função para buscar estatísticas de impacto ambiental
   useEffect(() => {
@@ -221,7 +231,7 @@ export default function HomePage() {
       try {
         // Iniciar com loading
         setImpactStats(prev => ({ ...prev, loading: true }));
-        
+
         // Fazer a requisição para a API
         const response = await fetch("/api/stats/impact", {
           method: "GET",
@@ -229,13 +239,14 @@ export default function HomePage() {
             "Content-Type": "application/json",
           },
         });
-        
+
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+        console.log("Dados recebidos da API:", data);
+
         // Atualizar o estado com os dados recebidos
         setImpactStats({
           wasteCount: data.wasteCount || 0,
@@ -260,21 +271,21 @@ export default function HomePage() {
   }, []);
 
   return (
-    <Container maxWidth="4xl" sx={{ minWidth: '330px', display: 'flex', flexDirection: 'column', alignItems: 'center',mt: 4 }}>
+    <Container maxWidth="4xl" sx={{ minWidth: '330px', display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
       {/* Hero Section */}
       <HeroSection impactStats={impactStats} />
 
       {/* Main Content Tabs */}
-      <Box sx={{ Width: {sm:'30vh', xs:'40vh', lg:'90vh'}, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ Width: { sm: '30vh', xs: '40vh', lg: '90vh' }, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
-          <Tabs 
-            value={activeTab} 
-            onChange={handleTabChange} 
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
             textColor="primary"
             indicatorColor="primary"
             centered
-            sx={{ 
-              '& .MuiTab-root': { 
+            sx={{
+              '& .MuiTab-root': {
                 fontWeight: 'bold',
                 padding: { xs: '1px 5px', sm: '0px s0px' },
                 ontSize: { xs: '10px', sm: '10px' },
@@ -292,16 +303,17 @@ export default function HomePage() {
 
         {/* Home Tab */}
         {activeTab === 0 && (
-          <HomeTab 
-            latestPost={latestPost} 
+          <HomeTab
+            latestPost={latestPost}
             loading={loading}
-            upcomingSchedules={upcomingSchedules} 
+            upcomingSchedules={upcomingSchedules}
             loadingSchedules={loadingSchedules}
             goals={goals}
             loadingGoals={loadingGoals}
             impactStats={impactStats}
             handleOpenDialog={handleOpenDialog}
             onViewAllWasteTypes={handleViewAllWasteTypes}
+            isUserLoggedIn={isUserLoggedIn} // Passar o estado de login para o componente
           />
         )}
 
@@ -313,10 +325,10 @@ export default function HomePage() {
       </Box>
 
       {/* Dialog with detailed information */}
-      <WasteDetailDialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        selectedWaste={selectedWaste} 
+      <WasteDetailDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        selectedWaste={selectedWaste}
       />
     </Container>
   );

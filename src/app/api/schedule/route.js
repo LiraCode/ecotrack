@@ -2,6 +2,8 @@ import connectToDB from '@/lib/db';
 import CollectionScheduling from '@/models/collectionScheduling';
 import User from '@/models/user';
 import CollectionPoint from '@/models/collectionPoint';
+import Admin from '@/models/admin';
+import Responsable from '@/models/responsable';
 import  '@/models/waste';
 import  '@/models/address';
 import { NextResponse } from 'next/server';
@@ -43,21 +45,30 @@ export async function GET(request) {
     
     // Buscar o usuário para verificar o papel
     const user = await User.findOne({ firebaseId: decodedToken.uid });
+    let data = user;
     if (!user) {
-      return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
+      const admin = await Admin.findOne({ firebaseId: decodedToken.uid });
+      data = admin;
+      if (!admin) {
+        const responsible = await Responsable.findOne({ firebaseId: decodedToken.uid });
+        data = responsible;
+        if (!responsible) {
+          return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+        }
+      }
     }
     
     // Construir filtro de consulta
     const query = {};
     
     // Se for um usuário comum, mostrar apenas seus próprios agendamentos
-    if (user.role === 'user') {
-      query.userId = user._id;
+    if (data.role === 'user') {
+      query.userId = data._id;
     } 
     // Se for um responsável por ecoponto, mostrar apenas agendamentos do seu ecoponto
-    else if (user.role === 'Responsável') {
+    else if (data.role === 'Responsável') {
       // Buscar ecopontos associados a este responsável
-      const ecopoints = await CollectionPoint.find({ responsibleId: user._id });
+      const ecopoints = await CollectionPoint.find({ responsibleId: data._id });
       const ecopointIds = ecopoints.map(ep => ep._id);
       
       if (ecopointIds.length === 0) {
@@ -70,7 +81,7 @@ export async function GET(request) {
     // Aplicar filtros adicionais se fornecidos
     if (
       userId &&
-      (user.role === "Administrador" || user.role === "Responsável")
+      (data.role === "Administrador" || data.role === "Responsável")
     ) {
       query.userId = userId;
     }
@@ -180,6 +191,126 @@ export async function POST(request) {
     console.error('Error creating schedule:', error);
     return NextResponse.json(
       { message: 'Erro ao criar agendamento', error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Atualizar um agendamento existente
+export async function PUT(request) {
+  try {
+    await connectToDB();
+    
+    // Verificar autenticação com Firebase
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
+    
+    // Obter ID do agendamento da URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const scheduleId = pathParts[pathParts.length - 1];
+    
+    if (!scheduleId || scheduleId === 'schedule') {
+      return NextResponse.json(
+        { message: 'ID do agendamento não fornecido' },
+        { status: 400 }
+      );
+    }
+    
+    // Obter dados do corpo da requisição
+    const body = await request.json();
+    
+    // Buscar o usuário para verificar o papel
+    const user = await User.findOne({ firebaseId: decodedToken.uid });
+    let data = user;
+    if (!user) {
+      const admin = await Admin.findOne({ firebaseId: decodedToken.uid });
+      data = admin;
+      if (!admin) {
+        const responsible = await Responsable.findOne({ firebaseId: decodedToken.uid });
+        data = responsible;
+        if (!responsible) {
+          return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+        }
+      }
+    }
+    
+    // Buscar o agendamento existente
+    const existingSchedule = await CollectionScheduling.findById(scheduleId);
+    if (!existingSchedule) {
+      return NextResponse.json(
+        { message: 'Agendamento não encontrado' },
+        { status: 404 }
+      );
+    }
+    
+    // Verificar permissões
+    // Usuários comuns só podem atualizar seus próprios agendamentos
+    if (data.role === 'user' && existingSchedule.userId.toString() !== data._id.toString()) {
+      return NextResponse.json(
+        { message: 'Não autorizado a modificar este agendamento' },
+        { status: 403 }
+      );
+    }
+    
+    // Responsáveis só podem atualizar agendamentos de seus ecopontos
+    if (data.role === 'Responsável') {
+      const ecopoints = await CollectionPoint.find({ responsibleId: data._id });
+      const ecopointIds = ecopoints.map(ep => ep._id.toString());
+      
+      if (!ecopointIds.includes(existingSchedule.collectionPointId.toString())) {
+        return NextResponse.json(
+          { message: 'Não autorizado a modificar este agendamento' },
+          { status: 403 }
+        );
+      }
+    }
+    
+    // Preparar dados para atualização
+    const updateData = {};
+    
+    // Apenas administradores podem alterar o usuário
+    if (data.role === 'Administrador' && body.userId) {
+      updateData.userId = body.userId;
+    }
+    
+    // Campos que podem ser atualizados
+    if (body.collectionPointId) updateData.collectionPointId = body.collectionPointId;
+    if (body.date) updateData.date = new Date(body.date);
+    if (body.time !== undefined) updateData.time = body.time;
+    if (body.status) updateData.status = body.status;
+    if (body.wastes) updateData.wastes = body.wastes;
+    if (body.addressId) updateData.addressId = body.addressId;
+    if (body.collector !== undefined) updateData.collector = body.collector;
+    
+    // Atualizar o agendamento
+    const updatedSchedule = await CollectionScheduling.findByIdAndUpdate(
+      scheduleId,
+      updateData,
+      { new: true, runValidators: true }
+    )
+      .populate('userId')
+      .populate('collectionPointId')
+      .populate('addressId')
+      .populate({
+        path: 'wastes.wasteId',
+        model: 'Waste'
+      });
+    
+    if (!updatedSchedule) {
+      return NextResponse.json(
+        { message: 'Erro ao atualizar agendamento' },
+        { status: 500 }
+      );
+    }
+    
+    return NextResponse.json(updatedSchedule);
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    return NextResponse.json(
+      { message: 'Erro ao atualizar agendamento', error: error.message },
       { status: 500 }
     );
   }

@@ -29,13 +29,14 @@ export const getAllGoals = async (status = null) => {
   }
 };
 
-export const getGoalById = async (id) => {
+export const getGoalById = async (id, token) => {
   console.log('getGoalById called with id:', id);
   try {
     const response = await fetch(`/api/goals?id=${id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
     
@@ -53,12 +54,13 @@ export const getGoalById = async (id) => {
 };
 
 // Criar nova meta (admin)
-export const createGoal = async (goalData) => {
+export const createGoal = async (goalData, token) => {
   try {
     const response = await fetch('/api/goals', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(goalData),
     });
@@ -77,12 +79,13 @@ export const createGoal = async (goalData) => {
 };
 
 // Atualizar meta (admin)
-export const updateGoal = async (id, goalData) => {
+export const updateGoal = async (id, goalData, token) => {
   try {
     const response = await fetch('/api/goals', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         id,
@@ -104,12 +107,13 @@ export const updateGoal = async (id, goalData) => {
 };
 
 // Remover meta (admin)
-export const deleteGoal = async (id) => {
+export const deleteGoal = async (id,token) => {
   try {
     const response = await fetch(`/api/goals?id=${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
     

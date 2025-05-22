@@ -48,12 +48,14 @@ export async function DELETE(request, { params }) {
     // Find the user to verify permissions
     const user = await User.findOne({ firebaseId: decodedToken.uid });
     if (!user) {
+      console.log("User not found");
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
     
     // Find the score
     const score = await Score.findById(id);
     if (!score) {
+      console.log("Score not found");
       return NextResponse.json({ message: 'Score não encontrado' }, { status: 404 });
     }
     

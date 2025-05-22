@@ -24,7 +24,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   useEffect(() => {
     // Verifica o estado do usuário e define o role
     if (user) {
-      if(user.role){
+      if (user.role) {
         setRole(user.role);
         setLoading(false);
       }
@@ -32,11 +32,11 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
       setRole("all");
       setLoading(false);
     }
-  
+
 
   }, [user]);
 
-  
+
 
 
   // Atualiza o pageName a partir do localStorage quando o componente monta
@@ -75,20 +75,20 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     // If user is not logged in, show items for not-logged users
     if (!user) {
       return (
-        item.role === "not-logged" || 
-        item.role === "all" || 
+        item.role === "not-logged" ||
+        item.role === "all" ||
         (Array.isArray(item.role) && (item.role.includes("not-logged") || item.role.includes("all")))
       );
     }
-    
+
     // If user is logged in, show items for logged users with appropriate role
     return (
-      item.role === "logged" || 
-      item.role === "all" || 
-      item.role === role || 
+      item.role === "logged" ||
+      item.role === "all" ||
+      item.role === role ||
       (Array.isArray(item.role) && (
-        item.role.includes("logged") || 
-        item.role.includes("all") || 
+        item.role.includes("logged") ||
+        item.role.includes("all") ||
         item.role.includes(role)
       ))
     );
@@ -97,9 +97,8 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   return (
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
-        className={`fixed left-0 z-50 flex h-screen min-w-28 max-w-28 flex-col overflow-y-hidden bg-gray-100 duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed left-0 z-50 flex h-screen min-w-28 max-w-28 flex-col overflow-y-hidden bg-gray-100 duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear green aling-center">
           <nav className="mt-5 flex flex-col items-center w-full lg:mt-5">
@@ -107,7 +106,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
               <div key={groupIndex} className="w-full">
                 <ul className="mb-2 flex flex-col gap-2 text-sm w-full">
                   {group.menuItems
-                    .filter(shouldDisplayMenuItem)
+                    .filter(shouldDisplayMenuItem).sort((a, b) => a.pos - b.pos)
                     .map((menuItem, menuIndex) => (
                       <li key={menuIndex} className="flex justify-center w-full align-center">
                         <SidebarItem
@@ -117,6 +116,10 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
                         />
                       </li>
                     ))}
+
+
+
+
                 </ul>
               </div>
             ))}

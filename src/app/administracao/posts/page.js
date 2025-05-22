@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/config/firebase/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import useLocalStorage from '@/hooks/useLocalStorage';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import AppLayout from '@/components/Layout/page';
+import dynamic from 'next/dynamic';
+// Remover o import do CSS do react-quill
+// import 'react-quill/dist/quill.snow.css';
+// Importar o CSS do react-quill-new
+import 'react-quill-new/dist/quill.snow.css';
 import { 
   Box, 
   Typography, 
@@ -31,12 +33,21 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  Grid
+  Grid,
+  Chip,
+  CircularProgress
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAuth } from '@/context/AuthContext';
+
+// Importar React-Quill-New dinamicamente para evitar problemas de SSR
+const ReactQuill = dynamic(() => import('react-quill-new'), { 
+  ssr: false,
+  loading: () => <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando editor...</Box>
+});
 
 export default function AdminPosts() {
   const [posts, setPosts] = useState([]);
@@ -45,6 +56,7 @@ export default function AdminPosts() {
   const [currentPost, setCurrentPost] = useState(null);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [categories, setCategories] = useState(['Notícia', 'Tutorial', 'Evento', 'Dica', 'Outro']);
@@ -55,11 +67,38 @@ export default function AdminPosts() {
     category: [],
     content: '',
     image: '',
+    status: 'active'
   });
   
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
+  
+  // Configuração do editor Quill
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'indent': '-1' }, { 'indent': '+1' }],
+      ['link', 'image'],
+      [{ 'align': [] }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['clean']
+    ],
+    clipboard: {
+      matchVisual: false,
+    }
+  };
+
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'indent',
+    'link', 'image',
+    'align',
+    'color', 'background'
+  ];
   
   // Get sidebar status from localStorage
   useEffect(() => {
@@ -80,15 +119,19 @@ export default function AdminPosts() {
 
   const fetchPosts = useCallback(async () => {
     try {
+      setFetchLoading(true);
       const response = await fetch('/api/posts');
       const data = await response.json();
       if (response.ok) {
-        setPosts(data);
+        setPosts(Array.isArray(data) ? data : []);
       } else {
         showAlert(data.message || 'Erro ao carregar posts', 'error');
       }
     } catch (error) {
+      console.error('Error fetching posts:', error);
       showAlert('Erro ao carregar posts', 'error');
+    } finally {
+      setFetchLoading(false);
     }
   }, []);
 
@@ -101,14 +144,15 @@ export default function AdminPosts() {
       setEditMode(true);
       setCurrentPost(post);
       setFormData({
-        title: post.title,
+        title: post.title || '',
         subtitle: post.subtitle || '',
         description: post.description || '',
-        category: post.category || [],
-        content: post.content,
-        image: post.image,
+        category: Array.isArray(post.category) ? post.category : [],
+        content: post.content || '',
+        image: post.image || '',
+        status: post.status || 'active'
       });
-      setImagePreview(post.image);
+      setImagePreview(post.image || null);
     } else {
       setEditMode(false);
       setCurrentPost(null);
@@ -119,6 +163,7 @@ export default function AdminPosts() {
         category: [],
         content: '',
         image: '',
+        status: 'active'
       });
       setImage(null);
       setImagePreview(null);
@@ -138,10 +183,24 @@ export default function AdminPosts() {
     });
   };
 
+  const handleEditorChange = (content) => {
+    setFormData({
+      ...formData,
+      content
+    });
+  };
+
   const handleCategoryChange = (e) => {
     setFormData({
       ...formData,
       category: e.target.value
+    });
+  };
+
+  const handleStatusChange = (e) => {
+    setFormData({
+      ...formData,
+      status: e.target.value
     });
   };
 
@@ -160,16 +219,32 @@ export default function AdminPosts() {
   const uploadImage = async (file) => {
     if (!file) return null;
     
-    const fileExtension = file.name.split('.').pop();
-    const fileName = `posts/${uuidv4()}.${fileExtension}`;
-    const storageRef = ref(storage, fileName);
-    
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-    return downloadURL;
+    try {
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `posts/${uuidv4()}.${fileExtension}`;
+      const storageRef = ref(storage, fileName);
+      
+      await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Falha ao fazer upload da imagem');
+    }
   };
 
   const handleSubmit = async () => {
+    // Validação básica
+    if (!formData.title.trim()) {
+      showAlert('O título é obrigatório', 'error');
+      return;
+    }
+
+    if (!formData.content.trim()) {
+      showAlert('O conteúdo é obrigatório', 'error');
+      return;
+    }
+
     setLoading(true);
     try {
       let imageUrl = formData.image;
@@ -182,16 +257,16 @@ export default function AdminPosts() {
       const postData = {
         ...formData,
         image: imageUrl,
-        author: user.id,
+        author: user?.uid || '',
       };
       
       let response;
-      if (editMode) {
+      if (editMode && currentPost?._id) {
         response = await fetch(`/api/posts/${currentPost._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`,
+            'Authorization': `Bearer ${user?.accessToken}`,
           },
           body: JSON.stringify(postData),
         });
@@ -200,7 +275,7 @@ export default function AdminPosts() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`,
+            'Authorization': `Bearer ${user?.accessToken}`,
           },
           body: JSON.stringify(postData),
         });
@@ -217,7 +292,7 @@ export default function AdminPosts() {
       }
     } catch (error) {
       console.error('Erro ao salvar post:', error);
-      showAlert(error.message, 'error');
+      showAlert(error.message || 'Erro ao salvar post', 'error');
     } finally {
       setLoading(false);
     }
@@ -229,7 +304,7 @@ export default function AdminPosts() {
         const response = await fetch(`/api/posts/${id}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${user.accessToken}`,
+            'Authorization': `Bearer ${user?.accessToken}`,
           },
         });
         
@@ -241,6 +316,7 @@ export default function AdminPosts() {
           showAlert(data.message || 'Erro ao excluir post', 'error');
         }
       } catch (error) {
+        console.error('Error deleting post:', error);
         showAlert('Erro ao excluir post', 'error');
       }
     }
@@ -250,15 +326,39 @@ export default function AdminPosts() {
     setAlert({ ...alert, open: false });
   };
 
-  if (authLoading) {
-    return (
-      <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-          <Typography>Carregando...</Typography>
-        </Box>
-      </AppLayout>
-    );
-  }
+  // Função para renderizar uma prévia do conteúdo HTML
+  const renderContentPreview = (content) => {
+    if (!content) return '';
+    // Limitar a 100 caracteres e remover tags HTML
+    const plainText = content.replace(/<[^>]*>?/gm, '');
+    return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+  };
+
+  // Função para obter o status formatado
+  const getStatusChip = (status) => {
+    let color = 'default';
+    let label = 'Desconhecido';
+    
+    switch(status) {
+      case 'active':
+        color = 'success';
+        label = 'Ativo';
+        break;
+      case 'draft':
+        color = 'warning';
+        label = 'Rascunho';
+        break;
+      case 'archived':
+        color = 'default';
+        label = 'Arquivado';
+        break;
+      default:
+        color = 'primary';
+        label = status || 'Ativo';
+    }
+    
+    return <Chip label={label} color={color} size="small" />;
+  };
 
   return (
     <AppLayout>
@@ -298,62 +398,101 @@ export default function AdminPosts() {
               Gerenciamento de Posts
             </Typography>
 
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<AddIcon />}
-              onClick={() => handleOpen()}
-            >
-              Novo Post
-            </Button>
+            <Box>
+              <Button 
+                variant="outlined" 
+                startIcon={<RefreshIcon />} 
+                onClick={fetchPosts}
+                sx={{ mr: 1 }}
+              >
+                Atualizar
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpen()}
+              >
+                Novo Post
+              </Button>
+            </Box>
           </Box>
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Título</TableCell>
-                  <TableCell>Categoria</TableCell>
-                  <TableCell>Data de Criação</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {posts.map((post) => (
-                  <TableRow key={post._id}>
-                    <TableCell>{post.title}</TableCell>
-                    <TableCell>{post.category ? post.category.join(', ') : 'N/A'}</TableCell>
-                    <TableCell>
-                      {new Date(post.createdAt).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>{post.status || 'active'}</TableCell>
-                    <TableCell>
-                      <IconButton
-                        onClick={() => handleOpen(post)}
-                        color="primary"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleDelete(post._id)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {posts.length === 0 && (
+          {fetchLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <Typography>Carregando posts...</Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Nenhum post cadastrado
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Título</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Categoria</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Conteúdo</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Data</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Ações</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {posts.length > 0 ? (
+                    posts.map((post) => (
+                      <TableRow key={post._id} hover>
+                        <TableCell>{post.title}</TableCell>
+                        <TableCell>
+                          {post.category && Array.isArray(post.category) ? (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {post.category.map((cat, index) => (
+                                <Chip 
+                                  key={index} 
+                                  label={cat} 
+                                  size="small" 
+                                  sx={{ bgcolor: '#e8f5e9', color: '#2e7d32' }}
+                                />
+                              ))}
+                            </Box>
+                          ) : (
+                            'N/A'
+                          )}
+                        </TableCell>
+                        <TableCell>{renderContentPreview(post.content)}</TableCell>
+                        <TableCell>
+                          {new Date(post.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>{getStatusChip(post.status)}</TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={() => handleOpen(post)}
+                            color="primary"
+                            size="small"
+                            sx={{ mr: 1 }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => handleDelete(post._id)}
+                            color="error"
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        <Typography variant="body1" sx={{ py: 2 }}>
+                          Nenhum post cadastrado
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Paper>
 
         <Box sx={{ mt: 4 }}>
@@ -384,181 +523,309 @@ export default function AdminPosts() {
       </Box>
 
       {/* Dialog para adicionar/editar post */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="lg" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }
+        }}
+      >
         <DialogTitle
-          sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
+          sx={{ 
+            bgcolor: "#f5f5f5", 
+            color: "#2e7d32", 
+            fontWeight: "bold",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #e0e0e0',
+            py: 2
+          }}
         >
           {editMode ? "Editar Post" : "Novo Post"}
+          <IconButton onClick={handleClose} size="small">
+            <DeleteIcon />
+          </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            {/* Seção: Informações Básicas */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
-                Informações Básicas
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Título"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Subtítulo"
-                    name="subtitle"
-                    value={formData.subtitle}
-                    onChange={handleChange}
-                    required
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Descrição Curta"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    required
-                    margin="normal"
-                    helperText="Breve descrição para exibição na listagem"
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Categorias</InputLabel>
-                    <Select
-                      multiple
-                      name="category"
-                      value={formData.category}
-                      onChange={handleCategoryChange}
-                      label="Categorias"
-                    >
-                      {categories.map((category) => (
-                        <MenuItem key={category} value={category}>
-                          {category}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </Grid>
-
-            {/* Seção: Conteúdo */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
-                Conteúdo
-              </Typography>
-              <TextField
-                fullWidth
-                label="Conteúdo"
-                name="content"
-                value={formData.content}
-                onChange={handleChange}
-                multiline
-                rows={10}
-                required
-                margin="normal"
-              />
-            </Grid>
-
-            {/* Seção: Imagem */}
-            <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
-                Imagem
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
+        <DialogContent dividers sx={{ flexGrow: 1, overflow: 'auto', px: 4, py: 3 }}>
+          <Grid container spacing={4}>
+            {/* Coluna da esquerda - Informações básicas e imagem */}
+            <Grid item xs={12} md={4}>
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+                  Informações Básicas
+                </Typography>
+                
+                <TextField
+                  fullWidth
+                  label="Título"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  margin="normal"
+                  size="small"
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Subtítulo"
+                  name="subtitle"
+                  value={formData.subtitle}
+                  onChange={handleChange}
+                  margin="normal"
+                  size="small"
+                />
+                
+                <TextField
+                  fullWidth
+                  label="Descrição Curta"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={2}
+                  margin="normal"
+                  size="small"
+                  helperText="Breve descrição para listagens"
+                />
+                
+                <FormControl fullWidth margin="normal" size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleStatusChange}
+                    label="Status"
+                  >
+                    <MenuItem value="active">Ativo</MenuItem>
+                    <MenuItem value="draft">Rascunho</MenuItem>
+                    <MenuItem value="archived">Arquivado</MenuItem>
+                  </Select>
+                </FormControl>
+                
+                <FormControl fullWidth margin="normal" size="small">
+                  <InputLabel>Categorias</InputLabel>
+                  <Select
+                    multiple
+                    name="category"
+                    value={formData.category}
+                    onChange={handleCategoryChange}
+                    label="Categorias"
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>
+                        {category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Paper>
+              
+              {/* Seção de imagem */}
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+                  Imagem de Capa
+                </Typography>
+                
+                <Box sx={{ mb: 2, textAlign: 'center' }}>
                   <input
-                    type="file"
                     accept="image/*"
-                    onChange={handleImageChange}
                     style={{ display: 'none' }}
                     id="image-upload"
+                    type="file"
+                    onChange={handleImageChange}
                   />
                   <label htmlFor="image-upload">
                     <Button
-                      variant="contained"
+                      variant="outlined"
                       component="span"
-                      sx={{ mt: 1 }}
+                      color="primary"
+                      size="small"
+                      fullWidth
                     >
-                      {editMode ? "Alterar Imagem" : "Selecionar Imagem"}
+                      Selecionar Imagem
                     </Button>
                   </label>
-                  {!image && editMode && (
-                    <Typography variant="caption" sx={{ ml: 2 }}>
-                      Mantenha em branco para manter a imagem atual
-                    </Typography>
-                  )}
-                </Grid>
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                    Recomendado: 1200 x 630 pixels
+                  </Typography>
+                </Box>
                 
-                {imagePreview && (
-                  <Grid item xs={12} sx={{ mt: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Pré-visualização:
-                    </Typography>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        maxWidth: 400,
-                        height: 'auto',
-                        position: 'relative',
-                        mt: 1,
-                        border: '1px solid #ddd',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <Image 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        width={400}
-                        height={250}
-                        style={{ objectFit: 'cover' }}
+                {imagePreview ? (
+                  <Box sx={{ 
+                    width: '100%', 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    mb: 1
+                  }}>
+                    <Box sx={{ 
+                      width: '100%', 
+                      maxWidth: '400px',
+                      height: 'auto',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      border: '1px solid #ddd'
+                    }}>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          objectFit: 'cover',
+                        }}
                       />
                     </Box>
-                  </Grid>
+                  </Box>
+                ) : (
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '150px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    border: '1px dashed #ccc',
+                    borderRadius: 1,
+                    bgcolor: '#f9f9f9'
+                  }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Nenhuma imagem selecionada
+                    </Typography>
+                  </Box>
                 )}
-              </Grid>
+              </Paper>
+            </Grid>
+            
+            {/* Coluna da direita - Editor de conteúdo */}
+            <Grid item xs={12} md={8}>
+              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+                  Conteúdo
+                </Typography>
+                
+                <Box 
+                  sx={{ 
+                    mb: 2,
+                    mx: 'auto',
+                    '.ql-container': {
+                      minHeight: '400px',
+                      fontSize: '16px'
+                    },
+                    '.ql-editor': {
+                      minHeight: '400px'
+                    },
+                    '.ql-toolbar': {
+                      borderRadius: '4px 4px 0 0',
+                      backgroundColor: '#f9f9f9'
+                    },
+                    '.ql-container': {
+                      borderRadius: '0 0 4px 4px'
+                    }
+                  }}
+                >
+                  <ReactQuill
+                    theme="snow"
+                    value={formData.content}
+                    onChange={handleEditorChange}
+                    modules={modules}
+                    formats={formats}
+                    placeholder="Escreva o conteúdo do seu post aqui..."
+                  />
+                </Box>
+                
+                <Box sx={{ mt: 3, p: 2, bgcolor: '#f9f9f9', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#2e7d32' }}>
+                    Dicas para o editor:
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="caption" display="block">
+                        • Use os botões da barra para formatar seu texto
+                      </Typography>
+                      <Typography variant="caption" display="block">
+                        • Para adicionar imagens, clique no ícone de imagem
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="caption" display="block">
+                        • Para adicionar links, selecione o texto e clique no ícone de link
+                      </Typography>
+                      <Typography variant="caption" display="block">
+                        • Use os cabeçalhos para organizar seu conteúdo
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Paper>
             </Grid>
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, bgcolor: "#f5f5f5" }}>
-          <Button onClick={handleClose} variant="outlined" color="secondary">
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', borderTop: '1px solid #e0e0e0' }}>
+          <Button 
+            onClick={handleClose} 
+            color="inherit"
+            variant="outlined"
+          >
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? "Salvando..." : (editMode ? "Atualizar" : "Salvar")}
-          </Button>
+          <Box>
+            {editMode && (
+              <Button
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    status: 'draft'
+                  });
+                  setTimeout(handleSubmit, 0);
+                }}
+                variant="outlined"
+                color="warning"
+                disabled={loading}
+                sx={{ mr: 1 }}
+              >
+                Salvar como Rascunho
+              </Button>
+            )}
+            <Button
+              onClick={handleSubmit}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+            >
+              {loading ? 'Salvando...' : editMode ? 'Atualizar' : 'Publicar'}
+            </Button>
+          </Box>
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar para alertas */}
       <Snackbar
         open={alert.open}
         autoHideDuration={6000}
         onClose={handleCloseAlert}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
           onClose={handleCloseAlert}
           severity={alert.severity}
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
         >
           {alert.message}
         </Alert>

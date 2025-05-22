@@ -75,6 +75,7 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     
     if (!isValidObjectId(id)) {
+      console.error('Invalid ID:', id);
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
     }
     
@@ -104,7 +105,6 @@ export async function PUT(request, { params }) {
     
     // Buscar o agendamento existente
     const existingSchedule = await CollectionScheduling.findById(id);
-    console.log('Existing Schedule:', existingSchedule);
     if (!existingSchedule) {
       return NextResponse.json({ message: 'Agendamento não encontrado' }, { status: 404 });
     }

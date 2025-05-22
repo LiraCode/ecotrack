@@ -99,13 +99,13 @@ export default function ScheduleDialog({
 
 
                     {/* Botão para cancelar agendamento */}
-                    {(!schedule.completed && !schedule.canceled && schedule.status !== 'Cancelado') && (
+                    {(schedule.status !== "Coletado" && schedule.status !== 'Cancelado') && (
                       <Tooltip title="Cancelar agendamento">
                         <IconButton
                           edge="end"
                           onClick={() => onCancel(schedule.date, schedule.name)}
                           sx={{ color: '#f44336', marginTop: '50px', marginRight: '10px' }}
-                          disabled={schedule.completed || schedule.canceled || schedule.status === 'Cancelado'}
+                          disabled={schedule.status === 'Coletado' || schedule.status === 'Cancelado'}
                         >
                           <Cancel />
                         </IconButton>
@@ -117,12 +117,12 @@ export default function ScheduleDialog({
                   border: '1px solid #e0e0e0',
                   borderRadius: '4px',
                   mb: 2,
-                  backgroundColor: schedule.canceled ? '#ffebee' :
-                    schedule.completed ? '#f1f8e9' : 'white',
+                  backgroundColor: schedule.status === 'Cancelado' ? '#ffebee' :
+                    schedule.status === 'Coletado' ? '#f1f8e9' : 'white',
                   flexDirection: 'column',
                   alignItems: 'flex-start',
                   padding: 2,
-                  opacity: schedule.canceled ? 0.7 : 1
+                  opacity: schedule.status === 'Cancelado' ? 0.7 : 1
                 }}
               >
                 <Box sx={{ width: '100%', mb: 1 }}>
@@ -130,9 +130,9 @@ export default function ScheduleDialog({
                     variant='h6'
                     sx={{
                       fontWeight: 'bold',
-                      color: schedule.canceled ? '#d32f2f' :
-                        schedule.completed ? '#4caf50' : '#333',
-                      textDecoration: (schedule.completed || schedule.canceled) ? 'line-through' : 'none'
+                      color: schedule.status === 'Cancelado' ? '#d32f2f' :
+                        schedule.status === 'Coletado' ? '#4caf50' : '#333',
+                      textDecoration: (schedule.status === 'Coletado' || schedule.status === 'Cancelado') ? 'line-through' : 'none'
                     }}
                   >
                     {schedule.name}
@@ -150,13 +150,13 @@ export default function ScheduleDialog({
                   />
 
                   <Chip
-                    label={schedule.canceled ? "Cancelado" : schedule.status}
+                    label={schedule.status === "Cancelado" ? "Cancelado" : schedule.status}
                     size="small"
                     sx={{
-                      backgroundColor: schedule.canceled ? '#ffcdd2' :
-                        schedule.completed ? '#4caf50' : '#ffecb3',
-                      color: schedule.canceled ? '#d32f2f' :
-                        schedule.completed ? 'white' : '#ff6f00',
+                      backgroundColor: schedule.status !== 'Cancelado' ? '#ffcdd2' :
+                        schedule.status === "Coletado" ? '#4caf50' : '#ffecb3',
+                      color: schedule.status !== 'Cancelado' ? '#d32f2f' :
+                        schedule.status === "Coletado" ? 'white' : '#ff6f00',
                       mt: 0.5
                     }}
                   />

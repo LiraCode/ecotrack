@@ -31,18 +31,16 @@ const DesafioAtivo = ({ desafio, onConcluir, onRemover, onAtualizarProgresso }) 
     setOpenDialog(false)
   }
   
- 
 
-  
-
-  
   const handleRemover = async () => {
     if (!onRemover) return
     
     if (window.confirm(`Tem certeza que deseja remover o desafio "${desafio.nome}"? \n Essa ação não pode ser desfeita e irá zerar o progresso atual.`)) {
       setLoading(true)
       try {
-        await onRemover(desafio.id)
+        console.log("ID do desafio sendo removido:", desafio.id)
+        // Usar desafio.scoreId se existir, caso contrário usar desafio.id
+        await onRemover(desafio.scoreId || desafio.id)
       } catch (error) {
         console.error("Erro ao remover desafio:", error)
       } finally {

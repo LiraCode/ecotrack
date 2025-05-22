@@ -16,6 +16,7 @@ export const MetasProvider = ({ children }) => {
   const [desafiosDisponiveis, setDesafiosDisponiveis] = useState([])
   const [abaAtiva, setAbaAtiva] = useState('andamento')
   const [pendingAlert, setPendingAlert] = useState(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Verificar scores expirados ao carregar
   useEffect(() => {
@@ -64,9 +65,11 @@ export const MetasProvider = ({ children }) => {
       // Atualizar listas de desafios
       const desafio = desafiosDisponiveis.find(d => d.id === desafioId)
       if (desafio) {
-        // Adicionar aos desafios ativos
+        // Adicionar aos desafios ativos com o ID do score retornado pela API
         setDesafiosAtivos(prev => [...prev, {
           ...desafio,
+          id: data.score._id,
+          goalId: desafioId,
           progresso: 0,
           pontosGanhos: 0
         }])
@@ -176,6 +179,9 @@ export const MetasProvider = ({ children }) => {
       setDesafiosConcluidos(prev => prev.filter(d => d.id !== desafioId))
       setDesafiosExpirados(prev => prev.filter(d => d.id !== desafioId))
       
+      // Incrementar o refreshTrigger para forçar o recarregamento dos dados
+      setRefreshTrigger(prev => prev + 1)
+      
       toast({
         title: "Desafio removido",
         description: "O desafio foi removido da sua lista",
@@ -260,13 +266,13 @@ export const MetasProvider = ({ children }) => {
       setDesafiosAtivos,
       setDesafiosConcluidos,
       setDesafiosExpirados,
-      setDesafiosDisponiveis
+      setDesafiosDisponiveis,
+      refreshTrigger
     }}>
       {children}
     </MetasContext.Provider>
   )
 }
-
 export const useMetasContext = () => {
   const context = useContext(MetasContext)
   if (!context) {

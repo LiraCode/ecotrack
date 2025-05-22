@@ -8,7 +8,7 @@ export async function GET(request) {
     
     // Buscar apenas agendamentos concluídos
     const completedSchedules = await CollectionScheduling.find({ 
-      status: { $in: ['Concluído', 'Completed'] }
+      status: { $in: ['Coletado', 'Completed'] }
     }).populate({
       path: 'wastes.wasteId',
       model: 'Waste'

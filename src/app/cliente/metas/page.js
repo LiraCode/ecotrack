@@ -50,7 +50,9 @@ const MetasContent = () => {
     setDesafiosAtivos,
     setDesafiosConcluidos,
     setDesafiosExpirados,
-    setDesafiosDisponiveis
+    setDesafiosDisponiveis,
+    refreshTrigger,
+
   } = useMetasContext()
 
   useEffect(() => {
@@ -160,6 +162,7 @@ const MetasContent = () => {
           pontos: score.goalId?.points || 0,
           pontosGanhos: score.earnedPoints || 0
         })) : []
+        console.log("Dados formatados:", ativos);
         
         const concluidos = Array.isArray(completedScoresData.scores) ? completedScoresData.scores.map(score => ({
           id: score._id,
@@ -241,7 +244,7 @@ const MetasContent = () => {
     }
     
     fetchData()
-  }, [setDesafiosAtivos, setDesafiosConcluidos, setDesafiosDisponiveis, setDesafiosExpirados, setMeusPontos, setRanking, toast, user])
+  }, [setDesafiosAtivos, setDesafiosConcluidos, setDesafiosDisponiveis, setDesafiosExpirados, setMeusPontos, setRanking, toast, user, refreshTrigger])
 
   // Verificar se os dados estão disponíveis
   //console.log("Renderizando componentes com os seguintes dados:")

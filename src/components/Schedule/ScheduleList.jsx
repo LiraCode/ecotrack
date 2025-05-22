@@ -53,17 +53,25 @@ export default function ScheduleList({
                 ></Button>
                 <ListItemText
                   primary={
-                    <><Typography variant='h6' sx={{ whiteSpace: 'pre-line' }}>
-                      {`${schedule.name} \n`}
-                    </Typography><Typography variant='h7' sx={{ whiteSpace: 'pre-line' }}>{` Tipo de Material: ${schedule.type}`}</Typography></>
-                       
+                    <>
+                      <Typography variant="h6" sx={{ whiteSpace: "pre-line" }}>
+                        {`${schedule.name} \n`}
+                      </Typography>
+                      <Typography
+                        variant="h7"
+                        sx={{ whiteSpace: "pre-line" }}
+                      >{` Tipo de Material: ${schedule.type}`}</Typography>
+                    </>
                   }
                   secondary={
-                     <Typography variant="subtitle2" color="textSecondary" sx={{ whiteSpace: 'pre-line', mt: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      color="textSecondary"
+                      sx={{ whiteSpace: "pre-line", mt: 1 }}
+                    >
                       {`Data: ${schedule.date}\nStatus: ${schedule.status}`}
                     </Typography>
                   }
-                  
                   sx={{
                     "& .MuiListItemText-primary": {
                       fontWeight: "bold",
@@ -74,15 +82,12 @@ export default function ScheduleList({
                     },
                   }}
                 />
-                {schedule.completed  ? (
+                {schedule.status === "Coletado" ? (
                   <CheckCircle sx={{ color: "#4caf50" }} />
+                ) : schedule.status !== "Cancelado" ? (
+                  <AccessTime sx={{ color: "orange" }} />
                 ) : (
-                  schedule.status !== "Cancelado" ? (
-                    <AccessTime sx={{ color: "orange" }} />
-                  ) : (
-                    <Cancel sx={{ color: "#f44336" }} />
-                  )
-                 
+                  <Cancel sx={{ color: "#f44336" }} />
                 )}
               </ListItem>
               {index < schedules.length - 1 && <Divider />}

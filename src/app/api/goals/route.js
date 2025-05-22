@@ -1,6 +1,7 @@
 import connectToDB from '@/lib/db';
 import Goal from '@/models/goal';
 import User from '@/models/user';
+import Admin from '@/models/admin';
 import  '@/models/waste';
 import { auth } from '@/config/firebase/firebaseAdmin';
 import { NextResponse } from 'next/server';
@@ -18,6 +19,10 @@ async function verifyAuth(req) {
     const decodedToken = await auth.verifyIdToken(token);
     
     const user = await User.findOne({ firebaseId: decodedToken.uid });
+    if (!user) {
+      const Admins = await Admin.findOne({ firebaseId: decodedToken.uid });
+      return Admins;
+    }
     return user;
   } catch (error) {
     console.error('Error verifying auth:', error);
@@ -75,11 +80,13 @@ export async function POST(request) {
     // Verificar autenticação
     const user = await verifyAuth(request);
     if (!user) {
+      console.error('Error user:');
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
     // Verificar se é admin
-    if (user.role !== 'admin') {
+    if (user.role !== 'Administrador') {
+      console.error("Erro administrador:");
       return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
     }
     
@@ -136,11 +143,13 @@ export async function PUT(request) {
     // Verificar autenticação
     const user = await verifyAuth(request);
     if (!user) {
+      console.error('Error user:');
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
     // Verificar se é admin
-    if (user.role !== 'admin') {
+    if (user.role !== 'Administrador') {
+      console.error("Erro administrador:");
       return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
     }
     

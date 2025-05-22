@@ -31,9 +31,17 @@ const publicRoutes = [
   // Adicione outras rotas públicas aqui
 ];
 
-const adminExtraRoutes = [
-  'client/cadastro',
-  'parceiro/cadastro'  
+
+
+// Rotas permitidas para clientes
+const allowedClientRoutes = [
+  '/',
+  '/cliente',  // Adicionando a raiz da pasta cliente para permitir todas as subrotas
+  '/cliente/perfil',
+  '/cliente/metas',
+  '/agendamento',
+  '/posts',
+  '/locais'
 ];
 
 export const AuthContextProvider = ({ children }) => {
@@ -169,17 +177,19 @@ export const AuthContextProvider = ({ children }) => {
       // Se o usuário estiver logado, verificar o papel e limitar o acesso às pastas permitidas
       if (user.role === "Administrador") {
         // Apenas os administradores podem acessar rotas que iniciam com "/administracao"
-        if (!pathname.startsWith("/administracao") && !adminExtraRoutes && !publicRoutes) {
+        if (!pathname.startsWith("/administracao") && 
+            !adminExtraRoutes.some(route => pathname.startsWith(`/${route}`)) && 
+            !publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
           router.push("/administracao");
         }
       } else if (user.role === "Responsável") {
         // Apenas os responsáveis devem acessar rotas que iniciam com "/parceiro"
-        if (!pathname.startsWith("/parceiro")) {
+        if (!pathname.startsWith("/parceiro") && 
+            !publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
           router.push("/parceiro");
         }
       } else if (user.role === "User") {
-        // Clientes têm acesso somente a um conjunto de rotas permitidas
-        const allowedClientRoutes = ["/", "/agendamento", "/cliente/perfil", "/cliente/metas", "/posts"];
+        // Apenas os clientes devem acessar rotas que iniciam com "/cliente" ou rotas permitidas
         const isAllowed = allowedClientRoutes.some(route =>
           pathname === route || pathname.startsWith(`${route}/`)
         );
