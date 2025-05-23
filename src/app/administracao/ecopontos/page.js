@@ -100,7 +100,16 @@ export default function EcopontoManagement() {
 
   const fetchResponsibles = useCallback(async () => {
     try {
-      const response = await fetch('/api/responsible');
+      const response = await fetch('/api/responsible',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`
+          },
+       
+        }
+      );
       const data = await response.json();
       if (response.ok) {
         // Check if data has a specific property that contains the array
