@@ -24,14 +24,21 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  Grid
+  Grid,
+  CircularProgress,
+  Chip,
+  InputAdornment
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { validateCNPJ, formatCNPJ, formatCEP } from '@/utils/validators';
+import { fetchAddressByCEP, getCoordinatesFromAddress } from '@/services/cepService';
 
 export default function EcopontoManagement() {
   const [ecopontos, setEcopontos] = useState([]);
@@ -41,6 +48,10 @@ export default function EcopontoManagement() {
   const [responsibles, setResponsibles] = useState([]);
   const [wasteTypes, setWasteTypes] = useState([]);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
+  const [loadingCEP, setLoadingCEP] = useState(false);
+  const [loadingCoordinates, setLoadingCoordinates] = useState(false);
+  const [cnpjError, setCnpjError] = useState('');
+  const [cepError, setCepError] = useState('');
   const [formData, setFormData] = useState({
     cnpj: '',
     name: '',
@@ -55,30 +66,27 @@ export default function EcopontoManagement() {
       city: '',
       state: '',
       zipCode: '',
-    }
+    },
+    lat: '',
+    lng: ''
   });
   
   const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
   
-  // obter statusda sidebar do localStorage
+  // obter status da sidebar do localStorage
   useEffect(() => {
     const sidebarStatus = localStorage.getItem('sidebarOpen');
     if (sidebarStatus === 'true') {
       setSidebarOpen(true);
-      //verificar tamnho da tela se for maior que 768px setar sidebarOpen como true
       if (window.innerWidth > 768) {
         setSidebarOpen(true);
         localStorage.setItem('sidebarOpen', 'false');
         setIsMobile(false);
-        
       }
-
     }
-
   }, []);
-
 
   const showAlert = (message, severity) => {
     setAlert({ open: true, message, severity });
@@ -90,6 +98,14 @@ export default function EcopontoManagement() {
       const data = await response.json();
       if (response.ok) {
         setEcopontos(data);
+        // colocar data.location.coordinates[0] em lat e data.location.coordinates[1] em lng
+        // setFormData((prevFormData) => ({
+        //   ...prevFormData,
+        //   lat: data?.location.coordinates[0],
+        //   lng: data?.location.coordinates[1],
+          
+        //   }));
+        
       } else {
         showAlert(data.message || 'Erro ao carregar ecopontos', 'error');
       }
@@ -100,25 +116,20 @@ export default function EcopontoManagement() {
 
   const fetchResponsibles = useCallback(async () => {
     try {
-      const response = await fetch('/api/responsible',
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${user.accessToken}`,
-          },
-       
-        }
-      );
+      const response = await fetch('/api/responsible', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.accessToken}`,
+        },
+      });
       const data = await response.json();
       if (response.ok) {
-        // Check if data has a specific property that contains the array
         if (data.responsibles && Array.isArray(data.responsibles)) {
           setResponsibles(data.responsibles);
         } else if (Array.isArray(data)) {
           setResponsibles(data);
         } else {
-          // If all else fails, set an empty array
           setResponsibles([]);
           console.error('Unexpected response format:', data);
         }
@@ -127,7 +138,7 @@ export default function EcopontoManagement() {
       showAlert('Erro ao carregar responsáveis', 'error');
       console.error('Error fetching responsibles:', error);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const fetchWasteTypes = async () => {
@@ -135,15 +146,11 @@ export default function EcopontoManagement() {
         const response = await fetch('/api/waste');
         const data = await response.json();
         if (response.ok) {
-          // Check if data has a specific property that contains the array
           if (data.wasteTypes && Array.isArray(data.wasteTypes)) {
             setWasteTypes(data.wasteTypes);
-             
           } else if (Array.isArray(data)) {
             setWasteTypes(data);
-            
           } else {
-            // If all else fails, set an empty array
             setWasteTypes([]);
             console.error('Unexpected waste types response format:', data);
           }
@@ -167,17 +174,21 @@ export default function EcopontoManagement() {
         cnpj: ecoponto.cnpj,
         name: ecoponto.name,
         description: ecoponto.description,
-        responsableId: ecoponto.responsableId._id,
-        typeOfWasteId: ecoponto.typeOfWasteId.map(waste => waste._id),
+        responsableId: ecoponto.responsableId?._id || ecoponto.responsableId,
+        typeOfWasteId: Array.isArray(ecoponto.typeOfWasteId) 
+          ? ecoponto.typeOfWasteId.map(waste => waste._id || waste)
+          : [],
         address: {
-          street: ecoponto.address.street,
-          number: ecoponto.address.number,
-          complement: ecoponto.address.complement,
-          neighborhood: ecoponto.address.neighborhood,
-          city: ecoponto.address.city,
-          state: ecoponto.address.state,
-          zipCode: ecoponto.address.zipCode,
-        }
+          street: ecoponto.address?.street || '',
+          number: ecoponto.address?.number || '',
+          complement: ecoponto.address?.complement || '',
+          neighborhood: ecoponto.address?.neighborhood || '',
+          city: ecoponto.address?.city || '',
+          state: ecoponto.address?.state || '',
+          zipCode: ecoponto.address?.zipCode || '',
+        },
+        lat: ecoponto.location.coordinates[0] || '',
+        lng: ecoponto.location.coordinates[1] || '',
       });
     } else {
       setEditMode(false);
@@ -196,9 +207,13 @@ export default function EcopontoManagement() {
           city: '',
           state: '',
           zipCode: '',
-        }
+        },
+        lat: '',
+        lng: ''
       });
     }
+    setCnpjError('');
+    setCepError('');
     setOpen(true);
   };
 
@@ -208,7 +223,32 @@ export default function EcopontoManagement() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name.includes('.')) {
+    
+    if (name === 'cnpj') {
+      const formattedCNPJ = formatCNPJ(value);
+      setFormData({ ...formData, [name]: formattedCNPJ });
+      
+      // Validar CNPJ
+      if (value.replace(/[^\d]/g, '').length >= 14) {
+        if (!validateCNPJ(value)) {
+          setCnpjError('CNPJ inválido');
+        } else {
+          setCnpjError('');
+        }
+      } else {
+        setCnpjError('');
+      }
+    } else if (name === 'address.zipCode') {
+      const formattedCEP = formatCEP(value);
+      setFormData({
+        ...formData,
+        address: {
+          ...formData.address,
+          zipCode: formattedCEP
+        }
+      });
+      setCepError('');
+    } else if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
@@ -232,9 +272,92 @@ export default function EcopontoManagement() {
     });
   };
 
+  // Buscar endereço pelo CEP
+  const handleCEPSearch = async () => {
+    const cep = formData.address.zipCode.replace(/[^\d]/g, '');
+    
+    if (cep.length !== 8) {
+      setCepError('CEP deve ter 8 dígitos');
+      return;
+    }
+
+    setLoadingCEP(true);
+    setCepError('');
+
+    try {
+      const result = await fetchAddressByCEP(cep);
+      
+      if (result.success) {
+        setFormData({
+          ...formData,
+          address: {
+            ...formData.address,
+            street: result.address.street,
+            neighborhood: result.address.neighborhood,
+            city: result.address.city,
+            state: result.address.state,
+            zipCode: formatCEP(result.address.zipCode)
+          }
+        });
+        showAlert('Endereço encontrado com sucesso!', 'success');
+      } else {
+        setCepError(result.error);
+        showAlert(result.error, 'error');
+      }
+    } catch (error) {
+      setCepError('Erro ao buscar CEP');
+      showAlert('Erro ao buscar CEP', 'error');
+    } finally {
+      setLoadingCEP(false);
+    }
+  };
+
+  // Buscar coordenadas do endereço
+  const handleGetCoordinates = async () => {
+    if (!formData.address.street || !formData.address.number || !formData.address.city) {
+      showAlert('Preencha pelo menos rua, número e cidade para buscar coordenadas', 'warning');
+      return;
+    }
+
+    setLoadingCoordinates(true);
+
+    try {
+      const result = await getCoordinatesFromAddress(formData.address);
+      
+      if (result.success) {
+        setFormData({
+          ...formData,
+          lat: result.coordinates.lat,
+          lng: result.coordinates.lng
+        });
+        showAlert('Coordenadas encontradas com sucesso!', 'success');
+      } else {
+        showAlert(result.error, 'error');
+      }
+    } catch (error) {
+      showAlert('Erro ao buscar coordenadas', 'error');
+    } finally {
+      setLoadingCoordinates(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    console.log(editMode);
-    console.log(formData);
+    // Validações
+    if (cnpjError) {
+      showAlert('Corrija o CNPJ antes de continuar', 'error');
+      return;
+    }
+
+    if (!validateCNPJ(formData.cnpj)) {
+      showAlert('CNPJ inválido', 'error');
+      return;
+    }
+
+    if (!formData.lat || !formData.lng) {
+      showAlert('Coordenadas são obrigatórias. Use o botão "Buscar Coordenadas"', 'error');
+      return;
+    }
+
     try {
       let response;
       if (editMode) {
@@ -295,10 +418,8 @@ export default function EcopontoManagement() {
   if (loading) {
     return (
       <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '0vh' }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
           <Typography>Carregando...</Typography>
-        </Box>
         </Box>
       </AppLayout>
     );
@@ -360,6 +481,7 @@ export default function EcopontoManagement() {
                   <TableCell>CNPJ</TableCell>
                   <TableCell>Responsável</TableCell>
                   <TableCell>Cidade</TableCell>
+                  <TableCell>Coordenadas</TableCell>
                   <TableCell>Ações</TableCell>
                 </TableRow>
               </TableHead>
@@ -372,6 +494,18 @@ export default function EcopontoManagement() {
                       {ecoponto.responsableId?.name || "N/A"}
                     </TableCell>
                     <TableCell>{ecoponto.address?.city || "N/A"}</TableCell>
+                    <TableCell>
+                      {ecoponto.location.coordinates[0] && ecoponto.location.coordinates[1] ? (
+                        <Chip
+                          icon={<LocationOnIcon />}
+                          label={`${ecoponto.location.coordinates[0].toFixed(4)}, ${ecoponto.location.coordinates[1].toFixed(4)}`}
+                          size="small"
+                          color="success"
+                        />
+                      ) : (
+                        <Chip label="Sem coordenadas" size="small" color="warning" />
+                      )}
+                    </TableCell>
                     <TableCell>
                       <IconButton
                         onClick={() => handleOpen(ecoponto)}
@@ -390,7 +524,7 @@ export default function EcopontoManagement() {
                 ))}
                 {ecopontos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
+                    <TableCell colSpan={6} align="center">
                       Nenhum ecoponto cadastrado
                     </TableCell>
                   </TableRow>
@@ -434,7 +568,7 @@ export default function EcopontoManagement() {
       </Box>
 
       {/* Dialog para adicionar/editar ecoponto */}
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
         <DialogTitle
           sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
         >
@@ -469,9 +603,12 @@ export default function EcopontoManagement() {
                     onChange={handleChange}
                     required
                     margin="normal"
+                    error={!!cnpjError}
+                    helperText={cnpjError}
+                    placeholder="00.000.000/0000-00"
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12}>
                   <TextField
                     fullWidth
                     label="Descrição"
@@ -479,6 +616,7 @@ export default function EcopontoManagement() {
                     value={formData.description}
                     onChange={handleChange}
                     multiline
+                    rows={3}
                     required
                     margin="normal"
                   />
@@ -487,7 +625,7 @@ export default function EcopontoManagement() {
             </Grid>
 
             {/* Seção: Responsável e Tipos de Resíduos */}
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
                 Responsável e Tipos de Resíduos
               </Typography>
@@ -500,7 +638,6 @@ export default function EcopontoManagement() {
                       value={formData.responsableId}
                       onChange={handleChange}
                       label="Responsável"
-                      sx={{ minWidth: "200px" }} // Garante espaço suficiente para o select
                     >
                       {(Array.isArray(responsibles) ? responsibles : []).map(
                         (responsible) => (
@@ -525,7 +662,6 @@ export default function EcopontoManagement() {
                       value={formData.typeOfWasteId}
                       onChange={handleWasteChange}
                       label="Tipos de Resíduos"
-                      sx={{ minWidth: "200px" }} // Garante espaço suficiente para exibir as opções
                     >
                       {(Array.isArray(wasteTypes) ? wasteTypes : []).map(
                         (waste) => (
@@ -546,6 +682,34 @@ export default function EcopontoManagement() {
                 Endereço
               </Typography>
               <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="CEP"
+                    name="address.zipCode"
+                    value={formData.address.zipCode}
+                    onChange={handleChange}
+                    required
+                    margin="normal"
+                    error={!!cepError}
+                    helperText={cepError}
+                    placeholder="00000-000"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleCEPSearch}
+                            disabled={loadingCEP}
+                            edge="end"
+                          >
+                            {loadingCEP ? <CircularProgress size={20} /> : <SearchIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+
                 <Grid item xs={12} md={8}>
                   <TextField
                     fullWidth
@@ -570,7 +734,18 @@ export default function EcopontoManagement() {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Complemento"
+                    name="address.complement"
+                    value={formData.address.complement}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
                     label="Bairro"
@@ -585,17 +760,6 @@ export default function EcopontoManagement() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
-                    label="Complemento"
-                    name="address.complement"
-                    value={formData.address.complement}
-                    onChange={handleChange}
-                    margin="normal"
-                  />
-                </Grid>
-
-                <Grid item xs={12} md={5}>
-                  <TextField
-                    fullWidth
                     label="Cidade"
                     name="address.city"
                     value={formData.address.city}
@@ -605,7 +769,7 @@ export default function EcopontoManagement() {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} md={6}>
                   <TextField
                     fullWidth
                     label="Estado"
@@ -616,18 +780,83 @@ export default function EcopontoManagement() {
                     margin="normal"
                   />
                 </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Seção: Coordenadas */}
+            <Grid item xs={12}>
+              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+                Localização (Coordenadas)
+              </Typography>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Latitude"
+                    name="lat"
+                    type="number"
+                    value={formData.lat}
+                    onChange={handleChange}
+                    required
+                    margin="normal"
+                    inputProps={{
+                      step: "any",
+                      min: -90,
+                      max: 90
+                    }}
+                  />
+                </Grid>
 
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
-                    label="CEP"
-                    name="address.zipCode"
-                    value={formData.address.zipCode}
+                    label="Longitude"
+                    name="lng"
+                    type="number"
+                    value={formData.lng}
                     onChange={handleChange}
                     required
                     margin="normal"
+                    inputProps={{
+                      step: "any",
+                      min: -180,
+                      max: 180
+                    }}
                   />
                 </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleGetCoordinates}
+                    disabled={loadingCoordinates}
+                    startIcon={loadingCoordinates ? <CircularProgress size={20} /> : <LocationOnIcon />}
+                    fullWidth
+                    sx={{ mt: 2 }}
+                  >
+                    {loadingCoordinates ? 'Buscando...' : 'Buscar Coordenadas'}
+                  </Button>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Alert severity="info" sx={{ mt: 1 }}>
+                    <Typography variant="body2">
+                      <strong>Dica:</strong> Preencha o endereço completo e clique em &quot;Buscar Coordenadas&quot; 
+                      para obter automaticamente a latitude e longitude do local.
+                    </Typography>
+                  </Alert>
+                </Grid>
+
+                {formData.lat && formData.lng && (
+                  <Grid item xs={12}>
+                    <Alert severity="success" sx={{ mt: 1 }}>
+                      <Typography variant="body2">
+                        <strong>Coordenadas definidas:</strong> {formData.lat}, {formData.lng}
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                )}
               </Grid>
             </Grid>
           </Grid>
@@ -637,7 +866,12 @@ export default function EcopontoManagement() {
           <Button onClick={handleClose} variant="outlined" color="secondary">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            color="primary"
+            disabled={!!cnpjError || !!cepError}
+          >
             {editMode ? "Atualizar" : "Salvar"}
           </Button>
         </DialogActions>
@@ -660,4 +894,3 @@ export default function EcopontoManagement() {
     </AppLayout>
   );
 }
-

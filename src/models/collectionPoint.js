@@ -29,7 +29,21 @@ const CollectionPointSchema = new mongoose.Schema({
     location: {
         type: PointSchema,
         index: '2dsphere' // Índice para consultas geoespaciais
+  
     }
+}, {
+    timestamps: true
+});
+
+// Middleware para atualizar o campo location antes de salvar
+CollectionPointSchema.pre('save', function(next) {
+    if (this.lat && this.lng) {
+        this.location = {
+            type: 'Point',
+            coordinates: [this.lng, this.lat] // [longitude, latitude]
+        };
+    }
+    next();
 });
 
 // Export the model

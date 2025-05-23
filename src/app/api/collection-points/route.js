@@ -1,9 +1,9 @@
 import connectToDB from '@/lib/db';
 import CollectionPoint from '@/models/collectionPoint';
 import Address from '@/models/address';
-import  '@/models/waste';
-import  '@/models/responsable';
+import '@/models/waste';
 import { NextResponse } from 'next/server';
+
 
 // GET - Buscar todos os ecopontos
 export async function GET() {
@@ -30,31 +30,48 @@ export async function POST(request) {
   try {
     await connectToDB();
     
-    // Obter dados do corpo da requisição
-    const body = await request.json();
-    const { address, ...collectionPointData } = body;
+    const data = await request.json();
     
-    // Primeiro criar o endereço
-    const newAddress = new Address(address);
-    await newAddress.save();
-    
-    // Depois criar o ecoponto com a referência do endereço
-    const collectionPoint = new CollectionPoint({
-      ...collectionPointData,
-      address: newAddress._id
-    });
-    
-    await collectionPoint.save();
-    
-    // Retornar o ecoponto criado com os dados populados
-    const populatedCollectionPoint = await CollectionPoint.findById(collectionPoint._id)
-      .populate('responsableId')
-      .populate('typeOfWasteId')
+    // Validar dados obrigatórios
+    if (!data.cnpj || !data.name || !data.responsableId || !data.lat || !data.lng) {
+      return NextResponse.json(
+        { message: 'Dados obrigatórios não fornecidos' },
+        { status: 400 }
+      );
+    }
+
+    // Criar endereço primeiro
+    const address = new Address(data.address);
+    const savedAddress = await address.save();
+
+    // Criar collection point
+    const collectionPointData = {
+      ...data,
+      address: savedAddress._id,
+      lat: parseFloat(data.lat),
+      lng: parseFloat(data.lng)
+    };
+
+    const collectionPoint = new CollectionPoint(collectionPointData);
+    const savedCollectionPoint = await collectionPoint.save();
+
+    // Buscar o collection point completo com populate
+    const populatedCollectionPoint = await CollectionPoint.findById(savedCollectionPoint._id)
+      .populate('responsableId', 'name email')
+      .populate('typeOfWasteId', 'type name')
       .populate('address');
     
     return NextResponse.json(populatedCollectionPoint, { status: 201 });
   } catch (error) {
     console.error('Error creating collection point:', error);
+    
+    if (error.code === 11000) {
+      return NextResponse.json(
+        { message: 'CNPJ já cadastrado' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { message: 'Erro ao criar ecoponto', error: error.message },
       { status: 500 }
