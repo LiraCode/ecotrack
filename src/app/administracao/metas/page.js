@@ -108,14 +108,14 @@ export default function AdminMetasPage() {
   // Carregar metas
   const loadGoals = useCallback(async () => {
     try {
-      console.log("Carregando metas...");
+      //console.log("Carregando metas...");
       setLoading(true);
       const result = await getAllGoals();
-      console.log("Resultado da API:", result);
+      //console.log("Resultado da API:", result);
       
       if (result.success) {
         setGoals(result.goals || []);
-        console.log("Metas carregadas:", result.goals);
+        //console.log("Metas carregadas:", result.goals);
       } else {
         throw new Error(result.error || "Erro desconhecido ao carregar metas");
       }
@@ -131,13 +131,13 @@ export default function AdminMetasPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log("Iniciando carregamento de dados...");
+        //console.log("Iniciando carregamento de dados...");
         setLoading(true);
         
         // Carregar tipos de resíduos
-        console.log("Carregando tipos de resíduos...");
+        //console.log("Carregando tipos de resíduos...");
         const wasteResult = await getAllWasteTypes();
-        console.log("Resultado de tipos de resíduos:", wasteResult);
+        //console.log("Resultado de tipos de resíduos:", wasteResult);
         
         if (wasteResult.success) {
           setWasteTypes(wasteResult.wasteTypes || []);
@@ -156,20 +156,16 @@ export default function AdminMetasPage() {
     };
     
     if (user && user.role === 'Administrador') {
-      console.log("Usuário admin detectado, carregando dados...");
+      //console.log("Usuário admin detectado, carregando dados...");
       loadData();
     } else {
-      console.log("Aguardando autenticação ou usuário não é admin:", user);
+      //console.log("Aguardando autenticação ou usuário não é admin:", user);
       // Se não for admin, definir loading como false para não ficar em loop de carregamento
       if (!authLoading) {
         setLoading(false);
       }
     }
   }, [loadGoals, user, authLoading]);
-  
-  // Redirecionar se não estiver autenticado ou não for admin 
-// authcontext.js ja faz isso
-
   
   // Adicionar desafio ao formulário
   const addChallenge = () => {
@@ -179,13 +175,27 @@ export default function AdminMetasPage() {
   // Abrir formulário para edição
   const handleEditGoal = async (id) => {
     try {
+      //console.log("Iniciando edição da meta ID:", id);
       setLoading(true);
-      const result = await getGoalById(id, token);
       
-      if (result.success) {
+      // Buscar detalhes da meta pelo ID
+      const result = await getGoalById(id);
+      //console.log("Resultado da busca da meta:", result);
+      
+      if (result.success && result.goal) {
         const goal = result.goal;
+        //console.log("Meta encontrada:", goal);
         
-        // Preencher formulário com dados da meta
+        // Preparar os desafios para o formulário
+        const formattedChallenges = goal.challenges.map(challenge => ({
+          waste: challenge.waste._id || challenge.waste,
+          weight: challenge.weight || 0,
+          quantity: challenge.quantity || 0
+        }));
+        
+        //console.log("Desafios formatados:", formattedChallenges);
+        
+        // Resetar o formulário com os dados da meta
         reset({
           title: goal.title,
           description: goal.description,
@@ -194,13 +204,10 @@ export default function AdminMetasPage() {
           points: goal.points,
           targetType: goal.targetType,
           targetValue: goal.targetValue,
-          challenges: goal.challenges.map(challenge => ({
-            waste: challenge.waste._id,
-            weight: challenge.weight,
-            quantity: challenge.quantity
-          })),
+          challenges: formattedChallenges.length > 0 ? formattedChallenges : [{ waste: '', weight: 0, quantity: 0 }],
         });
         
+        // Definir o ID da meta em edição e abrir o diálogo
         setEditingGoalId(id);
         setIsDialogOpen(true);
       } else {
@@ -246,8 +253,12 @@ export default function AdminMetasPage() {
   
   // Enviar formulário
   const onSubmit = async (data) => {
+    //console.log("Dados do formulário:", data);
+    setLoading(true);
     try {
       setLoading(true);
+      //console.log("Dados do formulário:", data);
+      
       // Ajustar dados dos desafios com base no tipo de meta
       const challenges = data.challenges.map(challenge => ({
         waste: challenge.waste,
@@ -260,6 +271,9 @@ export default function AdminMetasPage() {
         challenges
       };
       
+      //console.log("Dados formatados para envio:", formData);
+      //console.log("Editando meta ID:", editingGoalId);
+      
       let result;
       
       if (editingGoalId) {
@@ -269,6 +283,8 @@ export default function AdminMetasPage() {
         // Criar nova meta
         result = await createGoal(formData, token);
       }
+      
+      //console.log("Resultado da operação:", result);
       
       if (result.success) {
         alert(editingGoalId ? 'Meta atualizada com sucesso' : 'Meta criada com sucesso');
@@ -393,7 +409,16 @@ export default function AdminMetasPage() {
                 color="primary"
                 startIcon={<AddIcon />} 
                 onClick={() => {
-                  reset();
+                  reset({
+                    title: '',
+                    description: '',
+                    initialDate: new Date(),
+                    validUntil: new Date(new Date().setDate(new Date().getDate() + 30)),
+                    points: 100,
+                    targetType: 'weight',
+                    targetValue: 10,
+                    challenges: [{ waste: '', weight: 0, quantity: 0 }],
+                  });
                   setEditingGoalId(null);
                   setIsDialogOpen(true);
                 }}
@@ -438,7 +463,16 @@ export default function AdminMetasPage() {
                 startIcon={<AddIcon />} 
                 sx={{ mt: 2 }}
                 onClick={() => {
-                  reset();
+                  reset({
+                    title: '',
+                    description: '',
+                    initialDate: new Date(),
+                    validUntil: new Date(new Date().setDate(new Date().getDate() + 30)),
+                    points: 100,
+                    targetType: 'weight',
+                    targetValue: 10,
+                    challenges: [{ waste: '', weight: 0, quantity: 0 }],
+                  });
                   setEditingGoalId(null);
                   setIsDialogOpen(true);
                 }}
@@ -510,7 +544,10 @@ export default function AdminMetasPage() {
           {/* Diálogo para criar/editar meta */}
           <Dialog
             open={isDialogOpen}
-            onClose={() => setIsDialogOpen(false)}
+            onClose={() => {
+              setIsDialogOpen(false);
+              setEditingGoalId(null);
+            }}
             maxWidth="md"
             fullWidth
           >
@@ -524,7 +561,10 @@ export default function AdminMetasPage() {
               <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
                 {editingGoalId ? 'Editar Meta' : 'Nova Meta'}
               </Typography>
-              <IconButton onClick={() => setIsDialogOpen(false)} size="small">
+              <IconButton onClick={() => {
+                setIsDialogOpen(false);
+                setEditingGoalId(null);
+              }} size="small">
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
@@ -537,7 +577,7 @@ export default function AdminMetasPage() {
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit(onSubmit)}>
+              <form id="goalForm" onSubmit={handleSubmit(onSubmit)}>
                 <Grid container spacing={3}>
                   {/* Seção de informações básicas */}
                   <Grid item xs={12}>
@@ -901,14 +941,23 @@ export default function AdminMetasPage() {
 
             <DialogActions sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
               <Button 
-                onClick={() => setIsDialogOpen(false)} 
+                onClick={() => {
+                  setIsDialogOpen(false);
+                  setEditingGoalId(null);
+                }} 
                 color="inherit"
                 disabled={loading}
               >
                 Cancelar
               </Button>
               <Button 
-                onClick={handleSubmit(onSubmit)} 
+                onClick={() => {
+                  //console.log("Save button clicked");
+                  // Chamar diretamente a função onSubmit com os valores atuais do formulário
+                  const currentValues = control._formValues;
+                  //console.log("Current form values:", currentValues);
+                  onSubmit(currentValues);
+                }}
                 variant="contained" 
                 disabled={loading}
                 sx={{
