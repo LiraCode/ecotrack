@@ -5,6 +5,8 @@ import Link from 'next/link';
 import LogoClickable from '@/components/Icons/logoClick/page';
 import { useAuth } from '@/context/AuthContext';
 import { registerUser } from '@/services/authService';
+import { fetchAddressByCEP } from '@/services/cepService';
+import { formatCPF, validateCPF, formatCEP } from '@/utils/validators';
 
 export default function Cadastro() {
   const router = useRouter();
@@ -25,7 +27,10 @@ export default function Cadastro() {
     confirmarSenha: '',
   });
   const [loading, setLoading] = useState(false);
+  const [loadingCEP, setLoadingCEP] = useState(false);
   const [error, setError] = useState('');
+  const [cpfError, setCpfError] = useState('');
+  const [cepError, setCepError] = useState('');
 
   // Redirecionar se o usuário já estiver logado
   useEffect(() => {
@@ -36,16 +41,97 @@ export default function Cadastro() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    
+    if (name === 'cpf') {
+      // Formatar CPF enquanto digita
+      const formattedCPF = formatCPF(value);
+      setFormData((prevData) => ({ ...prevData, [name]: formattedCPF }));
+      
+      // Validar CPF quando tiver 11 dígitos
+      if (value.replace(/[^\d]/g, '').length === 11) {
+        if (!validateCPF(value)) {
+          setCpfError('CPF inválido');
+        } else {
+          setCpfError('');
+        }
+      } else {
+        setCpfError('');
+      }
+    } else if (name === 'cep') {
+      // Formatar CEP enquanto digita
+      const formattedCEP = formatCEP(value);
+      setFormData((prevData) => ({ ...prevData, [name]: formattedCEP }));
+      setCepError('');
+      
+      // Buscar endereço automaticamente quando o CEP tiver 8 dígitos
+      if (value.replace(/[^\d]/g, '').length === 8) {
+        handleCEPSearch(formattedCEP);
+      }
+    } else {
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+    }
+  };
+
+  const handleCEPSearch = async (cepValue) => {
+    const cep = cepValue || formData.cep;
+    
+    if (cep.replace(/[^\d]/g, '').length !== 8) {
+      setCepError('CEP deve ter 8 dígitos');
+      return;
+    }
+
+    setLoadingCEP(true);
+    setCepError('');
+
+    try {
+      const result = await fetchAddressByCEP(cep);
+      
+      if (result.success) {
+        setFormData(prev => ({
+          ...prev,
+          endereco: result.address.street,
+          bairro: result.address.neighborhood,
+          cidade: result.address.city,
+          estado: result.address.state,
+          cep: formatCEP(result.address.zipCode)
+        }));
+      } else {
+        setCepError(result.error);
+      }
+    } catch (error) {
+      setCepError('Erro ao buscar CEP');
+      console.error('Erro ao buscar CEP:', error);
+    } finally {
+      setLoadingCEP(false);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
+    // Validar CPF
+    if (cpfError) {
+      setError('Por favor, corrija o CPF antes de continuar.');
+      return;
+    }
+    
+    if (!validateCPF(formData.cpf)) {
+      setCpfError('CPF inválido');
+      setError('Por favor, insira um CPF válido.');
+      return;
+    }
+    
     // Validar se as senhas coincidem
     if (formData.senha !== formData.confirmarSenha) {
       setError('As senhas não coincidem');
+      return;
+    }
+    
+    // Validar se o CEP foi preenchido corretamente
+    if (formData.cep.replace(/[^\d]/g, '').length !== 8) {
+      setCepError('CEP inválido');
+      setError('Por favor, insira um CEP válido.');
       return;
     }
     
@@ -69,6 +155,13 @@ export default function Cadastro() {
       setError('Ocorreu um erro durante o cadastro. Tente novamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para buscar CEP manualmente (botão)
+  const handleSearchCEPClick = () => {
+    if (formData.cep) {
+      handleCEPSearch(formData.cep);
     }
   };
 
@@ -115,14 +208,45 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full px-4 py-2 border ${cpfError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
               type="text"
               name="cpf"
-              placeholder="CPF"
+              placeholder="CPF (000.000.000-00)"
               value={formData.cpf}
               onChange={handleChange}
               required
+              maxLength={14}
             />
+            {cpfError && <p className="text-red-500 text-xs mt-1">{cpfError}</p>}
+          </div>
+          
+          <div className="relative">
+            <div className="flex">
+              <input
+                className={`w-full px-4 py-2 border ${cepError ? 'border-red-500' : 'border-gray-300'} rounded-l-md focus:outline-none focus:ring-2 focus:ring-green-500`}
+                type="text"
+                name="cep"
+                placeholder="CEP (00000-000)"
+                value={formData.cep}
+                onChange={handleChange}
+                required
+                maxLength={9}
+              />
+              <button
+                type="button"
+                onClick={handleSearchCEPClick}
+                disabled={loadingCEP}
+                className="bg-green-500 hover:bg-green-600 text-white px-3 rounded-r-md"
+              >
+                {loadingCEP ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  "Buscar"
+                )}
+              </button>
+            </div>
+            {cepError && <p className="text-red-500 text-xs mt-1">{cepError}</p>}
+            <p className="text-xs text-gray-500 mt-1">Digite o CEP para preencher o endereço automaticamente</p>
           </div>
           
           <div>
@@ -185,18 +309,6 @@ export default function Cadastro() {
               name="estado"
               placeholder="Estado"
               value={formData.estado}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          
-          <div>
-            <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              type="text"
-              name="cep"
-              placeholder="CEP"
-              value={formData.cep}
               onChange={handleChange}
               required
             />
