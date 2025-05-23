@@ -83,9 +83,9 @@ export default function Login({ type }) {
         // Redirecionar com base no tipo de usuário
         setTimeout(() => {
           if (isCliente) {
-            router.push('/cliente/perfil');
+            router.push('/');
           } else if (isColaborador) {
-            router.push('/colaborador/dashboard');
+            router.push('/colaborador/');
           } else if (isAdmin) {
             router.push('/administracao/');
           }
