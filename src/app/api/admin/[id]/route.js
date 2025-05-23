@@ -25,9 +25,10 @@ export async function GET(request, { params }) {
     await connectDB();
     
     const { id } = await params;
+    console.log("ID do administrador:", id);
     
     // Buscar administrador pelo ID
-    const admin = await Admin.findById(id);
+    const admin = await Admin.findOne({ firebaseId: id });
     
     if (!admin) {
       return NextResponse.json(

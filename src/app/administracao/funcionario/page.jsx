@@ -178,9 +178,13 @@ export default function AdminPage() {
       
       if (editMode) {
         // Código para edição permanece o mesmo...
+        console.log("Editando administrador:", currentAdmin._id);
+        console.log("Dados a serem atualizados:", formData);
+        console.log("administrador logado:", user.uid);
         const result = await updateAdmin(
           user.accessToken,
-          currentAdmin._id,
+          currentAdmin._id.toString(),
+
           {
             name: formData.name,
             phone: formData.phone,

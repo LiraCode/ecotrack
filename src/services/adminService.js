@@ -55,9 +55,9 @@ export const registerAdmin = async (token, password, adminData) => {
 };
 
   // updateAdmin é para atualizar os dados do administrador
-  export const updateAdmin = async (token, uid, adminId, updatedData) => {
+  export const updateAdmin = async (token, uid, updatedData) => {
     try {
-      const response = await fetch(`/api/admin/${adminId}`, {
+      const response = await fetch(`/api/admin/${uid}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -72,12 +72,6 @@ export const registerAdmin = async (token, password, adminData) => {
         );
       }
 
-      //esse user  é o user do firebase que esta sendo atualizado tem que obter o user e passar para o updateProfile pelo id do firebase
-      const user = await getUserById(uid);
-      updateProfile(user, {
-        displayName: adminData.nomeCompleto,
-        photoURL: adminData.photoURL,
-      });
       console.log("Dados do administrador atualizados com sucesso");
       return { success: true, admin: responseData.admin };
     } catch (error) {

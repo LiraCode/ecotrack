@@ -60,7 +60,7 @@ export default function AdminProfilePage() {
 
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin?uid=${user.uid}`, {
+      const response = await fetch(`/api/admin/${user.uid}`, {
         headers: {
           Authorization: `Bearer ${user.accessToken}`,
         },
@@ -68,11 +68,11 @@ export default function AdminProfilePage() {
     
       if (response.ok) {
         const data = await response.json();
-        console.log('Admin data response:', data); // Log para depuração
-         if (data.success && data.admins && data.admins.length > 0) {
+        //console.log('Admin data response:', data); // Log para depuração
+         if (data.success && data.admin) {
           // Formato alternativo: { success: true, admins: [ ... ] }
-          const adminData = data.admins[0];
-          console.log('Admin data response 2:',adminData.name); // Log para depuração
+          const adminData = data.admin;
+          //console.log('Admin data response 2:',adminData); // Log para depuração
           setUserData({
             name: adminData.name || '',
             email: adminData.email || user.email || '',
