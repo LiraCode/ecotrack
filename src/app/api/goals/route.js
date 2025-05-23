@@ -213,8 +213,8 @@ export async function DELETE(request) {
     }
     
     // Verificar se é admin
-    if (user.role !== 'admin') {
-      return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
+    if (user.role !== "Administrador") {
+      return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
     }
     
     // Obter parâmetros de consulta

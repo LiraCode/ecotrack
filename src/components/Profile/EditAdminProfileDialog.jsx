@@ -52,14 +52,14 @@ export default function EditAdminProfileDialog({
 
     try {
       setFetchLoading(true);
-      const response = await fetch(`/api/admin?uid=${user.uid}`, {
+      const response = await fetch(`/api/admin/${user.uid}`, {
         headers: {
           Authorization: `Bearer ${user.accessToken}`,
         },
       });
       if (response.ok) {
         const data = await response.json();
-        const adminData = data.admins[0];
+        const adminData = data.admin;
         setUserData({
           name: adminData.name || '',
           email: adminData.email || user.email || '',
