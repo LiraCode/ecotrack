@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LogoClickable from '@/components/Icons/logoClick/page';
 import { useAuth } from '@/context/AuthContext';
-import { registerAdmin, registerResponsible, registerUser } from '@/services/authService';
+import { registerUser } from '@/services/authService';
 
-export default function Cadastro({ userType }) {
+export default function Cadastro() {
   const router = useRouter();
   const { user } = useAuth();
   const [formData, setFormData] = useState({
@@ -29,12 +29,10 @@ export default function Cadastro({ userType }) {
 
   // Redirecionar se o usuário já estiver logado
   useEffect(() => {
-    console.log('User:', userType);
-    if (user && userType === 'clientes') {
-
+    if (user) {
       router.push(`/`);
     }
-  }, [user, router, userType]);
+  }, [user, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,39 +53,14 @@ export default function Cadastro({ userType }) {
       setLoading(true);
       
       // Adicionar o tipo de usuário aos dados
-      const role = userType === 'cliente' ? 'User' : userType === 'responsável' ? 'Responsável' : 'Administrador';
-      const userData = userType === 'cliente'?{ ...formData, userType }: { ...formData, role };
-      let url = null;
-      switch(role){
-        case 'User':
-          url = 'client'
-          break;
-        case 'Responsável':
-          url = "parceiro";
-          break;
-        case 'Administrador':
-          url = "adminisracao"
-          break;
-        default:
-          url = null;
-      }
-     
-      var result = null;
+      const userData = { ...formData, userType: 'cliente' };
       
       // Registrar usuário no Firebase e MongoDB
-      console.log('User Type:', userType);
-      if (userType === 'cliente') {
-         result = await registerUser(formData.email, formData.senha, userData);
-      } else if (userType === 'responsável') {
-         result = await registerResponsible(formData.email, formData.senha, userData);
-      } else if (userType === 'administração') {
-        formData.role === 'administrador' ? console.log(userData): formData.role = 'employee'; 
-         result = await registerAdmin(formData.email, formData.senha, userData);
-      }
+      const result = await registerUser(formData.email, formData.senha, userData);
       
       if (result.success) {
         // Redirecionar para a página de login ou dashboard
-        router.push(`/${userType}/login?registered=true`);
+        router.push(`/cliente/login?registered=true`);
       } else {
         setError(result.error || 'Erro ao criar conta. Tente novamente.');
       }
@@ -99,20 +72,15 @@ export default function Cadastro({ userType }) {
     }
   };
 
-  const isCliente = userType === 'cliente';
-  const isColaborador = userType === 'responsável';
-  const isAdmin = userType === 'administração';
-  
-
   return (
     <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white rounded-lg shadow-md overflow-hidden">
         <div className="meta-3 text-white py-5 px-6">
           <h2 className="text-2xl font-bold text-center">
-            Cadastro de {userType.charAt(0).toUpperCase() + userType.slice(1)}
+            Cadastro de Cliente
           </h2>
         </div>
-         <LogoClickable rota='/' color='#08B75B' width={150} height={150} />
+        <LogoClickable rota='/' color='#08B75B' width={150} height={150} />
         
         {error && (
           <div className="px-8 text-center">
@@ -121,7 +89,6 @@ export default function Cadastro({ userType }) {
         )}
         
         <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-4">
-          {/* Campos comuns para todos */}
           <div>
             <input
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -146,96 +113,94 @@ export default function Cadastro({ userType }) {
             />
           </div>
           
-          {!isAdmin && (
-            <div>
-              <input
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                type="text"
-                name="cpf"
-                placeholder="CPF"
-                value={formData.cpf}
-                onChange={handleChange}
-                required={userType !== 'administrador'}
-              />
-            </div>
-          )}
+          <div>
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="cpf"
+              placeholder="CPF"
+              value={formData.cpf}
+              onChange={handleChange}
+              required
+            />
+          </div>
           
-          {isCliente && (
-            <>
-              <div>
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="endereco"
-                  placeholder="Rua/Avenida"
-                  value={formData.endereco}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="numero"
-                  placeholder="Número"
-                  value={formData.numero}
-                  onChange={handleChange}
-                  required
-                />
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="complemento"
-                  placeholder="Complemento"
-                  value={formData.complemento}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="bairro"
-                  placeholder="Bairro"
-                  value={formData.bairro}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="cidade"
-                  placeholder="Cidade"
-                  value={formData.cidade}
-                  onChange={handleChange}
-                  required
-                />
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="estado"
-                  placeholder="Estado"
-                  value={formData.estado}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <input
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  type="text"
-                  name="cep"
-                  placeholder="CEP"
-                  value={formData.cep}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </>
-          )}
+          <div>
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="endereco"
+              placeholder="Rua/Avenida"
+              value={formData.endereco}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="numero"
+              placeholder="Número"
+              value={formData.numero}
+              onChange={handleChange}
+              required
+            />
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="complemento"
+              placeholder="Complemento"
+              value={formData.complemento}
+              onChange={handleChange}
+            />
+          </div>
+          
+          <div>
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="bairro"
+              placeholder="Bairro"
+              value={formData.bairro}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="cidade"
+              placeholder="Cidade"
+              value={formData.cidade}
+              onChange={handleChange}
+              required
+            />
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="estado"
+              placeholder="Estado"
+              value={formData.estado}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
+          <div>
+            <input
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              type="text"
+              name="cep"
+              placeholder="CEP"
+              value={formData.cep}
+              onChange={handleChange}
+              required
+            />
+          </div>
           
           <div>
             <input
@@ -274,22 +239,6 @@ export default function Cadastro({ userType }) {
               minLength={6}
             />
           </div>
-          {isAdmin && (
-            <div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isAdmin"
-                  className="mr-2"
-                  value={formData.role = 'Administrador'}
-                  onChange={handleChange}
-                />
-                <label className="text-sm text-gray-600">
-                  esse cadastro é para um administrador?
-                </label>
-              </div>
-            </div>
-          )}
 
           <div className="pt-4">
             <button 
@@ -304,7 +253,7 @@ export default function Cadastro({ userType }) {
           <div className="text-center pt-4 pb-2">
             <p className="text-sm text-gray-600">
               Já tem uma conta?{' '}
-              <Link href={`/${url}/login`} className="text-green-500 hover:text-green-600 font-medium">
+              <Link href="/cliente/login" className="text-green-500 hover:text-green-600 font-medium">
                 Faça login
               </Link>
             </p>
