@@ -50,6 +50,7 @@ export default function NewScheduleDialog({
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedTime, setSelectedTime] = useState(dayjs().hour(10).minute(0));
   const [timeError, setTimeError] = useState('');
+  const [dateError, setDateError] = useState('');
 
   // Fetch eco-points and user addresses when component mounts
   useEffect(() => {
@@ -133,10 +134,35 @@ export default function NewScheduleDialog({
     setEcoPointsError('');
     setAddressError('');
     setTimeError('');
+    setDateError('');
     onClose();
   };
 
+  // Function to validate date is not in the past
+  const validateDate = (date) => {
+    const today = dayjs().startOf('day');
+    return date.isBefore(today) ? false : true;
+  };
+
+  // Handle date change with validation
+  const handleDateChange = (newDate) => {
+    if (!validateDate(newDate)) {
+      setDateError('Não é possível selecionar datas anteriores a hoje');
+      // Still set the date to today to avoid invalid state
+      setSelectedDate(dayjs());
+    } else {
+      setDateError('');
+      setSelectedDate(dayjs(newDate));
+    }
+  };
+
   const handleSubmit = async () => {
+    // Validate date is not in the past
+    if (!validateDate(selectedDate)) {
+      setDateError('Não é possível agendar para datas anteriores a hoje');
+      return;
+    }
+    
     // Validate material selection
     if (selectedMaterials.length === 0) {
       setError('Por favor, selecione pelo menos um tipo de material');
@@ -285,16 +311,24 @@ export default function NewScheduleDialog({
           <>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", my: 4 }}>
-                {/* Date Picker */}
+                {/* Date Picker with validation */}
                 <DatePicker
                   label="Selecione uma data"
                   value={selectedDate}
-                  onChange={(newDate) => setSelectedDate(dayjs(newDate))}
+                  onChange={handleDateChange}
                   format="DD/MM/YYYY"
                   sx={{ mb: 2, width: '100%' }}
+                  disablePast={true} // This disables past dates in the calendar
+                  minDate={dayjs()} // Set minimum date to today
                 />
                 
-                {/* Time Picker - Novo componente */}
+                {dateError && (
+                  <FormHelperText error sx={{ mt: 0, mb: 2 }}>
+                    {dateError}
+                  </FormHelperText>
+                )}
+                
+                {/* Time Picker */}
                 <TimePicker
                   label="Selecione um horário"
                   value={selectedTime}

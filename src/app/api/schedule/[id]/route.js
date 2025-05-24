@@ -84,6 +84,7 @@ export async function PUT(request, { params }) {
     // Verificar autenticação do usuário
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error("Token de autenticação não fornecido");
       return NextResponse.json(
         { error: "Token de autenticação não fornecido" },
         { status: 401 }
@@ -117,7 +118,8 @@ export async function PUT(request, { params }) {
       'status', 
       'collector', 
       'collectedAt', 
-      'wastes'
+      'wastes',
+      'date',
     ];
     
     // Filtrar apenas os campos permitidos

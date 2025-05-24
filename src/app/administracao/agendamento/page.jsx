@@ -1,11 +1,11 @@
 'use client';
 
 import AppLayout from '@/components/Layout/page';
-import { 
-  Box, 
-  Typography, 
-  Paper, 
-  Button, 
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -32,8 +32,7 @@ import {
   Divider,
   FormHelperText
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker, TimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR } from 'date-fns/locale';
 import EditIcon from '@mui/icons-material/Edit';
@@ -41,6 +40,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState, useCallback } from 'react';
+import { date } from 'zod';
 
 export default function AgendamentoManagement() {
   const [agendamentos, setAgendamentos] = useState([]);
@@ -50,33 +50,37 @@ export default function AgendamentoManagement() {
   const [ecopontos, setEcopontos] = useState([]);
   const [users, setUsers] = useState([]);
   const [wasteTypes, setWasteTypes] = useState([]);
-  const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
+  const [alert, setAlert] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [activeTab, setActiveTab] = useState(4); // 4 corresponde ao tab "Todos"
   const [loading, setLoading] = useState(true);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [agendamentoToDelete, setAgendamentoToDelete] = useState(null);
   const [formData, setFormData] = useState({
-    userId: '',
-    collectionPointId: '',
+    userId: "",
+    collectionPointId: "",
     date: new Date(),
-    time: '',
-    status: 'Aguardando Confirmação',
-    wastes: [{ wasteId: '', quantity: 1, weight: 0 }]
+    time: "",
+    status: "Aguardando Confirmação",
+    wastes: [{ wasteId: "", quantity: 1, weight: 0 }],
   });
-  
+
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
-  
+
   // obter status da sidebar do localStorage
   useEffect(() => {
-    const sidebarStatus = localStorage.getItem('sidebarOpen');
-    if (sidebarStatus === 'true') {
+    const sidebarStatus = localStorage.getItem("sidebarOpen");
+    if (sidebarStatus === "true") {
       setSidebarOpen(true);
       //verificar tamanho da tela se for maior que 768px setar sidebarOpen como true
       if (window.innerWidth > 768) {
         setSidebarOpen(true);
-        localStorage.setItem('sidebarOpen', 'false');
+        localStorage.setItem("sidebarOpen", "false");
         setIsMobile(false);
       }
     }
@@ -89,23 +93,21 @@ export default function AgendamentoManagement() {
   const fetchAgendamentos = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/schedule'
-        , {
-        method: 'GET',
+      const response = await fetch("/api/schedule", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.accessToken}`
-        }
-      }
-      );
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+      });
       const data = await response.json();
       if (response.ok) {
         setAgendamentos(data);
       } else {
-        showAlert(data.message || 'Erro ao carregar agendamentos', 'error');
+        showAlert(data.message || "Erro ao carregar agendamentos", "error");
       }
     } catch (error) {
-      showAlert('Erro ao carregar agendamentos', 'error');
+      showAlert("Erro ao carregar agendamentos", "error");
     } finally {
       setLoading(false);
     }
@@ -113,44 +115,41 @@ export default function AgendamentoManagement() {
 
   const fetchEcopontos = useCallback(async () => {
     try {
-      const response = await fetch('/api/collection-points');
+      const response = await fetch("/api/collection-points");
       const data = await response.json();
       if (response.ok) {
         setEcopontos(data);
       } else {
-        showAlert(data.message || 'Erro ao carregar ecopontos', 'error');
+        showAlert(data.message || "Erro ao carregar ecopontos", "error");
       }
     } catch (error) {
-      showAlert('Erro ao carregar ecopontos', 'error');
+      showAlert("Erro ao carregar ecopontos", "error");
     }
   }, []);
 
   const fetchUsers = useCallback(async () => {
     try {
-      const response = await fetch('/api/users'
-        , {
-        method: 'GET',
+      const response = await fetch("/api/users", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.accessToken}`
-        }
-      }
-      );
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.accessToken}`,
+        },
+      });
       const data = await response.json();
-      console.log(data.users);
       if (response.ok) {
         setUsers(data.users);
       } else {
-        showAlert(data.message || 'Erro ao carregar usuários', 'error');
+        showAlert(data.message || "Erro ao carregar usuários", "error");
       }
     } catch (error) {
-      showAlert('Erro ao carregar usuários', 'error');
+      showAlert("Erro ao carregar usuários", "error");
     }
   }, []);
 
   const fetchWasteTypes = useCallback(async () => {
     try {
-      const response = await fetch('/api/waste');
+      const response = await fetch("/api/waste");
       const data = await response.json();
       if (response.ok) {
         if (data.wasteTypes && Array.isArray(data.wasteTypes)) {
@@ -159,12 +158,12 @@ export default function AgendamentoManagement() {
           setWasteTypes(data);
         } else {
           setWasteTypes([]);
-          console.error('Unexpected waste types response format:', data);
+          console.error("Unexpected waste types response format:", data);
         }
       }
     } catch (error) {
-      showAlert('Erro ao carregar tipos de resíduos', 'error');
-      console.error('Error fetching waste types:', error);
+      showAlert("Erro ao carregar tipos de resíduos", "error");
+      console.error("Error fetching waste types:", error);
     }
   }, []);
 
@@ -177,32 +176,43 @@ export default function AgendamentoManagement() {
     }
   }, [user, fetchAgendamentos, fetchEcopontos, fetchUsers, fetchWasteTypes]);
 
+
+  // funcion extrair o horário do agendamento
+  const formattedTime = (date) => {
+    const scheduleDate = new Date(date);
+    return scheduleDate.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const handleOpen = (agendamento = null) => {
     if (agendamento) {
       setEditMode(true);
       setCurrentAgendamento(agendamento);
+
       setFormData({
         userId: agendamento.userId._id,
         collectionPointId: agendamento.collectionPointId._id,
         date: new Date(agendamento.date),
-        time: agendamento.time || '',
+        time: formattedTime(agendamento.date) || "",
         status: agendamento.status,
-        wastes: agendamento.wastes.map(waste => ({
+        wastes: agendamento.wastes.map((waste) => ({
           wasteId: waste.wasteId._id,
           quantity: waste.quantity,
-          weight: waste.weight
-        }))
+          weight: waste.weight,
+        })),
       });
     } else {
       setEditMode(false);
       setCurrentAgendamento(null);
       setFormData({
-        userId: '',
-        collectionPointId: '',
+        userId: "",
+        collectionPointId: "",
         date: new Date(),
-        time: '',
-        status: 'Aguardando Confirmação',
-        wastes: [{ wasteId: '', quantity: 1, weight: 0 }]
+        time: formattedTime || "",
+        status: "Aguardando Confirmação",
+        wastes: [{ wasteId: "", quantity: 1, weight: 0 }],
       });
     }
     setOpen(true);
@@ -216,14 +226,36 @@ export default function AgendamentoManagement() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
+  };
+
+  const handleTimeChange = (newTime) => {
+    if (!newTime) return;
+
+    // Create a new date object with the current date but updated time
+    const updatedDate = new Date(formData.date);
+
+    // Extract hours and minutes from the new time
+    const hours = newTime.getHours();
+    const minutes = newTime.getMinutes();
+
+    // Set the hours and minutes to the date
+    updatedDate.setHours(hours);
+    updatedDate.setMinutes(minutes);
+
+    setFormData({
+      ...formData,
+      date: updatedDate,
+      time: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+    });
+    handleDateChange(updatedDate);
   };
 
   const handleDateChange = (date) => {
     setFormData({
       ...formData,
-      date
+      date,
     });
   };
 
@@ -231,18 +263,18 @@ export default function AgendamentoManagement() {
     const updatedWastes = [...formData.wastes];
     updatedWastes[index] = {
       ...updatedWastes[index],
-      [field]: value
+      [field]: value,
     };
     setFormData({
       ...formData,
-      wastes: updatedWastes
+      wastes: updatedWastes,
     });
   };
 
   const addWaste = () => {
     setFormData({
       ...formData,
-      wastes: [...formData.wastes, { wasteId: '', quantity: 1, weight: 0 }]
+      wastes: [...formData.wastes, { wasteId: "", quantity: 1, weight: 0 }],
     });
   };
 
@@ -251,7 +283,7 @@ export default function AgendamentoManagement() {
       const updatedWastes = formData.wastes.filter((_, i) => i !== index);
       setFormData({
         ...formData,
-        wastes: updatedWastes
+        wastes: updatedWastes,
       });
     }
   };
@@ -260,20 +292,22 @@ export default function AgendamentoManagement() {
     try {
       let response;
       if (editMode) {
+        console.log(formData);
         response = await fetch(`/api/schedule/${currentAgendamento._id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.accessToken}`,
           },
           body: JSON.stringify(formData),
         });
       } else {
-        response = await fetch('/api/schedule', {
-          method: 'POST',
+        
+        response = await fetch("/api/schedule", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.accessToken}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.accessToken}`,
           },
           body: JSON.stringify(formData),
         });
@@ -281,14 +315,19 @@ export default function AgendamentoManagement() {
 
       const data = await response.json();
       if (response.ok) {
-        showAlert(editMode ? 'Agendamento atualizado com sucesso!' : 'Agendamento criado com sucesso!', 'success');
+        showAlert(
+          editMode
+            ? "Agendamento atualizado com sucesso!"
+            : "Agendamento criado com sucesso!",
+          "success"
+        );
         handleClose();
         fetchAgendamentos();
       } else {
-        showAlert(data.message || 'Erro ao salvar agendamento', 'error');
+        showAlert(data.message || "Erro ao salvar agendamento", "error");
       }
     } catch (error) {
-      showAlert('Erro ao salvar agendamento', 'error');
+      showAlert("Erro ao salvar agendamento", "error");
     }
   };
 
@@ -300,23 +339,23 @@ export default function AgendamentoManagement() {
   const handleDelete = async () => {
     try {
       const response = await fetch(`/api/schedule/${agendamentoToDelete}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${user.accessToken}`
-        }
+          Authorization: `Bearer ${user.accessToken}`,
+        },
       });
-      
+
       if (response.ok) {
-        showAlert('Agendamento excluído com sucesso!', 'success');
+        showAlert("Agendamento excluído com sucesso!", "success");
         setConfirmDeleteOpen(false);
         setAgendamentoToDelete(null);
         fetchAgendamentos();
       } else {
         const data = await response.json();
-        showAlert(data.message || 'Erro ao excluir agendamento', 'error');
+        showAlert(data.message || "Erro ao excluir agendamento", "error");
       }
     } catch (error) {
-      showAlert('Erro ao excluir agendamento', 'error');
+      showAlert("Erro ao excluir agendamento", "error");
     }
   };
 
@@ -330,10 +369,16 @@ export default function AgendamentoManagement() {
 
   // Filtrar agendamentos por status
   const getFilteredAgendamentos = () => {
-    if (activeTab === 0) return agendamentos.filter(a => a.status === 'Aguardando confirmação do Ponto de Coleta');
-    if (activeTab === 1) return agendamentos.filter(a => a.status === 'Confirmado');
-    if (activeTab === 2) return agendamentos.filter(a => a.status === 'Coletado');
-    if (activeTab === 3) return agendamentos.filter(a => a.status === 'Cancelado');
+    if (activeTab === 0)
+      return agendamentos.filter(
+        (a) => a.status === "Aguardando confirmação do Ponto de Coleta"
+      );
+    if (activeTab === 1)
+      return agendamentos.filter((a) => a.status === "Confirmado");
+    if (activeTab === 2)
+      return agendamentos.filter((a) => a.status === "Coletado");
+    if (activeTab === 3)
+      return agendamentos.filter((a) => a.status === "Cancelado");
     return agendamentos; // Tab 'Todos'
   };
 
@@ -342,38 +387,41 @@ export default function AgendamentoManagement() {
   // Formatar data para exibição
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString("pt-BR");
   };
 
   // Obter chip de status com cor apropriada
   const getStatusChip = (status) => {
-    let color = 'default';
-    
-    if (status === 'Aguardando confirmação do Ponto de Coleta') {
-      color = 'warning';
-    } else if (status === 'Confirmado') {
-      color = 'info';
-    } else if (status === 'Coletado') {
-      color = 'success';
-    } else if (status === 'Cancelado') {
-      color = 'error';
+    let color = "default";
+
+    if (status === "Aguardando confirmação do Ponto de Coleta") {
+      color = "warning";
+    } else if (status === "Confirmado") {
+      color = "info";
+    } else if (status === "Coletado") {
+      color = "success";
+    } else if (status === "Cancelado") {
+      color = "error";
     }
-    
-    return (
-      <Chip 
-        label={status} 
-        color={color} 
-        size="small" 
-      />
-    );
+
+    return <Chip label={status} color={color} size="small" />;
   };
 
   if (loading && agendamentos.length === 0) {
     return (
       <AppLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "50vh",
+          }}
+        >
           <CircularProgress color="success" />
-          <Typography variant="body1" sx={{ ml: 2 }}>Carregando...</Typography>
+          <Typography variant="body1" sx={{ ml: 2 }}>
+            Carregando...
+          </Typography>
         </Box>
       </AppLayout>
     );
@@ -486,7 +534,7 @@ export default function AgendamentoManagement() {
                       </TableCell>
                       <TableCell>{formatDate(agendamento.date)}</TableCell>
                       <TableCell>
-                        {agendamento.time || "Não definido"}
+                        {formattedTime(agendamento.date) || "Não definido"}
                       </TableCell>
                       <TableCell>{getStatusChip(agendamento.status)}</TableCell>
                       <TableCell>
@@ -498,9 +546,8 @@ export default function AgendamentoManagement() {
                               <Chip
                                 key={index}
                                 size="small"
-                                label={`${
-                                  waste.wasteId?.type || "Desconhecido"
-                                } (${waste.quantity} un.)`}
+                                label={`${waste.wasteId?.type || "Desconhecido"
+                                  } (${waste.quantity} un.)`}
                                 sx={{ bgcolor: "#e8f5e9", color: "#2e7d32" }}
                               />
                             ))}
@@ -587,20 +634,23 @@ export default function AgendamentoManagement() {
                   label="Data"
                   value={formData.date}
                   onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
                   sx={{ width: "100%" }}
                 />
               </LocalizationProvider>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Horário"
-                name="time"
-                value={formData.time}
-                onChange={handleChange}
-                placeholder="Ex: 14:30"
-              />
+              <LocalizationProvider
+                dateAdapter={AdapterDateFns}
+                adapterLocale={ptBR}
+              >
+                <TimePicker
+                  label="Horário"
+                  value={formData.date}
+                  onChange={handleDateChange}
+                  ampm={false}
+                  sx={{ width: "100%" }}
+                />
+              </LocalizationProvider>
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth>
@@ -612,7 +662,9 @@ export default function AgendamentoManagement() {
                   label="Status"
                   sx={{ minWidth: 150 }}
                 >
-                  <MenuItem value="Aguardando confirmação do Ponto de Coleta">Aguardando confirmação do Ponto de Coleta</MenuItem>
+                  <MenuItem value="Aguardando confirmação do Ponto de Coleta">
+                    Aguardando confirmação do Ponto de Coleta
+                  </MenuItem>
                   <MenuItem value="Coletado">Coletado</MenuItem>
                   <MenuItem value="Confirmado">Confirmado</MenuItem>
                   <MenuItem value="Cancelado">Cancelado</MenuItem>
