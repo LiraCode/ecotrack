@@ -1,6 +1,7 @@
 import connectToDB from '@/lib/db';
 import CollectionPoint from '@/models/collectionPoint';
 import Address from '@/models/address';
+import '@/models/responsable';
 import '@/models/waste';
 import { NextResponse } from 'next/server';
 

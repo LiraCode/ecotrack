@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,7 +12,8 @@ import {
   Box,
   Divider,
   Chip,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import { Close, Cancel, Add, LocationOn, Person, AccessTime } from '@mui/icons-material';
 
@@ -22,14 +24,17 @@ export default function ScheduleDialog({
   schedules,
   onCancel,
   onAddNew,
-  isMobile
+  isMobile,
+  fetchSchedules
 }) {
+  const [cancellingSchedule, setCancellingSchedule] = useState(null);
+  
   // Filtra os agendamentos para a data selecionada
   const filteredSchedules = schedules.filter(
     schedule => schedule.date === selectedDate
   );
+  
   // Função para extrair o horário da data
-  // Função corrigida para extrair o horário da data
   const getTimeFromDate = (dateString, scheduleObj) => {
     if (!dateString) return 'Não informado';
 
@@ -60,6 +65,24 @@ export default function ScheduleDialog({
     ).join(' ');
   };
 
+  // Função para lidar com o cancelamento
+  const handleCancel = async (date, name, scheduleId) => {
+    setCancellingSchedule(scheduleId);
+    
+    try {
+      // Chamar a função onCancel fornecida como prop
+      await onCancel(date, name);
+      
+      // Após o cancelamento, buscar os dados atualizados
+      if (typeof fetchSchedules === 'function') {
+        await fetchSchedules();
+      }
+    } catch (error) {
+      console.error("Erro ao cancelar agendamento:", error);
+    } finally {
+      setCancellingSchedule(null);
+    }
+  };
 
   return (
     <Dialog
@@ -95,7 +118,7 @@ export default function ScheduleDialog({
           <List>
             {filteredSchedules.map((schedule, index) => (
               <ListItem
-                key={index}
+                key={`${schedule.id || index}-${schedule.status}`}
                 secondaryAction={
                   <Box sx={{ display: "flex", gap: 1 }}>
                     {/* Botão para cancelar agendamento */}
@@ -105,7 +128,7 @@ export default function ScheduleDialog({
                           <IconButton
                             edge="end"
                             onClick={() =>
-                              onCancel(schedule.date, schedule.name)
+                              handleCancel(schedule.date, schedule.name, schedule.id)
                             }
                             sx={{
                               color: "#f44336",
@@ -114,16 +137,20 @@ export default function ScheduleDialog({
                             }}
                             disabled={
                               schedule.status === "Coletado" ||
-                              schedule.status === "Cancelado"
+                              schedule.status === "Cancelado" ||
+                              cancellingSchedule === schedule.id
                             }
                           >
-                            <Cancel />
+                            {cancellingSchedule === schedule.id ? (
+                              <CircularProgress size={24} color="error" />
+                            ) : (
+                              <Cancel />
+                            )}
                           </IconButton>
                         </Tooltip>
                       )}
                   </Box>
                 }
-                //background
                 sx={{
                   border: "1px solid #e0e0e0",
                   borderRadius: "4px",
@@ -140,7 +167,6 @@ export default function ScheduleDialog({
                   opacity: schedule.status === "Cancelado" ? 0.7 : 1,
                 }}
               >
-                {/* COR FONTE TITULO */}
                 <Box sx={{ width: "100%", mb: 1 }}>
                   <Typography
                     variant="h6"
@@ -172,11 +198,8 @@ export default function ScheduleDialog({
                       mr: 1,
                     }}
                   />
-                  {/* balao de status */}
                   <Chip
-                    label={
-                      schedule.status 
-                    }
+                    label={schedule.status}
                     size="small"
                     sx={{
                       backgroundColor:
@@ -185,11 +208,9 @@ export default function ScheduleDialog({
                           : schedule.status === "Coletado"
                           ? "#4caf50"
                           : schedule.status === "Confirmado"
-                          //uma cor tom azul
                           ? "#007bff"
                           : "#ffef9f",
                       color:
-
                         schedule.status === "Cancelado"
                           ? "#d32f2f"
                           : schedule.status === "Coletado" || schedule.status === "Confirmado"

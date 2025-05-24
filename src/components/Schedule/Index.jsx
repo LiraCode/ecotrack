@@ -9,9 +9,8 @@ import ScheduleDialog from './ScheduleDialog';
 import { useAuth } from "@/context/AuthContext";
 import { cancelScheduling } from '../../services/schedulingService';
 
-
 export default function AgendamentoPage({ sidebarOpen = false }) {
-    const theme = useTheme();
+  const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [schedules, setSchedules] = useState([]);
   const [openNewDialog, setOpenNewDialog] = useState(false);
@@ -37,6 +36,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     if (!user) return;
 
     try {
+      setLoading(true);
       const response = await fetch('/api/schedule', {
         headers: {
           Authorization: `Bearer ${user.accessToken}`,
@@ -45,7 +45,6 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
 
       if (response.ok) {
         const data = await response.json();
-        //console.log(data);
         const formattedSchedules = data.map(schedule => ({
           id: schedule._id,
           name: schedule.collectionPointId.name,
@@ -76,45 +75,49 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     }
   };
 
-   const handleAddSchedule = async (newSchedule) => {
+  const handleAddSchedule = async (newSchedule) => {
     await fetchSchedules(); // Refresh schedules after adding new one
   };
   
-
   const handleCancelSchedule = async (date, name) => {
-  // Encontre o ID do agendamento com base na data e nome
-  const scheduleToCancel = schedules.find(
-    schedule => schedule.date === date && schedule.name === name
-  );
-
-  
-  if (!scheduleToCancel || !scheduleToCancel.id) {
-    console.error('Agendamento não encontrado ou sem ID');
-    return;
-  }
-  
-  // Chame o serviço para cancelar o agendamento
-  console.log('ID do agendamento a ser cancelado:', scheduleToCancel.id);
-  const result = await cancelScheduling(scheduleToCancel.id);
-  
-  if (result.success) {
-    // Atualize o estado local para refletir o cancelamento
-    setSchedules(prevSchedules => 
-      prevSchedules.map(schedule => 
-        schedule.date === date && schedule.name === name
-          ? { ...schedule, canceled: true }
-          : schedule
-      )
+    // Encontre o ID do agendamento com base na data e nome
+    const scheduleToCancel = schedules.find(
+      schedule => schedule.date === date && schedule.name === name
     );
     
-    // Opcional: Mostre uma mensagem de sucesso
-    // toast.success('Agendamento cancelado com sucesso!');
-  } else {
-    // Opcional: Mostre uma mensagem de erro
-    // toast.error(`Erro ao cancelar agendamento: ${result.error}`);
-    console.error('Erro ao cancelar agendamento:', result.error);
-  }
-};
+    if (!scheduleToCancel || !scheduleToCancel.id) {
+      console.error('Agendamento não encontrado ou sem ID');
+      return { success: false, error: 'Agendamento não encontrado' };
+    }
+    
+    try {
+      // Chame o serviço para cancelar o agendamento
+      console.log('ID do agendamento a ser cancelado:', scheduleToCancel.id);
+      const result = await cancelScheduling(scheduleToCancel.id);
+      
+      if (result.success) {
+        // Atualize o estado local para refletir o cancelamento
+        setSchedules(prevSchedules => 
+          prevSchedules.map(schedule => 
+            schedule.id === scheduleToCancel.id
+              ? { ...schedule, status: "Cancelado" }
+              : schedule
+          )
+        );
+        
+        // Buscar dados atualizados do servidor
+        await fetchSchedules();
+        
+        return { success: true };
+      } else {
+        console.error('Erro ao cancelar agendamento:', result.error);
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+            console.error('Erro ao cancelar agendamento:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // Função para abrir o diálogo de novo agendamento
   const handleOpenNewDialog = () => {
@@ -260,6 +263,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         selectedDate={formatDate(selectedFullDate)}
         onAddSchedule={handleAddSchedule}
         isMobile={isMobile}
+        fetchSchedules={fetchSchedules}
       />
 
       <ScheduleDialog
@@ -273,7 +277,9 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
           setOpenNewDialog(true);
         }}
         isMobile={isMobile}
+        fetchSchedules={fetchSchedules}
       />
     </Box>
   );
 }
+

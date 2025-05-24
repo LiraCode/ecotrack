@@ -44,6 +44,7 @@ export async function PUT(request, { params }) {
     const schedule = await CollectionScheduling.findById(id);
     
     if (!schedule) {
+      console.error('Agendamento não encontrado');
       return NextResponse.json(
         { message: 'Agendamento não encontrado' },
         { status: 404 }
@@ -51,6 +52,7 @@ export async function PUT(request, { params }) {
     }
     
     if (schedule.status === 'Cancelado') {
+      console.error('Agendamento já está cancelado');
       return NextResponse.json(
         { message: 'Agendamento já está cancelado' },
         { status: 400 }
@@ -63,6 +65,7 @@ export async function PUT(request, { params }) {
     await schedule.save();
     
     // Responder com sucesso
+    console.log('Agendamento cancelado com sucesso');
     return NextResponse.json({ 
       success: true, 
       message: 'Agendamento cancelado com sucesso',

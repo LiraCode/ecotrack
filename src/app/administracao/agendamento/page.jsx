@@ -115,7 +115,15 @@ export default function AgendamentoManagement() {
 
   const fetchEcopontos = useCallback(async () => {
     try {
-      const response = await fetch("/api/collection-points");
+      const response = await fetch("/api/collection-points",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.accessToken}`,
+          },
+        }
+      );
       const data = await response.json();
       if (response.ok) {
         setEcopontos(data);

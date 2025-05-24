@@ -33,7 +33,8 @@ export default function NewScheduleDialog({
   open, 
   onClose,  
   onAddSchedule, 
-  isMobile 
+  isMobile,
+  fetchSchedules // Nova prop para buscar os agendamentos atualizados
 }) {
   const { user } = useAuth();
   const [selectedMaterials, setSelectedMaterials] = useState([]);
@@ -232,8 +233,18 @@ export default function NewScheduleDialog({
       
       if (response.ok) {
         const data = await response.json();
+        
         // Notificar o componente pai sobre o novo agendamento
-        onAddSchedule(data);
+        if (typeof onAddSchedule === 'function') {
+          onAddSchedule(data);
+        }
+        
+        // Buscar dados atualizados do servidor
+        if (typeof fetchSchedules === 'function') {
+          await fetchSchedules();
+        }
+        
+        // Fechar o diálogo após sucesso
         handleClose();
       } else {
         let errorMessage = 'Erro ao criar agendamento';
