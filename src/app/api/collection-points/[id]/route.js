@@ -1,6 +1,8 @@
 import connectToDB from '@/lib/db';
 import CollectionPoint from '@/models/collectionPoint';
 import Address from '@/models/address';
+import '@/models/waste';
+import '@/models/responsable';
 import { NextResponse } from 'next/server';
 
 // GET - Buscar um ecoponto específico
@@ -40,6 +42,9 @@ export async function PUT(request, { params }) {
     // Obter dados do corpo da requisição
     const body = await request.json();
     const { address, ...collectionPointData } = body;
+    //acrescetar isActive true e isDeleted false
+    collectionPointData.isActive = true;
+    collectionPointData.isDeleted = false;
 
     // Buscar o ecoponto existente
     const existingPoint = await CollectionPoint.findById(id);
@@ -89,12 +94,12 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
+//desativar o ecoponto ja os agendamentos dependem do ecoponto
+    collectionPoint.isActive = false;
+    collectionPoint.isDeleted = true;
+    await collectionPoint.save();
 
-    // Remover o endereço associado
-    await Address.findByIdAndDelete(collectionPoint.address);
-
-    // Remover o ecoponto
-    await CollectionPoint.findByIdAndDelete(id);
+    
 
     return NextResponse.json(
       { message: 'Ecoponto removido com sucesso' },

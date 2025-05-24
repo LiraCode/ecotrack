@@ -10,7 +10,10 @@ export async function GET() {
   try {
     await connectToDB();
     
-    const collectionPoints = await CollectionPoint.find({})
+    const collectionPoints = await CollectionPoint.find({
+      isActive: true,
+      isDeleted: false
+    })
       .populate('responsableId')
       .populate('typeOfWasteId')
       .populate('address');

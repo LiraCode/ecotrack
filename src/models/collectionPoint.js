@@ -22,6 +22,8 @@ const CollectionPointSchema = new mongoose.Schema({
     responsableId: { type: mongoose.Schema.Types.ObjectId, ref: 'Responsable', required: true },
     typeOfWasteId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Waste', required: true }],
     address: { type: mongoose.Schema.Types.ObjectId, ref: 'Address', required: true },
+    isActive: { type: Boolean, default: true ,required: true },
+    isDeleted: { type: Boolean, default: false ,required: true },
     // Adicionando campos de latitude e longitude diretamente
     lat: { type: Number },
     lng: { type: Number },
