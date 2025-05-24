@@ -45,24 +45,25 @@ export default function LocaisPage() {
         
         // Get ecopoints array from response
         const ecopointsArray = data.ecopoints || [];
+        console.log('Ecopoints array:', );
         
         // Format data to match the expected structure
         const formattedEcoPoints = ecopointsArray
           .filter(point => {
             // Filter points without valid coordinates
-            const hasLat = point.lat || (point.location?.coordinates && point.location.coordinates[1]);
-            const hasLng = point.lng || (point.location?.coordinates && point.location.coordinates[0]);
+            const hasLat = point.lat;
+            const hasLng = point.lng ;
             return hasLat && hasLng;
           })
           .map(point => ({
+            id: point._id,
             name: point.name,
-            lat: point.lat || point.location.coordinates[1],
-            lng: point.lng || point.location.coordinates[0],
+            lat: point.lat || (point.location?.coordinates ? point.location.coordinates[1] : null),
+            lng: point.lng || (point.location?.coordinates ? point.location.coordinates[0] : null),
             address: point.address?.street 
               ? `${point.address.street}, ${point.address.number}` 
               : 'Endereço não disponível',
-            region: point.address?.neighborhood || 'Região não especificada',
-            id: point._id
+            region: point.address?.neighborhood || 'Região não especificada'
           }));
         
         setEcoPoints(formattedEcoPoints);
@@ -77,10 +78,10 @@ export default function LocaisPage() {
     fetchEcoPoints();
   }, []);
 
-  const handleMarkerClick = (point) => {
-    if (mapRef.current) {
-      mapRef.current.flyTo([point.lat, point.lng], 16);
-      setActiveMarker(point.name);
+  const handleMarkerClick = (ecoPoint) => {
+    if (mapRef.current && ecoPoint && ecoPoint.lat && ecoPoint.lng) {
+      mapRef.current.flyTo([ecoPoint.lat, ecoPoint.lng], 16);
+      setActiveMarker(ecoPoint.name);
       
       if (mapContainerRef.current) {
         mapContainerRef.current.scrollIntoView({ 

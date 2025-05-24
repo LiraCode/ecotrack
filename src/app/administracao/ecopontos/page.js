@@ -187,8 +187,8 @@ export default function EcopontoManagement() {
           state: ecoponto.address?.state || '',
           zipCode: ecoponto.address?.zipCode || '',
         },
-        lat: ecoponto.location.coordinates[0] || '',
-        lng: ecoponto.location.coordinates[1] || '',
+        lat: ecoponto.lat || '',
+        lng: ecoponto.lng || '',
       });
     } else {
       setEditMode(false);
@@ -495,10 +495,10 @@ export default function EcopontoManagement() {
                     </TableCell>
                     <TableCell>{ecoponto.address?.city || "N/A"}</TableCell>
                     <TableCell>
-                      {ecoponto.location.coordinates[0] && ecoponto.location.coordinates[1] ? (
+                      {ecoponto.lat && ecoponto.lng ? (
                         <Chip
                           icon={<LocationOnIcon />}
-                          label={`${ecoponto.location.coordinates[0].toFixed(4)}, ${ecoponto.location.coordinates[1].toFixed(4)}`}
+                          label={`${ecoponto.lat.toFixed(4)}, ${ecoponto.lng.toFixed(4)}`}
                           size="small"
                           color="success"
                         />
