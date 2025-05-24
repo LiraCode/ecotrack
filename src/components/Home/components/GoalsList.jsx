@@ -25,7 +25,7 @@ export default function GoalsList({ goals, loading }) {
   return (
     <Paper elevation={1} sx={{ p: 3, borderRadius: 2, width: '100%' }}>
       <Typography variant="h5" sx={{ mb: 3, color: '#2e8b57', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <EmojiEventsIcon sx={{ mr: 1 }} /> Minhas Metas
+        <EmojiEventsIcon sx={{ mr: 1 }} /> Meus Desafios Ativos
       </Typography>
       <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
         {goals.map((goal) => (

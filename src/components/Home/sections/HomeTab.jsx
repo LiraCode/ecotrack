@@ -45,7 +45,7 @@ const HomeTab = ({
       </Box>
       
       {/* Próximos Agendamentos - mostrar apenas se o usuário estiver logado como "user" */}
-      <Box sx={componentStyle}>
+      <Box sx={{ ...componentStyle, mb: 5 }}>
         {isUserLoggedIn ? (
           <UpcomingSchedules 
             schedules={upcomingSchedules} 

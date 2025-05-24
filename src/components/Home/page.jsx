@@ -122,6 +122,7 @@ export default function HomePage() {
         }
 
         const data = await response.json();
+        
 
         // Formatar os dados para o formato esperado pelo componente
         const formattedSchedules = data.map(schedule => {
@@ -144,11 +145,17 @@ export default function HomePage() {
             location: schedule.collectionPointId?.name || "Ecoponto",
             date: formattedDate,
             time: formattedTime,
-            type: schedule.wastes?.map(w => w.wasteId?.name || "Resíduo").join(", ") || "Diversos"
+            status: schedule.status,
+            type: schedule.wastes?.map(w => w.wasteId?.type || "Resíduo").join(", ") || "Diversos"
           };
         });
 
-        setUpcomingSchedules(formattedSchedules);
+        const nextSchedule = formattedSchedules
+        .filter(schedule => schedule.status !== "Cancelado" && schedule.status !== "Coletado")
+        .sort((a, b) => new Date(b.rawDate) - new Date(a.rawDate));
+
+        setUpcomingSchedules(nextSchedule);
+        console.log(nextSchedule);
       } catch (error) {
         console.error("Error fetching upcoming schedules:", error);
         setUpcomingSchedules([]);
@@ -191,13 +198,23 @@ export default function HomePage() {
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
         }
+        const scoresResponse = await fetch('/api/scores?status=active', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        
+        if (!scoresResponse.ok) {
+          throw new Error('Falha ao buscar metas ativas')
+        }
 
-        const responseData = await response.json();
+        const responseData = await scoresResponse.json();
+        console.log("scores",responseData);
 
         // Verificar a estrutura da resposta e extrair o array de metas
         const goalsArray = Array.isArray(responseData)
           ? responseData
-          : responseData.goals || responseData.data || [];
+          : responseData.scores || responseData.data || [];
 
         // Verificar se goalsArray é realmente um array
         if (!Array.isArray(goalsArray)) {
@@ -208,10 +225,10 @@ export default function HomePage() {
         // Formatar os dados para o formato esperado pelo componente
         const formattedGoals = goalsArray.map(goal => ({
           id: goal._id || goal.id,
-          title: goal.description || goal.title,
-          completed: goal.completed || false
+          title: goal.goalId.title || goal.title,
+          status: goal.status || false
         }));
-
+        console.log(formattedGoals);
         setGoals(formattedGoals);
       } catch (error) {
         console.error("Error fetching goals:", error);
