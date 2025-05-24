@@ -542,12 +542,12 @@ export default function AgendamentoManagement() {
                           <Box
                             sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
                           >
-                            {agendamento.wastes.map((waste, index) => (
+                            {agendamento.wastes.map((waste, index) => ( 
                               <Chip
                                 key={index}
                                 size="small"
                                 label={`${waste.wasteId?.type || "Desconhecido"
-                                  } (${waste.quantity} un.)`}
+                                  } (${waste.quantity < 1 ? waste.weight : waste.quantity} ${waste.weight > 0 ? "kg" : "Un"}.)`}
                                 sx={{ bgcolor: "#e8f5e9", color: "#2e7d32" }}
                               />
                             ))}
