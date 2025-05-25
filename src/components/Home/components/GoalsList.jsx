@@ -66,7 +66,7 @@ export default function GoalsList({ goals, loading }) {
         ))}
       </List>
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-        <Link href="/metas" style={{ textDecoration: 'none' }}>
+        <Link href="/cliente/metas" style={{ textDecoration: 'none' }}>
           <Button
             component="span"
             variant="outlined"
