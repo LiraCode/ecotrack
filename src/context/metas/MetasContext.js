@@ -1,251 +1,367 @@
 'use client'
-import React, { createContext, useState, useContext, useEffect } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { useToast } from '@/components/ui/use-toast'
-import { checkExpiredScores } from '@/services/scoreService'
-import { getAuthToken } from '@/services/authService'
+import { useAuth } from '@/context/AuthContext'
 
-const MetasContext = createContext()
+const MetasContext = createContext({
+  desafiosAtivos: [],
+  desafiosConcluidos: [],
+  desafiosExpirados: [],
+  desafiosDisponiveis: [],
+  meusPontos: 0,
+  ranking: [],
+  loading: true,
+  abaAtiva: 'andamento',
+  setAbaAtiva: () => {},
+  participarDesafio: async () => {},
+  removerDesafio: async () => {},
+  atualizarProgresso: async () => {},
+  concluirDesafio: async () => {}
+})
+
+export const useMetasContext = () => useContext(MetasContext)
 
 export const MetasProvider = ({ children }) => {
+  const { user } = useAuth();
   const { toast } = useToast()
+  
+  // Estado para armazenar os dados
   const [meusPontos, setMeusPontos] = useState(0)
   const [ranking, setRanking] = useState([])
+  const [abaAtiva, setAbaAtiva] = useState('andamento')
   const [desafiosAtivos, setDesafiosAtivos] = useState([])
   const [desafiosConcluidos, setDesafiosConcluidos] = useState([])
   const [desafiosExpirados, setDesafiosExpirados] = useState([])
   const [desafiosDisponiveis, setDesafiosDisponiveis] = useState([])
-  const [abaAtiva, setAbaAtiva] = useState('andamento')
-  const [pendingAlert, setPendingAlert] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
-  // Verificar scores expirados ao carregar
-  useEffect(() => {
-    const verifyExpiredScores = async () => {
-      try {
-        const result = await checkExpiredScores()
-        if (result.success && result.expiredCount > 0) {
-          toast({
-            title: "Metas expiradas",
-            description: `${result.expiredCount} meta(s) expirou(aram) e foi(ram) movida(s) para a aba "Expirados"`,
-            variant: "warning"
-          })
-        }
-      } catch (error) {
-        console.error("Erro ao verificar scores expirados:", error)
-      }
-    }
+  const refreshData = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1)
+  }, [])
 
-    verifyExpiredScores()
-  }, [toast])
+  // Função para buscar os desafios do usuário
+  const fetchUserChallenges = useCallback(async () => {
+    if (!user?.accessToken) return;
 
-  // Função para participar de um desafio
-  const participarDesafio = async (desafioId) => {
     try {
-      const token = await getAuthToken()
-      if (!token) {
-        throw new Error("Não foi possível obter o token de autenticação")
+      setLoading(true);
+      
+      // Verificar se é um usuário admin
+      const adminResponse = await fetch('/api/admin/me', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      const isAdmin = adminResponse.ok;
+      
+      // Se for admin, não buscar pontos nem ranking
+      if (isAdmin) {
+        setMeusPontos(0);
+        setRanking([]);
+        return;
       }
       
+      // Buscar scores (desafios) do usuário
+      const scoresResponse = await fetch('/api/scores', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      if (!scoresResponse.ok) {
+        throw new Error('Falha ao buscar scores');
+      }
+      
+      const scoresData = await scoresResponse.json();
+      
+      console.log('Scores recebidos:', scoresData.scores);
+      
+      // Separar os desafios por status
+      const ativos = scoresData.scores.filter(score => score.status === 'active') || [];
+      const concluidos = scoresData.scores.filter(score => score.status === 'completed') || [];
+      const expirados = scoresData.scores.filter(score => score.status === 'expired') || [];
+      
+      console.log('Desafios separados:', {
+        ativos: ativos.length,
+        concluidos: concluidos.length,
+        expirados: expirados.length
+      });
+      
+      // Atualizar estados
+      setDesafiosAtivos(ativos);
+      setDesafiosConcluidos(concluidos);
+      setDesafiosExpirados(expirados);
+      
+      // Buscar desafios disponíveis
+      const goalsResponse = await fetch('/api/goals?status=active', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      if (!goalsResponse.ok) {
+        throw new Error('Falha ao buscar metas disponíveis');
+      }
+      
+      const goalsData = await goalsResponse.json();
+      
+      // Filtrar metas que o usuário ainda não participa
+      const activeScoreIds = [...ativos, ...concluidos, ...expirados].map(score => score.goalId._id);
+      const availableGoals = goalsData.goals.filter(goal => 
+        !activeScoreIds.includes(goal._id)
+      );
+      
+      console.log('Metas disponíveis:', {
+        total: goalsData.goals.length,
+        disponiveis: availableGoals.length
+      });
+      
+      setDesafiosDisponiveis(availableGoals);
+      
+      // Buscar pontuação do usuário
+      const pointsResponse = await fetch('/api/scores/points', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      if (pointsResponse.ok) {
+        const pointsData = await pointsResponse.json();
+        console.log('Pontos recebidos:', pointsData);
+        setMeusPontos(pointsData.points || 0);
+      } else {
+        console.error('Erro ao buscar pontos:', await pointsResponse.text());
+      }
+      
+      // Buscar ranking
+      const rankingResponse = await fetch('/api/scores/ranking', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+      
+      if (rankingResponse.ok) {
+        const rankingData = await rankingResponse.json();
+        console.log('Dados do ranking:', rankingData);
+        setRanking(rankingData.ranking || []);
+      } else {
+        console.error('Erro ao buscar ranking:', await rankingResponse.text());
+      }
+      
+    } catch (error) {
+      console.error('Erro ao buscar desafios:', error);
+      toast({
+        title: "Erro",
+        description: "Falha ao carregar seus desafios",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, toast]);
+
+  // Carregar dados quando o componente montar ou quando houver refresh
+  useEffect(() => {
+    fetchUserChallenges();
+  }, [fetchUserChallenges, refreshTrigger]);
+
+  const participarDesafio = async (goalId) => {
+    try {
+      if (!user?.accessToken) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para participar de desafios",
+          variant: "destructive"
+        });
+        return false;
+      }
+    
       const response = await fetch('/api/scores', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${user.accessToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ goalId: desafioId })
-      })
-      
+        body: JSON.stringify({ goalId })
+      });
+    
+      const data = await response.json();
+    
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Falha ao participar do desafio')
-      }
-      
-      const data = await response.json()
-      
-      // Atualizar listas de desafios
-      const desafio = desafiosDisponiveis.find(d => d.id === desafioId)
-      if (desafio) {
-        // Adicionar aos desafios ativos com o ID do score retornado pela API
-        setDesafiosAtivos(prev => [...prev, {
-          ...desafio,
-          id: data.score._id,
-          goalId: desafioId,
-          progresso: 0,
-          pontosGanhos: 0
-        }])
-        
-        // Remover dos desafios disponíveis
-        setDesafiosDisponiveis(prev => prev.filter(d => d.id !== desafioId))
-        
         toast({
-          title: "Sucesso!",
-          description: `Você está participando do desafio "${desafio.nome}"`,
-          variant: "success"
-        })
+          title: "Erro",
+          description: data.message || "Não foi possível participar deste desafio.",
+          variant: "destructive"
+        });
+        return false;
       }
-      
-      return data
+    
+      toast({
+        title: "Sucesso!",
+        description: "Você está participando deste desafio agora.",
+        variant: "success"
+      });
+    
+      refreshData();
+      return true;
     } catch (error) {
-      console.error("Erro ao participar do desafio:", error)
+      console.error("Erro ao participar do desafio:", error);
       toast({
         title: "Erro",
-        description: `Falha ao participar do desafio: ${error.message}`,
+        description: "Ocorreu um erro ao participar do desafio.",
         variant: "destructive"
-      })
-      throw error
+      });
+      return false;
     }
-  }
+  };
 
-  // Função para concluir um desafio
-  const concluirDesafio = async (desafioId) => {
+  const removerDesafio = async (scoreId) => {
     try {
-      const token = await getAuthToken()
-      if (!token) {
-        throw new Error("Não foi possível obter o token de autenticação")
-      }
-      
-      const response = await fetch(`/api/scores/${desafioId}/complete`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Falha ao concluir o desafio')
-      }
-      
-      const data = await response.json()
-      
-      // Atualizar listas de desafios
-      const desafio = desafiosAtivos.find(d => d.id === desafioId)
-      if (desafio) {
-        // Adicionar aos desafios concluídos
-        setDesafiosConcluidos(prev => [...prev, {
-          ...desafio,
-          pontosGanhos: data.earnedPoints || desafio.pontos
-        }])
-        
-        // Remover dos desafios ativos
-        setDesafiosAtivos(prev => prev.filter(d => d.id !== desafioId))
-        
-        // Atualizar pontos totais
-        setMeusPontos(prev => prev + (data.earnedPoints || desafio.pontos))
-        
+      if (!user?.accessToken) {
         toast({
-          title: "Parabéns!",
-          description: `Você concluiu o desafio "${desafio.nome}" e ganhou ${data.earnedPoints || desafio.pontos} pontos!`,
-          variant: "success"
-        })
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para remover desafios",
+          variant: "destructive"
+        });
+        return false;
       }
-      
-      return data
-    } catch (error) {
-      console.error("Erro ao concluir desafio:", error)
-      toast({
-        title: "Erro",
-        description: `Falha ao concluir o desafio: ${error.message}`,
-        variant: "destructive"
-      })
-      throw error
-    }
-  }
-
-  // Função para remover um desafio
-  const removerDesafio = async (desafioId) => {
-    try {
-      const token = await getAuthToken()
-      if (!token) {
-        throw new Error("Não foi possível obter o token de autenticação")
-      }
-      
-      const response = await fetch(`/api/scores/${desafioId}`, {
+    
+      const response = await fetch(`/api/scores/${scoreId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${user.accessToken}`
         }
-      })
-      
+      });
+    
+      const data = await response.json();
+    
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Falha ao remover o desafio')
+        toast({
+          title: "Erro",
+          description: data.message || "Não foi possível remover este desafio.",
+          variant: "destructive"
+        });
+        return false;
       }
-      
-      // Remover o desafio da lista apropriada
-      setDesafiosAtivos(prev => prev.filter(d => d.id !== desafioId))
-      setDesafiosConcluidos(prev => prev.filter(d => d.id !== desafioId))
-      setDesafiosExpirados(prev => prev.filter(d => d.id !== desafioId))
-      
-      // Incrementar o refreshTrigger para forçar o recarregamento dos dados
-      setRefreshTrigger(prev => prev + 1)
-      
+    
       toast({
-        title: "Desafio removido",
-        description: "O desafio foi removido da sua lista",
+        title: "Sucesso!",
+        description: "Desafio removido com sucesso.",
         variant: "success"
-      })
-      
-      return true
+      });
+    
+      refreshData();
+      return true;
     } catch (error) {
-      console.error("Erro ao remover desafio:", error)
+      console.error("Erro ao remover desafio:", error);
       toast({
         title: "Erro",
-        description: `Falha ao remover o desafio: ${error.message}`,
+        description: "Ocorreu um erro ao remover o desafio.",
         variant: "destructive"
-      })
-      throw error
+      });
+      return false;
     }
-  }
+  };
 
-  // Função para atualizar o progresso de um desafio
-  const atualizarProgresso = async (desafioId, novoProgresso) => {
+  const atualizarProgresso = useCallback(async (scoreId, wasteId, quantidade) => {
     try {
-      const token = await getAuthToken()
-      if (!token) {
-        throw new Error("Não foi possível obter o token de autenticação")
+      if (!user?.accessToken) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para atualizar o progresso",
+          variant: "destructive"
+        });
+        return false;
       }
-      
-      const response = await fetch(`/api/scores/${desafioId}/progress`, {
+
+      const response = await fetch(`/api/scores/${scoreId}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${user.accessToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ progress: novoProgresso })
-      })
-      
+        body: JSON.stringify({ 
+          wasteId,
+          quantity: quantidade
+        })
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Falha ao atualizar o progresso')
+        throw new Error(data.message || 'Erro ao atualizar progresso');
       }
-      
-      const data = await response.json()
-      
-      // Atualizar o progresso no estado
-      setDesafiosAtivos(prev => prev.map(d => 
-        d.id === desafioId ? { ...d, progresso: novoProgresso } : d
-      ))
-      
+
       toast({
-        title: "Progresso atualizado",
-        description: "O progresso do desafio foi atualizado com sucesso",
-        variant: "success"
-      })
-      
-      return data
+        title: "Sucesso!",
+        description: "Progresso atualizado com sucesso",
+      });
+
+      refreshData();
+      return true;
     } catch (error) {
-      console.error("Erro ao atualizar progresso:", error)
+      console.error('Erro ao atualizar progresso:', error);
       toast({
         title: "Erro",
-        description: `Falha ao atualizar o progresso: ${error.message}`,
+        description: error.message || "Falha ao atualizar progresso",
         variant: "destructive"
-      })
-      throw error
+      });
+      return false;
     }
-  }
+  }, [user, toast, refreshData]);
+
+  const concluirDesafio = useCallback(async (scoreId) => {
+    try {
+      if (!user?.accessToken) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Você precisa estar logado para concluir desafios",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      const response = await fetch(`/api/scores/${scoreId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao concluir desafio');
+      }
+
+      // Atualizar estados localmente
+      setDesafiosAtivos(prev => prev.filter(d => d._id !== scoreId));
+      setDesafiosConcluidos(prev => [...prev, data.score]);
+
+      toast({
+        title: "Parabéns!",
+        description: `Desafio concluído com sucesso! Você ganhou ${data.earnedPoints || 0} pontos.`,
+      });
+
+      // Atualizar pontuação
+      setMeusPontos(prev => prev + (data.earnedPoints || 0));
+
+      // Forçar atualização dos dados
+      await fetchUserChallenges();
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao concluir desafio:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Falha ao concluir desafio",
+        variant: "destructive"
+      });
+      return false;
+    }
+  }, [user, toast, fetchUserChallenges]);
 
   return (
     <MetasContext.Provider value={{
@@ -257,28 +373,13 @@ export const MetasProvider = ({ children }) => {
       desafiosConcluidos,
       desafiosExpirados,
       desafiosDisponiveis,
-      concluirDesafio,
+      loading,
+      participarDesafio,
       removerDesafio,
       atualizarProgresso,
-      participarDesafio,
-      setMeusPontos,
-      setRanking,
-      setDesafiosAtivos,
-      setDesafiosConcluidos,
-      setDesafiosExpirados,
-      setDesafiosDisponiveis,
-      refreshTrigger
+      concluirDesafio
     }}>
       {children}
     </MetasContext.Provider>
-  )
-}
-export const useMetasContext = () => {
-  const context = useContext(MetasContext)
-  if (!context) {
-    throw new Error('useMetasContext must be used within a MetasProvider')
-  }
-  return context
-}
-
-export { MetasContext }
+  );
+};

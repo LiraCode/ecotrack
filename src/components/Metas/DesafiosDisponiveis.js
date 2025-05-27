@@ -1,118 +1,153 @@
-'use client'
 import React from 'react'
-import { Typography, Paper, Button, Grid, Card, CardContent, CardActions } from '@mui/material'
-import { useToast } from '@/components/ui/use-toast'
-import { useAuth } from '@/context/AuthContext'
+import { Box, Typography, Button, Card, CardContent, CardActions, Divider, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-const DesafiosDisponiveis = (props) => {
-  const { toast } = useToast()
-  const { user } = useAuth()
-  const [loading, setLoading] = React.useState({})
-  // Verificar se props e desafiosDisponiveis existem
-  if (!props) {
-    console.warn("DesafiosDisponiveis: props is undefined")
-    return <LoadingDesafios />
-  }
-  
-  const desafiosDisponiveis = props.desafiosDisponiveis
-  const participarDesafio = props.participarDesafio
-  
-  // Verificar se desafiosDisponiveis existe e é um array
-  if (!desafiosDisponiveis || !Array.isArray(desafiosDisponiveis)) {
-    console.warn("DesafiosDisponiveis: desafiosDisponiveis is not an array", desafiosDisponiveis)
-    return <LoadingDesafios />
-  }
-  
+const DesafiosDisponiveis = ({ desafiosDisponiveis, participarDesafio }) => {
+  // Verificar se há desafios disponíveis para exibir
+  const temDesafios = Array.isArray(desafiosDisponiveis) && desafiosDisponiveis.length > 0
 
-  const handleParticipar = async (desafioId) => {
-    if (!participarDesafio || typeof participarDesafio !== 'function') {
-      console.error("participarDesafio is not a function")
-      return
-    }
+  // Função para formatar a data
+  const formatarData = (data) => {
+    if (!data) return 'Data não definida'
     
-    setLoading(prev => ({ ...prev, [desafioId]: true }))
     try {
-      await participarDesafio(desafioId)
+      const dataObj = data instanceof Date ? data : new Date(data)
+      if (isNaN(dataObj.getTime())) return 'Data inválida'
+      return format(dataObj, 'dd/MM/yyyy', { locale: ptBR })
     } catch (error) {
-      console.error("Erro ao participar do desafio:", error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível participar do desafio. Tente novamente.",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(prev => ({ ...prev, [desafioId]: false }))
+      console.error('Erro ao formatar data:', error)
+      return 'Data inválida'
     }
   }
+  
+  // Função para lidar com a participação no desafio
+  const handleParticipar = (id) => {
+    console.log('Participando do desafio com ID:', id);
+    participarDesafio(id);
+  };
+
+  const formatarValor = (value, type) => {
+    if (typeof value === 'object' && value.$numberDecimal) {
+      value = parseFloat(value.$numberDecimal);
+    }
+    return type === 'weight' ? value.toFixed(1) : Math.round(value);
+  };
 
   return (
-    <Paper elevation={3} className="p-6 mb-8">
-      <Typography variant="h5" className="font-bold mb-4">
+    <Box sx={{ mt: 6, mb: 8 }}>
+      <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
         Desafios Disponíveis
       </Typography>
       
-      {desafiosDisponiveis.length === 0 ? (
-        <div className="text-center p-8 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">Não há desafios disponíveis no momento.</p>
-          <p className="text-gray-500">Volte mais tarde para novos desafios!</p>
+      <Divider sx={{ mb: 3 }} />
+      
+      {temDesafios ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {desafiosDisponiveis.map((desafio) => (
+            <Card key={desafio._id || desafio.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column', boxShadow: 3 }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" component="div" gutterBottom sx={{ fontWeight: 'bold' }}>
+                  {desafio.title || desafio.nome}
+                </Typography>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {desafio.description || desafio.descricao}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Início:
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatarData(desafio.initialDate || desafio.dataInicio)}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Término:
+                  </Typography>
+                  <Typography variant="body2">
+                    {formatarData(desafio.validUntil || desafio.dataTermino)}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Pontuação:
+                  </Typography>
+                  <Chip 
+                    label={`${desafio.points || desafio.pontos} pontos`} 
+                    color="primary" 
+                    size="small" 
+                    sx={{ fontWeight: 'bold' }}
+                  />
+                </Box>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                {/* Metas específicas */}
+                {desafio.challenges && desafio.challenges.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                      Metas específicas:
+                    </Typography>
+                    <TableContainer component={Paper} variant="outlined">
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Tipo de Resíduo</TableCell>
+                            <TableCell align="right">Meta</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {desafio.challenges.map((challenge, index) => {
+                            const unit = challenge.type === 'weight' ? 'kg' : 'un';
+                            const value = formatarValor(challenge.value, challenge.type);
+                            
+                            return (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  {challenge.waste?.type || 'Resíduo'}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {value} {unit}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+              </CardContent>
+              
+              <CardActions sx={{ p: 2, pt: 0 }}>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  fullWidth
+                  onClick={() => handleParticipar(desafio._id || desafio.id)}
+                >
+                  Participar
+                </Button>
+              </CardActions>
+            </Card>
+          ))}
         </div>
       ) : (
-        <Grid container spacing={3}>
-          {desafiosDisponiveis.map((desafio, index) => (
-            <Grid item xs={12} sm={6} md={4} key={desafio.id || index}>
-              <Card className="h-full flex flex-col">
-                <CardContent className="flex-grow">
-                  <Typography variant="h6" className="font-medium mb-2">
-                    {desafio.nome}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" className="mb-3">
-                    {desafio.descricao}
-                  </Typography>
-                  <div className="space-y-1 text-sm">
-                    <Typography>
-                      <span className="font-medium">Meta:</span> {desafio.total} {desafio.tipo === 'peso' ? 'kg' : 'itens'}
-                    </Typography>
-                    <Typography>
-                      <span className="font-medium">Pontos:</span> {desafio.pontos}
-                    </Typography>
-                    <Typography>
-                      <span className="font-medium">Prazo:</span> {desafio.dataTermino ? desafio.dataTermino.toLocaleDateString() : 'Não definido'}
-                    </Typography>
-                  </div>
-                </CardContent>
-                <CardActions>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    fullWidth
-                    onClick={() => handleParticipar(desafio.id)}
-                    disabled={loading[desafio.id]}
-                  >
-                    {loading[desafio.id] ? 'Participando...' : 'Participar'}
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <Box sx={{ textAlign: 'center', py: 4, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+          <Typography variant="body1" color="text.secondary">
+            Não há novos desafios disponíveis no momento.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Volte mais tarde para verificar novos desafios.
+          </Typography>
+        </Box>
       )}
-    </Paper>
-  )
-}
-
-// Componente de carregamento para exibir quando os desafios não estiverem disponíveis
-const LoadingDesafios = () => {
-  return (
-    <Paper elevation={3} className="p-6 mb-8">
-      <Typography variant="h5" className="font-bold mb-4">
-        Desafios Disponíveis
-      </Typography>
-      <div className="text-center p-8">
-        <Typography variant="body1" color="textSecondary">
-          Carregando desafios disponíveis...
-        </Typography>
-      </div>
-    </Paper>
+    </Box>
   )
 }
 

@@ -65,7 +65,7 @@ const menuGroups = [
         ),
         label: "Perfil",
         route: "/cliente/perfil",
-        role: "User",
+        role: ["User"],
         pos: 3,
       },
       {

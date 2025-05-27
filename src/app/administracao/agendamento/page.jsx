@@ -415,6 +415,11 @@ export default function AgendamentoManagement() {
     return <Chip label={status} color={color} size="small" />;
   };
 
+  // Adicionar função para contar agendamentos por status
+  const getStatusCount = (status) => {
+    return agendamentos.filter(ag => ag.status === status).length;
+  };
+
   if (loading && agendamentos.length === 0) {
     return (
       <AppLayout>
@@ -500,13 +505,88 @@ export default function AgendamentoManagement() {
                 },
               }}
             >
-              <Tab label="Aguardando" />
-              <Tab label="Confirmados" />
-              <Tab label="coletados" />
-              <Tab label="Cancelados" />
-              <Tab label="Todos" />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    AGUARDANDO
+                    <Chip 
+                      size="small" 
+                      label={getStatusCount('Aguardando confirmação do Ponto de Coleta')} 
+                      color="warning"
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+              />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    CONFIRMADOS
+                    <Chip 
+                      size="small" 
+                      label={getStatusCount('Confirmado')} 
+                      color="info"
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+              />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    COLETADOS
+                    <Chip 
+                      size="small" 
+                      label={getStatusCount('Coletado')} 
+                      color="success"
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+              />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    CANCELADOS
+                    <Chip 
+                      size="small" 
+                      label={getStatusCount('Cancelado')} 
+                      color="error"
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+              />
+              <Tab 
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    TODOS
+                    <Chip 
+                      size="small" 
+                      label={agendamentos.length} 
+                      color="default"
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+              />
             </Tabs>
           </Paper>
+
+          {/* Adicionar mensagem informativa do filtro atual */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              {activeTab === 4 
+                ? `Mostrando todos os ${agendamentos.length} agendamentos` 
+                : `Mostrando ${filteredAgendamentos.length} agendamentos ${
+                    activeTab === 0 ? 'aguardando confirmação do Ponto de Coleta' :
+                    activeTab === 1 ? 'confirmados' :
+                    activeTab === 2 ? 'coletados' :
+                    'cancelados'
+                  }`
+              }
+            </Typography>
+          </Box>
 
           <TableContainer>
             <Table>

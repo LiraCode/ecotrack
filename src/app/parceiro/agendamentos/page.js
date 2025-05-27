@@ -18,27 +18,29 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Snackbar,
   Alert,
   Grid,
-  Chip
+  Chip,
+  Stack,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { updateScoreProgress, updateScoresFromScheduling, updateWasteProgress } from '@/services/scoreService';
 
 // Configurar dayjs para usar o locale pt-br
 dayjs.locale('pt-br');
@@ -51,13 +53,23 @@ export default function AgendamentosManagement() {
     const [ecopontos, setEcopontos] = useState([]);
     const [wasteTypes, setWasteTypes] = useState([]);
     const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
+    const [activeTab, setActiveTab] = useState(4); // 4 corresponde ao tab "Todos"
     const [formData, setFormData] = useState({
         status: '',
         collector: '',
         collectedAt: null,
+        collectedTime: null,
         wastes: []
     });
     const [responsableId, setResponsableId] = useState(null);
+    const [confirmationDialog, setConfirmationDialog] = useState({
+        open: false,
+        title: '',
+        message: '',
+        action: null,
+        actionText: '',
+        cancelText: 'Cancelar'
+    });
 
     const { user, loading } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -201,28 +213,41 @@ export default function AgendamentosManagement() {
         }
     }, [responsableId, fetchAgendamentos, fetchEcopontos, fetchWasteTypes]);
 
-    const handleOpen = (agendamento = null) => {
-    if (agendamento) {
-        setEditMode(true);
-        setCurrentAgendamento(agendamento);
-        setFormData({
-            status: agendamento.status,
-            collector: agendamento.collector,
-            collectedAt: agendamento.collectedAt ? dayjs(agendamento.collectedAt).format('YYYY-MM-DD') : null,
-            wastes: agendamento.wastes ? [...agendamento.wastes] : []
-        });
-    } else {
-        setEditMode(false);
-        setCurrentAgendamento(null);
-        setFormData({
-            status: '',
-            collector: '',
-            collectedAt: null,
-            wastes: []
-        });
-    }
-    setOpen(true);
-};
+    const handleOpen = (agendamento = null, initialStatus = null) => {
+        if (agendamento) {
+            setEditMode(true);
+            setCurrentAgendamento(agendamento);
+            
+            // Extrair data e hora da coleta, se existir
+            let collectedDate = null;
+            let collectedTime = null;
+            
+            if (agendamento.collectedAt) {
+                const collectedDateTime = dayjs(agendamento.collectedAt);
+                collectedDate = collectedDateTime;
+                collectedTime = collectedDateTime;
+            }
+            
+            setFormData({
+                status: initialStatus || agendamento.status,
+                collector: agendamento.collector || '',
+                collectedAt: collectedDate,
+                collectedTime: collectedTime,
+                wastes: agendamento.wastes ? [...agendamento.wastes] : []
+            });
+        } else {
+            setEditMode(false);
+            setCurrentAgendamento(null);
+            setFormData({
+                status: initialStatus || '',
+                collector: '',
+                collectedAt: null,
+                collectedTime: null,
+                wastes: []
+            });
+        }
+        setOpen(true);
+    };
 
     const handleClose = () => {
         setOpen(false);
@@ -239,8 +264,99 @@ export default function AgendamentosManagement() {
     const handleDateChange = (newValue) => {
         setFormData({
             ...formData,
-            collectedAt: newValue ? newValue.format('YYYY-MM-DD') : null
+            collectedAt: newValue
         });
+    };
+
+    const handleTimeChange = (newValue) => {
+        setFormData({
+            ...formData,
+            collectedTime: newValue
+        });
+    };
+
+    // Função para processar as metas do usuário
+    const processUserGoals = async (userId, wastes) => {
+        try {
+            if (!userId) {
+                console.log('ID do usuário não disponível para processar metas');
+                return;
+            }
+            
+            // Obter token de autenticação
+            const token = user.accessToken;
+            
+            // Buscar as metas ativas do usuário
+            const response = await fetch(`/api/scores?userId=${userId}&status=active`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Resposta de erro completa:', errorText);
+                throw new Error('Falha ao buscar metas do usuário');
+            }
+            
+            const data = await response.json();
+            const userScores = data.scores || [];
+            
+            if (userScores.length === 0) {
+                console.log('Usuário não possui metas ativas para atualizar');
+                return;
+            }
+            
+            console.log('Metas ativas do usuário:', userScores);
+            
+            // Para cada resíduo coletado, atualizar as metas correspondentes
+            for (const waste of wastes) {
+                const wasteId = waste.wasteId;
+                const quantity = waste.quantity || 0;
+                
+                if (!wasteId || quantity <= 0) {
+                    continue;
+                }
+                
+                console.log(`Processando resíduo ${wasteId} com quantidade ${quantity}`);
+                
+                // Para cada meta ativa do usuário
+                for (const score of userScores) {
+                    // Atualizar o progresso do resíduo na meta
+                    try {
+                        const updateResponse = await fetch(`/api/scores/${score._id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                wasteTypeId: wasteId,
+                                quantity: quantity
+                            })
+                        });
+                        
+                        if (updateResponse.ok) {
+                            const updateData = await updateResponse.json();
+                            console.log(`Meta ${score._id} atualizada:`, updateData.score);
+                        } else {
+                            const errorData = await updateResponse.json();
+                            console.error(`Erro ao atualizar meta ${score._id}:`, errorData);
+                        }
+                    } catch (error) {
+                        console.error(`Erro ao processar meta ${score._id}:`, error);
+                    }
+                }
+            }
+            
+            console.log('Processamento de metas concluído com sucesso');
+            return true;
+        } catch (error) {
+            console.error('Erro ao processar metas do usuário:', error);
+            return false;
+        }
     };
 
     const handleSubmit = async () => {
@@ -252,6 +368,25 @@ export default function AgendamentosManagement() {
 
             // Criar uma cópia dos dados para manipulação
             const dataToSend = { ...formData };
+            
+            // Combinar data e hora da coleta, se ambos estiverem presentes
+            if (dataToSend.collectedAt && dataToSend.collectedTime) {
+                const collectedDate = dayjs(dataToSend.collectedAt);
+                const collectedTime = dayjs(dataToSend.collectedTime);
+                
+                // Criar um novo objeto dayjs com a data e hora combinados
+                const combinedDateTime = collectedDate
+                    .hour(collectedTime.hour())
+                    .minute(collectedTime.minute())
+                    .second(0);
+                
+                dataToSend.collectedAt = combinedDateTime.toISOString();
+            } else if (dataToSend.collectedAt) {
+                dataToSend.collectedAt = dayjs(dataToSend.collectedAt).toISOString();
+            }
+            
+            // Remover o campo collectedTime antes de enviar
+            delete dataToSend.collectedTime;
             
             // Garantir que apenas os IDs dos resíduos sejam enviados
             if (dataToSend.wastes && Array.isArray(dataToSend.wastes)) {
@@ -278,7 +413,19 @@ export default function AgendamentosManagement() {
 
             const data = await response.json();
             if (response.ok) {
-                showAlert('Agendamento atualizado com sucesso!', 'success');
+                // Se o status foi alterado para "Coletado", processar as metas do usuário
+                if (dataToSend.status === 'Coletado' && currentAgendamento.status !== 'Coletado') {
+                    const userId = currentAgendamento.userId?._id;
+                    if (userId) {
+                        await processUserGoals(userId, dataToSend.wastes);
+                        showAlert('Agendamento atualizado e metas do usuário processadas com sucesso!', 'success');
+                    } else {
+                        showAlert('Agendamento atualizado com sucesso, mas não foi possível processar metas do usuário.', 'warning');
+                    }
+                } else {
+                    showAlert('Agendamento atualizado com sucesso!', 'success');
+                }
+                
                 handleClose();
                 fetchAgendamentos();
             } else {
@@ -290,36 +437,82 @@ export default function AgendamentosManagement() {
         }
     };
 
-    const handleStatusChange = async (id, newStatus) => {
-        try {
-            // Usar o token de acesso do usuário do AuthContext
-            const token = user.accessToken;
+    // Função para confirmar uma ação
+    const confirmAction = (title, message, action, actionText = 'Confirmar', cancelText = 'Cancelar') => {
+        setConfirmationDialog({
+            open: true,
+            title,
+            message,
+            action,
+            actionText,
+            cancelText
+        });
+    };
 
-            const updateData = { 
-                status: newStatus
+    const handleCloseConfirmation = () => {
+        setConfirmationDialog({
+            ...confirmationDialog,
+            open: false
+        });
+    };
+
+    const executeConfirmedAction = () => {
+        if (confirmationDialog.action) {
+            confirmationDialog.action();
+        }
+        handleCloseConfirmation();
+    };
+
+    const handleStatusChange = async (agendamento, newStatus) => {
+        try {
+            // Se o status for "Coletado", abrir o modal de edição para preencher informações adicionais
+            if (newStatus === 'Coletado') {
+                handleOpen(agendamento, 'Coletado');
+                setFormData(prev => ({
+                    ...prev,
+                    status: 'Coletado',
+                    collectedAt: dayjs(),
+                    collectedTime: dayjs()
+                }));
+                return;
+            }
+            
+            // Para outros status, pedir confirmação
+            const statusText = {
+                'Confirmado': 'confirmar',
+                'Cancelado': 'cancelar'
             };
             
-            // Se o status for "Coletado", adicionar a data atual
-            if (newStatus === 'Coletado') {
-                updateData.collectedAt = new Date().toISOString();
-            }
+            confirmAction(
+                `${statusText[newStatus]} Agendamento`,
+                `Tem certeza que deseja ${statusText[newStatus]} este agendamento?`,
+                async () => {
+                    // Usar o token de acesso do usuário do AuthContext
+                    const token = user.accessToken;
 
-            const response = await fetch(`/api/collection-scheduling/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    const updateData = { 
+                        status: newStatus
+                    };
+
+                    const response = await fetch(`/api/schedule/${agendamento._id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updateData),
+                    });
+                    
+                    if (response.ok) {
+                        showAlert(`Status atualizado para ${newStatus}!`, 'success');
+                        fetchAgendamentos();
+                    } else {
+                        const data = await response.json();
+                        showAlert(data.message || 'Erro ao atualizar status', 'error');
+                    }
                 },
-                body: JSON.stringify(updateData),
-            });
-            
-            if (response.ok) {
-                showAlert(`Status atualizado para ${newStatus}!`, 'success');
-                fetchAgendamentos();
-            } else {
-                const data = await response.json();
-                showAlert(data.message || 'Erro ao atualizar status', 'error');
-            }
+                `${statusText[newStatus].charAt(0).toUpperCase() + statusText[newStatus].slice(1)}`
+            );
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
             showAlert('Erro ao atualizar status', 'error');
@@ -327,30 +520,35 @@ export default function AgendamentosManagement() {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
-            try {
-                // Usar o token de acesso do usuário do AuthContext
-                const token = user.accessToken;
+        confirmAction(
+            'Excluir Agendamento',
+            'Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.',
+            async () => {
+                try {
+                    // Usar o token de acesso do usuário do AuthContext
+                    const token = user.accessToken;
 
-                const response = await fetch(`/api/collection-scheduling/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                    const response = await fetch(`/api/schedule/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        showAlert('Agendamento excluído com sucesso!', 'success');
+                        fetchAgendamentos();
+                    } else {
+                        const data = await response.json();
+                        showAlert(data.message || 'Erro ao excluir agendamento', 'error');
                     }
-                });
-                
-                if (response.ok) {
-                    showAlert('Agendamento excluído com sucesso!', 'success');
-                    fetchAgendamentos();
-                } else {
-                    const data = await response.json();
-                    showAlert(data.message || 'Erro ao excluir agendamento', 'error');
+                } catch (error) {
+                    console.error('Erro ao excluir agendamento:', error);
+                    showAlert('Erro ao excluir agendamento', 'error');
                 }
-            } catch (error) {
-                console.error('Erro ao excluir agendamento:', error);
-                showAlert('Erro ao excluir agendamento', 'error');
-            }
-        }
+            },
+            'Excluir'
+        );
     };
 
     const handleCloseAlert = () => {
@@ -385,44 +583,141 @@ export default function AgendamentosManagement() {
         const ecoponto = id.name
         return ecoponto
     };
-const handleWasteChange = (index, field, value) => {
-    // Criar uma cópia do array de resíduos
-    const updatedWastes = [...formData.wastes];
-    
-    // Atualizar o campo específico do resíduo no índice fornecido
-    updatedWastes[index] = {
-        ...updatedWastes[index],
-        [field]: value
-    };
-    
-    // Atualizar o estado formData com o array de resíduos atualizado
-    setFormData({
-        ...formData,
-        wastes: updatedWastes
-    });
-};
-    const getWasteName = (wasteData) => {
-    // Verificar se recebemos um objeto completo em vez de apenas um ID
-    if (wasteData && typeof wasteData === 'object' && wasteData._id) {
-        // Se o próprio objeto já tem type ou name, retornar diretamente
-        if (wasteData.type) return wasteData.type;
-        if (wasteData.name) return wasteData.name;
+
+    const handleWasteChange = (index, field, value) => {
+        // Criar uma cópia do array de resíduos
+        const updatedWastes = [...formData.wastes];
         
-        // Caso contrário, usar o _id para buscar nos wasteTypes
-        const idString = wasteData._id.toString();
-        const waste = wasteTypes.find(w => w._id && w._id.toString() === idString);
-        return waste ? (waste.type || waste.name) : 'N/A';
-    } 
-    // Caso seja apenas um ID (string ou ObjectId)
-    else if (wasteData) {
-        const idString = wasteData.toString();
-        const waste = wasteTypes.find(w => w._id && w._id.toString() === idString);
-        return waste ? (waste.type || waste.name) : 'N/A';
-    }
-    
-    // Se não tiver dados válidos
-    return 'N/A';
-};
+        // Atualizar o campo específico do resíduo no índice fornecido
+        updatedWastes[index] = {
+            ...updatedWastes[index],
+            [field]: value
+        };
+        
+        // Atualizar o estado formData com o array de resíduos atualizado
+        setFormData({
+            ...formData,
+            wastes: updatedWastes
+        });
+    };
+
+    const getWasteName = (wasteData) => {
+        // Verificar se recebemos um objeto completo em vez de apenas um ID
+        if (wasteData && typeof wasteData === 'object' && wasteData._id) {
+            // Se o próprio objeto já tem type ou name, retornar diretamente
+            if (wasteData.type) return wasteData.type;
+            if (wasteData.name) return wasteData.name;
+            
+            // Caso contrário, usar o _id para buscar nos wasteTypes
+            const idString = wasteData._id.toString();
+            const waste = wasteTypes.find(w => w._id && w._id.toString() === idString);
+            return waste ? (waste.type || waste.name) : 'N/A';
+        } 
+        // Caso seja apenas um ID (string ou ObjectId)
+        else if (wasteData) {
+            const idString = wasteData.toString();
+            const waste = wasteTypes.find(w => w._id && w._id.toString() === idString);
+            return waste ? (waste.type || waste.name) : 'N/A';
+        }
+        
+        // Se não tiver dados válidos
+        return 'N/A';
+    };
+
+    // Renderiza os botões de ação com base no status atual do agendamento
+    const renderActionButtons = (agendamento) => {
+        const status = agendamento.status;
+        
+        return (
+            <Stack direction="row" spacing={1}>
+                {/* Botão de edição sempre disponível */}
+                <IconButton
+                    onClick={() => handleOpen(agendamento)}
+                    color="primary"
+                    title="Editar detalhes"
+                    size="small"
+                >
+                    <EditIcon />
+                </IconButton>
+                
+                {/* Botões específicos para cada status */}
+                {status === 'Aguardando confirmação do Ponto de Coleta' && (
+                    <>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            startIcon={<EventAvailableIcon />}
+                            onClick={() => handleStatusChange(agendamento, 'Confirmado')}
+                        >
+                            Confirmar
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleStatusChange(agendamento, 'Cancelado')}
+                        >
+                            Cancelar
+                        </Button>
+                    </>
+                )}
+                
+                {status === 'Confirmado' && (
+                    <>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            startIcon={<CheckCircleIcon />}
+                            onClick={() => handleStatusChange(agendamento, 'Coletado')}
+                        >
+                            Coletar
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            size="small"
+                            startIcon={<CancelIcon />}
+                            onClick={() => handleStatusChange(agendamento, 'Cancelado')}
+                        >
+                            Cancelar
+                        </Button>
+                    </>
+                )}
+                
+                
+            </Stack>
+        );
+    };
+
+    // Adicionar função para lidar com mudança de tab
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue);
+    };
+
+    // Função para filtrar agendamentos baseado no tab ativo
+    const getFilteredAgendamentos = () => {
+        switch (activeTab) {
+            case 0:
+                return agendamentos.filter(ag => ag.status === 'Aguardando confirmação do Ponto de Coleta');
+            case 1:
+                return agendamentos.filter(ag => ag.status === 'Confirmado');
+            case 2:
+                return agendamentos.filter(ag => ag.status === 'Coletado');
+            case 3:
+                return agendamentos.filter(ag => ag.status === 'Cancelado');
+            default:
+                return agendamentos;
+        }
+    };
+
+    // Função para contar agendamentos por status
+    const getStatusCount = (status) => {
+        return agendamentos.filter(ag => ag.status === status).length;
+    };
+
     if (loading) {
         return (
             <AppLayout>
@@ -430,7 +725,7 @@ const handleWasteChange = (index, field, value) => {
                     <Typography>Carregando...</Typography>
                 </Box>
             </AppLayout>
-        );
+        );  
     }
 
     return (
@@ -472,6 +767,107 @@ const handleWasteChange = (index, field, value) => {
                         </Typography>
                     </Box>
 
+                    {/* Tabs para filtro */}
+                    <Paper sx={{ width: '100%', mb: 2 }}>
+                        <Tabs
+                            value={activeTab}
+                            onChange={handleTabChange}
+                            indicatorColor="primary"
+                            textColor="primary"
+                            variant="fullWidth"
+                            aria-label="Filtro de agendamentos"
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                '& .MuiTab-root': {
+                                    minWidth: 120,
+                                    fontWeight: 'medium',
+                                }
+                            }}
+                        >
+                            <Tab 
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Aguardando
+                                        <Chip 
+                                            size="small" 
+                                            label={getStatusCount('Aguardando confirmação do Ponto de Coleta')} 
+                                            color="warning"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                }
+                            />
+                            <Tab 
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Confirmados
+                                        <Chip 
+                                            size="small" 
+                                            label={getStatusCount('Confirmado')} 
+                                            color="info"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                }
+                            />
+                            <Tab 
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Coletados
+                                        <Chip 
+                                            size="small" 
+                                            label={getStatusCount('Coletado')} 
+                                            color="success"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                }
+                            />
+                            <Tab 
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Cancelados
+                                        <Chip 
+                                            size="small" 
+                                            label={getStatusCount('Cancelado')} 
+                                            color="error"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                }
+                            />
+                            <Tab 
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        Todos
+                                        <Chip 
+                                            size="small" 
+                                            label={agendamentos.length} 
+                                            color="default"
+                                            sx={{ ml: 1 }}
+                                        />
+                                    </Box>
+                                }
+                            />
+                        </Tabs>
+                    </Paper>
+
+                    {/* Mensagem informativa do filtro atual */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {activeTab === 4 
+                                ? `Mostrando todos os ${agendamentos.length} agendamentos` 
+                                : `Mostrando ${getFilteredAgendamentos().length} agendamentos ${
+                                    activeTab === 0 ? 'aguardando confirmação do Ponto de Coleta' :
+                                    activeTab === 1 ? 'confirmados' :
+                                    activeTab === 2 ? 'coletados' :
+                                    'cancelados'
+                                }`
+                            }
+                        </Typography>
+                    </Box>
+
                     <TableContainer>
                         <Table>
                             <TableHead>
@@ -486,7 +882,7 @@ const handleWasteChange = (index, field, value) => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {agendamentos.map((agendamento) => (
+                                {getFilteredAgendamentos().map((agendamento) => (
                                     <TableRow key={agendamento._id}>
                                         <TableCell>{agendamento.userId?.name || 'N/A'}</TableCell>
                                         <TableCell>{getEcopontoName(agendamento.collectionPointId)}</TableCell>
@@ -498,50 +894,14 @@ const handleWasteChange = (index, field, value) => {
                                                 size="small"
                                             />
                                         </TableCell>
-                                        <TableCell>{agendamento.collector}</TableCell>
+                                        <TableCell>{agendamento.collector || 'Não designado'}</TableCell>
                                         <TableCell>{agendamento.collectedAt ? formatDate(agendamento.collectedAt) : 'Pendente'}</TableCell>
                                         <TableCell>
-                                            <IconButton
-                                                onClick={() => handleOpen(agendamento)}
-                                                color="primary"
-                                                title="Editar"
-                                            >
-                                                <EditIcon />
-                                                                                            </IconButton>
-                                            
-                                            
-                                            {agendamento.status === 'Confirmado' && (
-                                                <IconButton
-                                                    onClick={() => handleStatusChange(agendamento._id, 'Coletado')}
-                                                    color="success"
-                                                    title="Marcar como coletado"
-                                                >
-                                                    <CheckCircleIcon />
-                                                </IconButton>
-                                            )}
-                                            
-                                            {(agendamento.status === 'Aguardando confirmação do Ponto de Coleta' || 
-                                                agendamento.status === 'Confirmado') && (
-                                                <IconButton
-                                                    onClick={() => handleStatusChange(agendamento._id, 'Cancelado')}
-                                                    color="error"
-                                                    title="Cancelar"
-                                                >
-                                                    <CancelIcon />
-                                                </IconButton>
-                                            )}
-                                            
-                                            <IconButton
-                                                onClick={() => handleDelete(agendamento._id)}
-                                                color="error"
-                                                title="Excluir"
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
+                                            {renderActionButtons(agendamento)}
                                         </TableCell>
                                     </TableRow>
                                 ))}
-                                {agendamentos.length === 0 && (
+                                {getFilteredAgendamentos().length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
                                             Nenhum agendamento encontrado
@@ -585,7 +945,7 @@ const handleWasteChange = (index, field, value) => {
                 <DialogTitle
                     sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
                 >
-                    Editar Agendamento
+                    {formData.status === 'Coletado' ? 'Registrar Coleta' : 'Editar Agendamento'}
                 </DialogTitle>
 
                 <DialogContent dividers>
@@ -632,28 +992,24 @@ const handleWasteChange = (index, field, value) => {
                                             CEP: {currentAgendamento.addressId?.zipCode}
                                         </Typography>
                                     </Grid>
+                                    
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1">
+                                            <strong>Status atual:</strong> 
+                                            <Chip 
+                                                label={currentAgendamento.status} 
+                                                color={getStatusColor(currentAgendamento.status)}
+                                                size="small"
+                                                sx={{ ml: 1 }}
+                                            />
+                                        </Typography>
+                                    </Grid>
                                 </Grid>
                             )}
                             
                             <Grid container spacing={2} sx={{ mt: 2 }}>
-                                <Grid item xs={12} md={6}>
-                                    <FormControl fullWidth margin="normal">
-                                        <InputLabel>Status</InputLabel>
-                                        <Select
-                                            name="status"
-                                            value={formData.status}
-                                            onChange={handleChange}
-                                            label="Status"
-                                        >
-                                            <MenuItem value="Aguardando confirmação do Ponto de Coleta">
-                                                Aguardando confirmação do Ponto de Coleta
-                                            </MenuItem>
-                                            <MenuItem value="Confirmado">Confirmado</MenuItem>
-                                            <MenuItem value="Coletado">Coletado</MenuItem>
-                                            <MenuItem value="Cancelado">Cancelado</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
+                                {/* Campo oculto para manter o status */}
+                                <input type="hidden" name="status" value={formData.status} />
                                 
                                 <Grid item xs={12} md={6}>
                                     <TextField
@@ -663,25 +1019,44 @@ const handleWasteChange = (index, field, value) => {
                                         value={formData.collector}
                                         onChange={handleChange}
                                         margin="normal"
+                                        placeholder="Nome do coletor responsável"
                                     />
                                 </Grid>
                                 
                                 {formData.status === 'Coletado' && (
-                                    <Grid item xs={12} md={6}>
-                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <DatePicker
-                                                label="Data da Coleta"
-                                                value={formData.collectedAt ? dayjs(formData.collectedAt) : null}
-                                                onChange={handleDateChange}
-                                                slotProps={{
-                                                    textField: {
-                                                        fullWidth: true,
-                                                        margin: "normal"
-                                                    }
-                                                }}
-                                            />
-                                        </LocalizationProvider>
-                                    </Grid>
+                                    <>
+                                        <Grid item xs={12} md={6}>
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker
+                                                    label="Data da Coleta"
+                                                    value={formData.collectedAt}
+                                                    onChange={handleDateChange}
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            margin: "normal"
+                                                        }
+                                                    }}
+                                                />
+                                            </LocalizationProvider>
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <TimePicker
+                                                    label="Horário da Coleta"
+                                                    value={formData.collectedTime}
+                                                    onChange={handleTimeChange}
+                                                    ampm={false} // Formato 24 horas
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            margin: "normal"
+                                                        }
+                                                    }}
+                                                />
+                                            </LocalizationProvider>
+                                        </Grid>
+                                    </>
                                 )}
                             </Grid>
                         </Grid>
@@ -737,9 +1112,9 @@ const handleWasteChange = (index, field, value) => {
                             </TableContainer>
                             
                             {formData.status === 'Coletado' && (
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    Ao marcar como coletado, certifique-se de atualizar as quantidades e pesos reais dos resíduos coletados.
-                                </Typography>
+                                <Alert severity="info" sx={{ mb: 2 }}>
+                                    Ao registrar a coleta, as metas de reciclagem do usuário serão atualizadas automaticamente com base nas quantidades informadas.
+                                </Alert>
                             )}
                         </Grid>
                     </Grid>
@@ -749,8 +1124,36 @@ const handleWasteChange = (index, field, value) => {
                     <Button onClick={handleClose} variant="outlined" color="secondary">
                         Cancelar
                     </Button>
-                    <Button onClick={handleSubmit} variant="contained" color="primary">
-                        Atualizar
+                    <Button 
+                        onClick={handleSubmit} 
+                        variant="contained" 
+                        color={formData.status === 'Coletado' ? "success" : "primary"}
+                    >
+                        {formData.status === 'Coletado' ? 'Registrar Coleta' : 'Atualizar'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog de confirmação */}
+            <Dialog
+                open={confirmationDialog.open}
+                onClose={handleCloseConfirmation}
+            >
+                <DialogTitle>{confirmationDialog.title}</DialogTitle>
+                <DialogContent>
+                    <Typography>{confirmationDialog.message}</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseConfirmation} color="inherit">
+                        {confirmationDialog.cancelText}
+                    </Button>
+                    <Button 
+                        onClick={executeConfirmedAction} 
+                        variant="contained" 
+                        color={confirmationDialog.actionText === 'Excluir' ? 'error' : 'primary'}
+                        autoFocus
+                    >
+                        {confirmationDialog.actionText}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -772,4 +1175,3 @@ const handleWasteChange = (index, field, value) => {
         </AppLayout>
     );
 }
-

@@ -1,79 +1,84 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { 
-  Container, Typography, Box, Button, Paper, 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
-  TextField, FormControl, InputLabel, Select, MenuItem, Grid,
-  Chip, IconButton, Divider, Tab, Tabs, CircularProgress,
-  FormHelperText, Alert
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { ptBR } from 'date-fns/locale';
-import { 
-  Add as AddIcon, 
-  Delete as DeleteIcon, 
-  Edit as EditIcon, 
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Close as CloseIcon
-} from '@mui/icons-material';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { 
-  getAllGoals, 
-  getGoalById, 
-  createGoal, 
-  updateGoal, 
-  deleteGoal 
-} from '@/services/goalService';
-import { getAllWasteTypes } from '@/services/wasteService';
 import AppLayout from '@/components/Layout/page';
-import { min } from 'date-fns';
+import {
+  Box, 
+  Typography, 
+  Paper, 
+  Button, 
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  Snackbar,
+  Alert,
+  Chip,
+  Autocomplete,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider,
+  CircularProgress
+} from '@mui/material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
-// Esquema de validação para o formulário de metas
-const goalFormSchema = z.object({
-  title: z.string().min(3, { message: 'O título deve ter pelo menos 3 caracteres' }),
-  description: z.string().min(10, { message: 'A descrição deve ter pelo menos 10 caracteres' }),
-  initialDate: z.date({ required_error: 'A data inicial é obrigatória' }),
-  validUntil: z.date({ required_error: 'A data final é obrigatória' }),
-  points: z.number().min(1, { message: 'A pontuação deve ser maior que zero' }),
-  targetType: z.enum(['weight', 'quantity'], { required_error: 'Selecione o tipo de meta' }),
-  targetValue: z.number().min(0.1, { message: 'O valor alvo deve ser maior que zero' }),
-  challenges: z.array(
-    z.object({
-      waste: z.string().min(1, { message: 'Selecione um tipo de resíduo' }),
-      weight: z.number().optional(),
-      quantity: z.number().optional(),
-    })
-  ).min(1, { message: 'Adicione pelo menos um desafio' }),
-});
-
-export default function AdminMetasPage() {
-  const { user, loading: authLoading } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [goals, setGoals] = useState([]);
+export default function GerenciamentoMetas() {
+  const { user, loading } = useAuth();
+  const [metas, setMetas] = useState([]);
   const [wasteTypes, setWasteTypes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [editingGoalId, setEditingGoalId] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [goalToDelete, setGoalToDelete] = useState(null);
-  const [error, setError] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [currentId, setCurrentId] = useState(null);
+  const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    initialDate: dayjs(),
+    validUntil: dayjs().add(30, 'day'),
+    status: 'active',
+    points: 100
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [challenges, setChallenges] = useState([]);
+  const [currentChallenge, setCurrentChallenge] = useState({
+    waste: null,
+    value: '',
+    type: 'quantity'
+  });
+  
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
-
-  // obter status da sidebar do localStorage
+  
+  // Get sidebar status from localStorage
   useEffect(() => {
     const sidebarStatus = localStorage.getItem('sidebarOpen');
     if (sidebarStatus === 'true') {
       setSidebarOpen(true);
-      //verificar tamanho da tela se for maior que 768px setar sidebarOpen como true
       if (window.innerWidth > 768) {
         setSidebarOpen(true);
         localStorage.setItem('sidebarOpen', 'false');
@@ -82,281 +87,276 @@ export default function AdminMetasPage() {
     }
   }, []);
 
-  const token = user?.accessToken;
-  
-  // Configurar formulário
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
-    resolver: zodResolver(goalFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      initialDate: new Date(),
-      validUntil: new Date(new Date().setDate(new Date().getDate() + 30)),
-      points: 100,
-      targetType: 'weight',
-      targetValue: 10,
-      challenges: [{ waste: '', weight: 0, quantity: 0 }],
-    },
-  });
-  
-  // Field array para os desafios
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "challenges",
-  });
-  
-  // Carregar metas
-  const loadGoals = useCallback(async () => {
-    try {
-      //console.log("Carregando metas...");
-      setLoading(true);
-      const result = await getAllGoals();
-      //console.log("Resultado da API:", result);
-      
-      if (result.success) {
-        setGoals(result.goals || []);
-        //console.log("Metas carregadas:", result.goals);
-      } else {
-        throw new Error(result.error || "Erro desconhecido ao carregar metas");
-      }
-    } catch (error) {
-      console.error('Erro ao carregar metas:', error);
-      setError(`Erro ao carregar metas: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchMetas = useCallback(async () => {
+    if (!user?.accessToken) return;
 
-  // Carregar tipos de resíduos e metas
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        //console.log("Iniciando carregamento de dados...");
-        setLoading(true);
-        
-        // Carregar tipos de resíduos
-        //console.log("Carregando tipos de resíduos...");
-        const wasteResult = await getAllWasteTypes();
-        //console.log("Resultado de tipos de resíduos:", wasteResult);
-        
-        if (wasteResult.success) {
-          setWasteTypes(wasteResult.wasteTypes || []);
-        } else {
-          throw new Error(wasteResult.error || "Erro desconhecido ao carregar tipos de resíduos");
+    try {
+      setFetchLoading(true);
+      const response = await fetch('/api/goals', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
         }
-        
-        // Carregar metas
-        await loadGoals();
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        setError(`Erro ao carregar dados: ${error.message}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    if (user && user.role === 'Administrador') {
-      //console.log("Usuário admin detectado, carregando dados...");
-      loadData();
-    } else {
-      //console.log("Aguardando autenticação ou usuário não é admin:", user);
-      // Se não for admin, definir loading como false para não ficar em loop de carregamento
-      if (!authLoading) {
-        setLoading(false);
-      }
-    }
-  }, [loadGoals, user, authLoading]);
-  
-  // Adicionar desafio ao formulário
-  const addChallenge = () => {
-    append({ waste: '', weight: 0, quantity: 0 });
-  };
-  
-  // Abrir formulário para edição
-  const handleEditGoal = async (id) => {
-    try {
-      //console.log("Iniciando edição da meta ID:", id);
-      setLoading(true);
+      });
       
-      // Buscar detalhes da meta pelo ID
-      const result = await getGoalById(id);
-      //console.log("Resultado da busca da meta:", result);
-      
-      if (result.success && result.goal) {
-        const goal = result.goal;
-        //console.log("Meta encontrada:", goal);
-        
-        // Preparar os desafios para o formulário
-        const formattedChallenges = goal.challenges.map(challenge => ({
-          waste: challenge.waste._id || challenge.waste,
-          weight: challenge.weight || 0,
-          quantity: challenge.quantity || 0
-        }));
-        
-        //console.log("Desafios formatados:", formattedChallenges);
-        
-        // Resetar o formulário com os dados da meta
-        reset({
-          title: goal.title,
-          description: goal.description,
-          initialDate: new Date(goal.initialDate),
-          validUntil: new Date(goal.validUntil),
-          points: goal.points,
-          targetType: goal.targetType,
-          targetValue: goal.targetValue,
-          challenges: formattedChallenges.length > 0 ? formattedChallenges : [{ waste: '', weight: 0, quantity: 0 }],
-        });
-        
-        // Definir o ID da meta em edição e abrir o diálogo
-        setEditingGoalId(id);
-        setIsDialogOpen(true);
-      } else {
-        throw new Error(result.error || "Erro desconhecido ao carregar meta para edição");
+      if (!response.ok) {
+        throw new Error('Falha ao buscar metas');
       }
+      
+      const data = await response.json();
+      setMetas(data.goals || []);
     } catch (error) {
-      console.error('Erro ao carregar meta para edição:', error);
-      setError(`Erro ao carregar meta para edição: ${error.message}`);
+      console.error('Erro ao buscar metas:', error);
+      showAlert('Erro ao carregar metas', 'error');
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
-  };
-  
-  // Abrir diálogo de confirmação para excluir
-  const handleOpenDeleteConfirm = (id) => {
-    setGoalToDelete(id);
-    setConfirmDeleteOpen(true);
-  };
-  
-  // Excluir meta
-  const handleDeleteGoal = async () => {
+  }, [user]);
+
+  const fetchWasteTypes = useCallback(async () => {
+    if (!user?.accessToken) return;
+
     try {
-      setLoading(true);
-      const result = await deleteGoal(goalToDelete,token);
+      const response = await fetch('/api/waste', {
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
       
-      if (result.success) {
-        alert('Meta excluída com sucesso');
-        setConfirmDeleteOpen(false);
-        setGoalToDelete(null);
-        
-        // Recarregar metas
-        await loadGoals();
-      } else {
-        throw new Error(result.error || "Erro desconhecido ao excluir meta");
+      if (!response.ok) {
+        throw new Error('Falha ao buscar tipos de resíduos');
       }
-    } catch (error) {
-      console.error('Erro ao excluir meta:', error);
-      setError(`Erro ao excluir meta: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Enviar formulário
-  const onSubmit = async (data) => {
-    //console.log("Dados do formulário:", data);
-    setLoading(true);
-    try {
-      setLoading(true);
-      //console.log("Dados do formulário:", data);
       
-      // Ajustar dados dos desafios com base no tipo de meta
-      const challenges = data.challenges.map(challenge => ({
+      const data = await response.json();
+      setWasteTypes(data.wasteTypes || []);
+    } catch (error) {
+      console.error('Erro ao buscar tipos de resíduos:', error);
+      showAlert('Erro ao carregar tipos de resíduos', 'error');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user && !loading) {
+      fetchMetas();
+      fetchWasteTypes();
+    }
+  }, [user, loading, fetchMetas, fetchWasteTypes]);
+
+  const showAlert = (message, severity) => {
+    setAlert({ open: true, message, severity });
+  };
+
+  const handleCloseAlert = () => {
+    setAlert({ ...alert, open: false });
+  };
+
+  // Função para extrair o valor numérico
+  const extractNumericValue = (value) => {
+    if (!value) return '';
+    if (value.$numberDecimal) return value.$numberDecimal;
+    if (typeof value === 'object' && value.toString) return value.toString();
+    return value;
+  };
+
+  const handleOpen = (meta = null) => {
+    if (meta) {
+      setEditMode(true);
+      setCurrentId(meta._id);
+      setFormData({
+        title: meta.title,
+        description: meta.description,
+        initialDate: dayjs(meta.initialDate),
+        validUntil: dayjs(meta.validUntil),
+        status: meta.status,
+        points: meta.points
+      });
+      
+      const metaChallenges = meta.challenges || [];
+      setChallenges(metaChallenges.map(challenge => ({
         waste: challenge.waste,
-        weight: data.targetType === 'weight' ? challenge.weight : 0,
-        quantity: data.targetType === 'quantity' ? challenge.quantity : 0
-      }));
-      
-      const formData = {
-        ...data,
-        challenges
-      };
-      
-      //console.log("Dados formatados para envio:", formData);
-      //console.log("Editando meta ID:", editingGoalId);
-      
-      let result;
-      
-      if (editingGoalId) {
-        // Atualizar meta existente
-        result = await updateGoal(editingGoalId, formData, token);
-      } else {
-        // Criar nova meta
-        result = await createGoal(formData, token);
+        value: extractNumericValue(challenge.value),
+        type: challenge.type
+      })));
+    } else {
+      setEditMode(false);
+      setCurrentId(null);
+      setFormData({
+        title: '',
+        description: '',
+        initialDate: dayjs(),
+        validUntil: dayjs().add(30, 'day'),
+        status: 'active',
+        points: 100
+      });
+      setChallenges([]);
+    }
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setFormErrors({});
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleDateChange = (field, newValue) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: newValue
+    }));
+  };
+
+  const handleChallengeChange = (field, value) => {
+    setCurrentChallenge(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addChallenge = () => {
+    if (!currentChallenge.waste || !currentChallenge.value) {
+      showAlert('Preencha todos os campos do desafio', 'error');
+      return;
+    }
+
+    setChallenges(prev => [...prev, { ...currentChallenge }]);
+    setCurrentChallenge({
+      waste: null,
+      value: '',
+      type: 'quantity'
+    });
+  };
+
+  const removeChallenge = (index) => {
+    setChallenges(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title) errors.title = 'Título é obrigatório';
+    if (!formData.description) errors.description = 'Descrição é obrigatória';
+    if (!formData.initialDate) errors.initialDate = 'Data inicial é obrigatória';
+    if (!formData.validUntil) errors.validUntil = 'Data final é obrigatória';
+    if (!formData.points) errors.points = 'Pontuação é obrigatória';
+    if (challenges.length === 0) errors.challenges = 'Adicione pelo menos um desafio';
+    
+    if (formData.initialDate && formData.validUntil) {
+      if (formData.initialDate.isAfter(formData.validUntil)) {
+        errors.dates = 'Data inicial não pode ser posterior à data final';
       }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    try {
+      const url = editMode ? `/api/goals/${currentId}` : '/api/goals';
+      const method = editMode ? 'PUT' : 'POST';
       
-      //console.log("Resultado da operação:", result);
-      
-      if (result.success) {
-        alert(editingGoalId ? 'Meta atualizada com sucesso' : 'Meta criada com sucesso');
-        
-        // Fechar diálogo e resetar formulário
-        setIsDialogOpen(false);
-        reset();
-        setEditingGoalId(null);
-        
-        // Recarregar metas
-        await loadGoals();
-      } else {
-        throw new Error(result.error || "Erro desconhecido ao salvar meta");
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.accessToken}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          initialDate: formData.initialDate.toISOString(),
+          validUntil: formData.validUntil.toISOString(),
+          challenges: challenges
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao salvar meta');
       }
+
+      showAlert(editMode ? 'Meta atualizada com sucesso!' : 'Meta criada com sucesso!', 'success');
+      handleClose();
+      fetchMetas();
     } catch (error) {
       console.error('Erro ao salvar meta:', error);
-      setError(`Erro ao salvar meta: ${error.message}`);
-    } finally {
-      setLoading(false);
+      showAlert(error.message || 'Erro ao salvar meta', 'error');
     }
   };
-  
-  // Filtrar metas por status
-  const getFilteredGoals = () => {
-    if (activeTab === 0) return goals.filter(goal => goal.status === 'active');
-    if (activeTab === 1) return goals.filter(goal => goal.status === 'inactive');
-    return goals; // Tab 'all'
-  };
-  
-  const filteredGoals = getFilteredGoals();
-  
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
-  
-  // Renderizar mensagem de erro se houver
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4, textAlign: 'center', bgcolor: '#ffebee' }}>
-          <Typography variant="h6" color="error" gutterBottom>
-            Erro
-          </Typography>
-          <Typography variant="body1">{error}</Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            sx={{ mt: 2 }}
-            onClick={() => {
-              setError(null);
-              loadGoals();
-            }}
-          >
-            Tentar novamente
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
-  
-  // Renderizar tela de carregamento
-  if (authLoading || loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-        <Typography variant="body1" sx={{ ml: 2 }}>Carregando...</Typography>
-      </Box>
-    );
-  }
-  
 
-  
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta meta?')) return;
+
+    try {
+      const response = await fetch(`/api/goals/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erro ao excluir meta');
+      }
+
+      showAlert('Meta excluída com sucesso!', 'success');
+      fetchMetas();
+    } catch (error) {
+      console.error('Erro ao excluir meta:', error);
+      showAlert(error.message || 'Erro ao excluir meta', 'error');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return dayjs(dateString).format('DD/MM/YYYY');
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'inactive':
+        return 'default';
+      case 'expired':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'active':
+        return 'Ativo';
+      case 'inactive':
+        return 'Inativo';
+      case 'expired':
+        return 'Expirado';
+      default:
+        return status;
+    }
+  };
+
+  if (loading || fetchLoading) {
+    return (
+      <AppLayout>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+        </Box>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <Box
@@ -399,607 +399,348 @@ export default function AdminMetasPage() {
               <Button 
                 variant="outlined" 
                 startIcon={<RefreshIcon />} 
-                onClick={loadGoals}
+                onClick={fetchMetas}
                 sx={{ mr: 1 }}
               >
                 Atualizar
               </Button>
-              <Button 
-                variant="contained" 
+              <Button
+                variant="contained"
                 color="primary"
-                startIcon={<AddIcon />} 
-                onClick={() => {
-                  reset({
-                    title: '',
-                    description: '',
-                    initialDate: new Date(),
-                    validUntil: new Date(new Date().setDate(new Date().getDate() + 30)),
-                    points: 100,
-                    targetType: 'weight',
-                    targetValue: 10,
-                    challenges: [{ waste: '', weight: 0, quantity: 0 }],
-                  });
-                  setEditingGoalId(null);
-                  setIsDialogOpen(true);
-                }}
+                startIcon={<AddIcon />}
+                onClick={() => handleOpen()}
               >
                 Nova Meta
               </Button>
             </Box>
           </Box>
-          
-          <Paper sx={{ mb: 4 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={handleTabChange} 
-              indicatorColor="primary"
-              textColor="primary"
-              sx={{
-                borderBottom: 1,
-                borderColor: 'divider',
-                '& .MuiTab-root': {
-                  fontWeight: 'medium',
-                  textTransform: 'none',
-                },
-              }}
-            >
-              <Tab label="Ativas" />
-              <Tab label="Inativas" />
-              <Tab label="Todas" />
-            </Tabs>
-          </Paper>
-          
-          {filteredGoals.length === 0 ? (
-            <Paper sx={{ p: 4, textAlign: 'center', bgcolor: '#f5f5f5' }}>
-              <Typography variant="h6" color="textSecondary" gutterBottom>
-                Nenhuma meta encontrada
+
+          {fetchLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress color="success" />
+              <Typography variant="body1" sx={{ ml: 2 }}>
+                Carregando metas...
               </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Não há metas {activeTab === 0 ? 'ativas' : activeTab === 1 ? 'inativas' : ''} no momento.
-              </Typography>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<AddIcon />} 
-                sx={{ mt: 2 }}
-                onClick={() => {
-                  reset({
-                    title: '',
-                    description: '',
-                    initialDate: new Date(),
-                    validUntil: new Date(new Date().setDate(new Date().getDate() + 30)),
-                    points: 100,
-                    targetType: 'weight',
-                    targetValue: 10,
-                    challenges: [{ waste: '', weight: 0, quantity: 0 }],
-                  });
-                  setEditingGoalId(null);
-                  setIsDialogOpen(true);
-                }}
-              >
-                Criar Nova Meta
-              </Button>
-            </Paper>
+            </Box>
           ) : (
-            <TableContainer component={Paper} sx={{ boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)' }}>
+            <TableContainer>
               <Table>
                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Título</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Descrição</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Período</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Pontos</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Meta</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Ações</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Pontos</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Desafios</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }} align="right">Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredGoals.map((goal) => (
-                    <TableRow key={goal._id} hover>
-                      <TableCell>{goal.title}</TableCell>
-                      <TableCell>
-                        {goal.description.length > 50 
-                          ? `${goal.description.substring(0, 50)}...` 
-                          : goal.description}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(goal.initialDate).toLocaleDateString()} a {new Date(goal.validUntil).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>{goal.points}</TableCell>
-                      <TableCell>
-                        {goal.targetValue} {goal.targetType === 'weight' ? 'kg' : 'un'}
-                      </TableCell>
+                  {metas.map((meta) => (
+                    <TableRow key={meta._id} hover>
+                      <TableCell>{meta.title}</TableCell>
+                      <TableCell>{formatDate(meta.initialDate)} - {formatDate(meta.validUntil)}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={goal.status === 'active' ? 'Ativa' : 'Inativa'} 
-                          color={goal.status === 'active' ? 'success' : 'default'}
-                          size="small"
+                          label={getStatusLabel(meta.status)} 
+                          color={getStatusColor(meta.status)} 
+                          size="small" 
                         />
                       </TableCell>
+                      <TableCell>{meta.points}</TableCell>
                       <TableCell>
+                        {meta.challenges && meta.challenges.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {meta.challenges.map((challenge, index) => {
+                              // Extrair o valor numérico do desafio
+                              const challengeValue = extractNumericValue(challenge.value);
+                              
+                              return (
+                                <Chip 
+                                  key={index} 
+                                  label={`${challenge.waste?.name || 'Resíduo'}: ${challengeValue} ${challenge.type === 'weight' ? 'kg' : 'un'}`} 
+                                  size="small" 
+                                  variant="outlined" 
+                                />
+                              );
+                            })}
+                          </Box>
+                        ) : (
+                          'Nenhum desafio'
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
                         <IconButton 
                           color="primary" 
-                          onClick={() => handleEditGoal(goal._id)}
+                          onClick={() => handleOpen(meta)}
                           size="small"
-                          sx={{ mr: 1 }}
+                          title="Editar"
                         >
                           <EditIcon />
                         </IconButton>
                         <IconButton 
                           color="error" 
-                          onClick={() => handleOpenDeleteConfirm(goal._id)}
+                          onClick={() => handleDelete(meta._id)}
                           size="small"
+                          title="Excluir"
                         >
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {metas.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        <Typography variant="body1" sx={{ py: 2, color: 'text.secondary' }}>
+                          Nenhuma meta encontrada
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
           )}
-          
-          {/* Diálogo para criar/editar meta */}
-          <Dialog
-            open={isDialogOpen}
-            onClose={() => {
-              setIsDialogOpen(false);
-              setEditingGoalId(null);
-            }}
-            maxWidth="md"
-            fullWidth
-          >
-            <DialogTitle sx={{ 
-              backgroundColor: '#f5f5f5', 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 2
-            }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                {editingGoalId ? 'Editar Meta' : 'Nova Meta'}
-              </Typography>
-              <IconButton onClick={() => {
-                setIsDialogOpen(false);
-                setEditingGoalId(null);
-              }} size="small">
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-
-            <DialogContent dividers sx={{ p: 3 }}>
-              {/* Mensagens de erro */}
-              {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                  {error}
-                </Alert>
-              )}
-
-              <form id="goalForm" onSubmit={handleSubmit(onSubmit)}>
-                <Grid container spacing={3}>
-                  {/* Seção de informações básicas */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2e7d32' }}>
-                      Informações Básicas
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={8}>
-                        <Controller
-                          name="title"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              label="Título"
-                              fullWidth
-                              error={!!errors.title}
-                              helperText={errors.title?.message}
-                              variant="outlined"
-                            />
-                          )}
-                        />
-                      </Grid>
-                      
-                      <Grid item xs={12} md={4}>
-                        <Controller
-                          name="points"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              label="Pontuação"
-                              type="number"
-                              fullWidth
-                              error={!!errors.points}
-                              helperText={errors.points?.message}
-                              variant="outlined"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                              InputProps={{
-                                startAdornment: (
-                                  <Typography variant="body2" color="textSecondary" sx={{ mr: 1 }}>
-                                    Pts:
-                                  </Typography>
-                                ),
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                      
-                      <Grid item xs={12}>
-                        <Controller
-                          name="description"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              label="Descrição"
-                              fullWidth
-                              multiline
-                              rows={3}
-                              error={!!errors.description}
-                              helperText={errors.description?.message}
-                              variant="outlined"
-                            />
-                          )}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  
-                  {/* Seção de período */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2e7d32' }}>
-                      Período de Validade
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                          <Controller
-                            name="initialDate"
-                            control={control}
-                            render={({ field }) => (
-                              <DatePicker
-                                label="Data Inicial"
-                                value={field.value}
-                                onChange={field.onChange}
-                                slotProps={{
-                                  textField: {
-                                    fullWidth: true,
-                                    variant: "outlined",
-                                    error: !!errors.initialDate,
-                                    helperText: errors.initialDate?.message
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                        </LocalizationProvider>
-                      </Grid>
-                      
-                      <Grid item xs={12} md={6}>
-                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-                          <Controller
-                            name="validUntil"
-                            control={control}
-                            render={({ field }) => (
-                              <DatePicker
-                                label="Data Final"
-                                value={field.value}
-                                onChange={field.onChange}
-                                minDate={watch('initialDate')}
-                                slotProps={{
-                                  textField: {
-                                    fullWidth: true,
-                                    variant: "outlined",
-                                    error: !!errors.validUntil,
-                                    helperText: errors.validUntil?.message
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                        </LocalizationProvider>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  
-                  {/* Seção de configuração da meta */}
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: '#2e7d32' }}>
-                      Configuração da Meta
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Controller
-                          name="targetType"
-                          control={control}
-                          render={({ field }) => (
-                            <FormControl 
-                              fullWidth 
-                              variant="outlined"
-                              error={!!errors.targetType}
-                            >
-                              <InputLabel>Tipo de Meta</InputLabel>
-                              <Select
-                                {...field}
-                                label="Tipo de Meta"
-                                error={!!errors.targetType}
-                                value={field.value}
-                                sx={{minWidth:200}}
-                              >
-                                <MenuItem value="weight">Peso (kg)</MenuItem>
-                                <MenuItem value="quantity">Quantidade (unidades)</MenuItem>
-                              </Select>
-                              {errors.targetType && (
-                                <FormHelperText>{errors.targetType.message}</FormHelperText>
-                              )}
-                            </FormControl>
-                          )}
-                        />
-                      </Grid>
-                      
-                      <Grid item xs={12} md={6}>
-                        <Controller
-                          name="targetValue"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              {...field}
-                              label={`Valor Alvo (${watch('targetType') === 'weight' ? 'kg' : 'unidades'})`}
-                              type="number"
-                              fullWidth
-                              error={!!errors.targetValue}
-                              helperText={errors.targetValue?.message}
-                              variant="outlined"
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                              InputProps={{
-                                endAdornment: (
-                                  <Typography variant="body2" color="textSecondary">
-                                    {watch('targetType') === 'weight' ? 'kg' : 'un'}
-                                  </Typography>
-                                ),
-                              }}
-                            />
-                          )}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  
-                  {/* Seção de desafios */}
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                        Desafios
-                      </Typography>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={addChallenge}
-                        sx={{ 
-                          borderColor: '#2e7d32', 
-                          color: '#2e7d32',
-                          '&:hover': {
-                            borderColor: '#1b5e20',
-                            backgroundColor: '#f1f8e9',
-                          }
-                        }}
-                      >
-                        Adicionar Desafio
-                      </Button>
-                    </Box>
-                    <Divider sx={{ mb: 2 }} />
-                    
-                    {fields.map((field, index) => (
-                      <Paper 
-                        key={field.id} 
-                        sx={{ 
-                          mb: 2, 
-                          p: 2, 
-                          border: '1px solid #e0e0e0', 
-                          borderRadius: 1,
-                          backgroundColor: '#fafafa'
-                        }}
-                        elevation={0}
-                      >
-                        <Grid container spacing={2} alignItems="center">
-                          <Grid item xs={12} md={6}>
-                            <Controller
-                              name={`challenges.${index}.waste`}
-                              control={control}
-                              render={({ field }) => (
-                                <FormControl 
-                                  fullWidth 
-                                  error={!!errors.challenges?.[index]?.waste}
-                                  variant="outlined"
-                                  sx={{ minWidth: '150px' }}
-                                >
-                                  <InputLabel>Tipo de Resíduo</InputLabel>
-                                  <Select
-                                    {...field}
-                                    label="Tipo de Resíduo"
-                                    sx={{ minWidth: '150px' }}
-                                    MenuProps={{ 
-                                      PaperProps: { 
-                                        sx: { minWidth: '150px' } 
-                                      }
-                                    }}
-                                  >
-                                    {wasteTypes && wasteTypes.length > 0 ? (
-                                      wasteTypes.map((waste) => (
-                                        <MenuItem key={waste._id} value={waste._id}>
-                                          {waste.type || waste.name || 'Resíduo sem nome'}
-                                        </MenuItem>
-                                      ))
-                                    ) : (
-                                      <MenuItem disabled value="">
-                                        Nenhum tipo de resíduo disponível
-                                      </MenuItem>
-                                    )}
-                                  </Select>
-                                  {errors.challenges?.[index]?.waste && (
-                                    <FormHelperText>{errors.challenges[index].waste.message}</FormHelperText>
-                                  )}
-                                </FormControl>
-                              )}
-                            />
-                          </Grid>
-                          
-                          {watch('targetType') === 'weight' ? (
-                            <Grid item xs={8} md={4}>
-                              <Controller
-                                name={`challenges.${index}.weight`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    label="Peso (kg)"
-                                    type="number"
-                                    fullWidth
-                                    variant="outlined"
-                                    error={!!errors.challenges?.[index]?.weight}
-                                    helperText={errors.challenges?.[index]?.weight?.message}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    InputProps={{
-                                      endAdornment: (
-                                        <Typography variant="body2" color="textSecondary">
-                                          kg
-                                        </Typography>
-                                      ),
-                                    }}
-                                  />
-                                )}
-                              />
-                            </Grid>
-                          ) : (
-                            <Grid item xs={8} md={4}>
-                              <Controller
-                                name={`challenges.${index}.quantity`}
-                                control={control}
-                                render={({ field }) => (
-                                  <TextField
-                                    {...field}
-                                    label="Quantidade"
-                                    type="number"
-                                    fullWidth
-                                    variant="outlined"
-                                    error={!!errors.challenges?.[index]?.quantity}
-                                    helperText={errors.challenges?.[index]?.quantity?.message}
-                                    onChange={(e) => field.onChange(Number(e.target.value))}
-                                    InputProps={{
-                                      endAdornment: (
-                                        <Typography variant="body2" color="textSecondary">
-                                          un
-                                        </Typography>
-                                      ),
-                                    }}
-                                  />
-                                )}
-                              />
-                            </Grid>
-                          )}
-                          
-                          <Grid item xs={4} md={2} sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <IconButton
-                              color="error"
-                              onClick={() => fields.length > 1 && remove(index)}
-                              disabled={fields.length <= 1}
-                              sx={{ 
-                                border: '1px solid',
-                                borderColor: fields.length <= 1 ? '#e0e0e0' : '#f44336',
-                                '&.Mui-disabled': {
-                                  borderColor: '#e0e0e0',
-                                }
-                              }}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Grid>
-                        </Grid>
-                      </Paper>
-                    ))}
-                    
-                    {errors.challenges?.message && (
-                      <Typography color="error" variant="caption" sx={{ display: 'block', mt: 1 }}>
-                        {errors.challenges.message}
-                      </Typography>
-                    )}
-                  </Grid>
-                </Grid>
-              </form>
-            </DialogContent>
-
-            <DialogActions sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
-              <Button 
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  setEditingGoalId(null);
-                }} 
-                color="inherit"
-                disabled={loading}
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={() => {
-                  //console.log("Save button clicked");
-                  // Chamar diretamente a função onSubmit com os valores atuais do formulário
-                  const currentValues = control._formValues;
-                  //console.log("Current form values:", currentValues);
-                  onSubmit(currentValues);
-                }}
-                variant="contained" 
-                disabled={loading}
-                sx={{
-                  backgroundColor: '#2e7d32',
-                  '&:hover': {
-                    backgroundColor: '#1b5e20',
-                  }
-                }}
-              >
-                {loading ? (
-                  <>
-                    <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                    {editingGoalId ? 'Salvando...' : 'Criando...'}
-                  </>
-                ) : (
-                  editingGoalId ? 'Salvar Alterações' : 'Criar Meta'
-                )}
-              </Button>
-            </DialogActions>
-          </Dialog>
-          
-          {/* Diálogo de confirmação para excluir */}
-          <Dialog
-            open={confirmDeleteOpen}
-            onClose={() => setConfirmDeleteOpen(false)}
-          >
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogContent>
-              <DialogContentText>
-                Tem certeza que deseja excluir esta meta? Esta ação não pode ser desfeita.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">
-                Cancelar
-              </Button>
-              <Button onClick={handleDeleteGoal} color="error" autoFocus>
-                Excluir
-              </Button>
-            </DialogActions>
-          </Dialog>
         </Paper>
+
+        <Box sx={{ mt: 4 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 2, color: "#2e7d32", fontWeight: "bold" }}
+          >
+            Sobre as Metas
+          </Typography>
+          <Paper
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Typography variant="body1" paragraph>
+              As metas são desafios de reciclagem que os usuários podem participar para ganhar pontos e reconhecimento.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Cada meta deve ter pelo menos um desafio específico, que define a quantidade ou peso de um determinado tipo de resíduo que o usuário precisa reciclar.
+            </Typography>
+            <Typography variant="body1">
+              Quando um usuário completa todos os desafios de uma meta, ele recebe os pontos definidos e a meta é marcada como concluída em seu perfil.
+            </Typography>
+          </Paper>
+        </Box>
+
+        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+          <DialogTitle>{editMode ? 'Editar Meta' : 'Nova Meta'}</DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Título"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  error={!!formErrors.title}
+                  helperText={formErrors.title}
+                  margin="normal"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Descrição"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  error={!!formErrors.description}
+                  helperText={formErrors.description}
+                  margin="normal"
+                  multiline
+                  rows={3}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Data Inicial"
+                    value={formData.initialDate}
+                    onChange={(newValue) => handleDateChange('initialDate', newValue)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        margin: "normal",
+                        error: !!formErrors.initialDate || !!formErrors.dates,
+                        helperText: formErrors.initialDate || formErrors.dates
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="Data Final"
+                    value={formData.validUntil}
+                    onChange={(newValue) => handleDateChange('validUntil', newValue)}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        margin: "normal",
+                        error: !!formErrors.validUntil || !!formErrors.dates,
+                        helperText: formErrors.validUntil || formErrors.dates
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    label="Status"
+                  >
+                    <MenuItem value="active">Ativo</MenuItem>
+                    <MenuItem value="inactive">Inativo</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Pontos"
+                  name="points"
+                  type="number"
+                  value={formData.points}
+                  onChange={handleChange}
+                  error={!!formErrors.points}
+                  helperText={formErrors.points}
+                  margin="normal"
+                  InputProps={{ inputProps: { min: 1 } }}
+                />
+              </Grid>
+              
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                  Desafios
+                </Typography>
+                {!!formErrors.challenges && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {formErrors.challenges}
+                  </Alert>
+                )}
+                
+                <Box sx={{ mb: 3, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={5}>
+                      <Autocomplete
+                        options={wasteTypes}
+                        getOptionLabel={(option) => option.name || ''}
+                        value={currentChallenge.waste}
+                        onChange={(event, newValue) => {
+                          handleChallengeChange('waste', newValue);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Tipo de Resíduo"
+                            fullWidth
+                            margin="normal"
+                          />
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <TextField
+                        fullWidth
+                        label="Valor"
+                        type="number"
+                        value={currentChallenge.value}
+                        onChange={(e) => handleChallengeChange('value', e.target.value)}
+                        margin="normal"
+                        InputProps={{ inputProps: { min: 1 } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                      <FormControl fullWidth margin="normal">
+                        <InputLabel>Tipo</InputLabel>
+                        <Select
+                          value={currentChallenge.type}
+                          onChange={(e) => handleChallengeChange('type', e.target.value)}
+                          label="Tipo"
+                        >
+                          <MenuItem value="quantity">Quantidade</MenuItem>
+                          <MenuItem value="weight">Peso (kg)</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        startIcon={<AddCircleOutlineIcon />}
+                        onClick={addChallenge}
+                        fullWidth
+                        sx={{ mt: 2 }}
+                      >
+                        Adicionar
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </Box>
+                
+                <List>
+                  {challenges.map((challenge, index) => (
+                    <Fragment key={index}>
+                      <ListItem>
+                        <ListItemText
+                          primary={challenge.waste?.name || 'Resíduo'}
+                          secondary={`Meta: ${challenge.value} ${challenge.type === 'weight' ? 'kg' : 'unidades'}`}
+                        />
+                        <ListItemSecondaryAction>
+                          <IconButton edge="end" color="error" onClick={() => removeChallenge(index)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </ListItemSecondaryAction>
+                      </ListItem>
+                      {index < challenges.length - 1 && <Divider />}
+                    </Fragment>
+                  ))}
+                  {challenges.length === 0 && (
+                    <ListItem>
+                      <ListItemText
+                        primary="Nenhum desafio adicionado"
+                        secondary="Adicione pelo menos um desafio para esta meta"
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="inherit">
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} variant="contained" color="primary">
+              {editMode ? 'Atualizar' : 'Criar'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Snackbar
+          open={alert.open}
+          autoHideDuration={6000}
+          onClose={handleCloseAlert}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={handleCloseAlert} severity={alert.severity} sx={{ width: '100%' }}>
+            {alert.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </AppLayout>
   );

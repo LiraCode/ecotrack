@@ -1,11 +1,10 @@
 import connectToDB from '@/lib/db';
 import Score from '@/models/score';
-import User from '@/models/user';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
 import mongoose from 'mongoose';
 
-// Helper function to verify Firebase token
+// Função auxiliar para verificar o token do Firebase
 async function verifyFirebaseToken(req) {
   try {
     const authHeader = req.headers.get('authorization');
@@ -22,106 +21,87 @@ async function verifyFirebaseToken(req) {
   }
 }
 
-// Helper function to check if ID is valid
-function isValidObjectId(id) {
-  return mongoose.Types.ObjectId.isValid(id);
-}
-
-// DELETE - Remove a specific score
-export async function DELETE(request, { params }) {
+// PUT - Atualizar progresso de um score específico
+export async function PUT(request, { params }) {
   try {
-    const { id } = await params;
-    console.log('Received ID:', id);
+    const { id } = params;
     
-    if (!isValidObjectId(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
     }
     
     await connectToDB();
     
-    // Verify authentication with Firebase
+    // Verificar autenticação com Firebase
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Find the user to verify permissions
-    const user = await User.findOne({ firebaseId: decodedToken.uid });
-    if (!user) {
-      console.log("User not found");
-      return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
-    }
+    // Obter dados do corpo da requisição
+    const data = await request.json();
+    const { currentValue } = data;
     
-    // Find the score
+    // Verificar se o score existe
     const score = await Score.findById(id);
     if (!score) {
-      console.log("Score not found");
       return NextResponse.json({ message: 'Score não encontrado' }, { status: 404 });
     }
     
-    // Check if the user is the owner of the score or an admin
-    if (score.clientId && user._id && 
-        score.clientId.toString() !== user._id.toString() && 
-        user.role !== 'admin') {
-      return NextResponse.json({ message: 'Não autorizado' }, { status: 403 });
+    // Atualizar o valor atual
+    if (currentValue !== undefined) {
+      score.currentValue = currentValue;
     }
     
-    // Remove the score
-    await Score.findByIdAndDelete(id);
+    // Salvar as alterações
+    await score.save();
     
-    return NextResponse.json({ 
-      message: 'Score removido com sucesso' 
+    return NextResponse.json({
+      message: 'Score atualizado com sucesso',
+      score
     });
   } catch (error) {
-    console.error('Error deleting score:', error);
+    console.error('Error updating score:', error);
     return NextResponse.json(
-      { message: 'Erro ao remover score', error: error.message },
+      { message: 'Erro ao atualizar score', error: error.message },
       { status: 500 }
     );
   }
 }
 
-// GET - Get a specific score (optional, but useful)
-export async function GET(request, { params }) {
+// DELETE - Remover um score específico
+export async function DELETE(request, { params }) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
-    if (!isValidObjectId(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
     }
     
     await connectToDB();
     
-    // Verify authentication with Firebase
+    // Verificar autenticação com Firebase
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Find the user to verify permissions
-    const user = await User.findOne({ firebaseId: decodedToken.uid });
-    if (!user) {
-      return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
-    }
-    
-    // Find the score with populated goal data
-    const score = await Score.findById(id).populate('goalId');
+    // Verificar se o score existe
+    const score = await Score.findById(id);
     if (!score) {
       return NextResponse.json({ message: 'Score não encontrado' }, { status: 404 });
     }
     
-    // Check if the user is the owner of the score or an admin
-    if (score.clientId && user._id && 
-        score.clientId.toString() !== user._id.toString() && 
-        user.role !== 'admin') {
-      return NextResponse.json({ message: 'Não autorizado' }, { status: 403 });
-    }
+    // Remover o score
+    await Score.findByIdAndDelete(id);
     
-    return NextResponse.json({ score });
+    return NextResponse.json({
+      message: 'Score removido com sucesso'
+    });
   } catch (error) {
-    console.error('Error fetching score:', error);
+    console.error('Error deleting score:', error);
     return NextResponse.json(
-      { message: 'Erro ao buscar score', error: error.message },
+      { message: 'Erro ao remover score', error: error.message },
       { status: 500 }
     );
   }

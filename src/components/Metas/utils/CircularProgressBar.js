@@ -1,51 +1,66 @@
 import React from 'react';
-import { Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { Box, Typography, CircularProgress } from '@mui/material';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-const CircularProgressBar = ({ progresso, total, expirado = false }) => {
-  const percentage = Math.round((progresso / total) * 100);
+const CircularProgressBar = ({ progresso, total, isPercentage = false, color = 'primary', size = 120 }) => {
+  // Se isPercentage for true, o progresso já é uma porcentagem (0-100)
+  // Caso contrário, calcular a porcentagem
+  const porcentagem = isPercentage ? progresso : Math.min(100, (progresso / total) * 100);
   
-  const data = {
-    labels: ['Concluído', 'Faltou'],
-    datasets: [
-      {
-        data: [progresso, total - progresso],
-        backgroundColor: [
-          '#4CAF50', // Verde para o progresso alcançado
-          expirado ? '#FF5252' : '#E0E0E0' // Vermelho vibrante se expirado
-        ],
-        borderWidth: 0,
-      },
-    ],
+  // Determinar a cor com base no progresso
+  const getColor = () => {
+    if (color !== 'auto') return color;
+    
+    if (porcentagem >= 100) return 'success';
+    if (porcentagem >= 70) return 'primary';
+    if (porcentagem >= 40) return 'warning';
+    return 'error';
   };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '70%',
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-  };
-
+  
   return (
-    <div className="relative" style={{ width: '100%', height: '150px' }}>
-      <Doughnut data={data} options={options} />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <span className="text-2xl font-bold text-gray-800">{percentage}%</span>
-        </div>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: size,
+        height: size,
+        margin: '0 auto'
+      }}
+    >
+      <CircularProgress
+        variant="determinate"
+        value={100}
+        size={size}
+        thickness={4}
+        sx={{ color: 'rgba(0, 0, 0, 0.1)', position: 'absolute' }}
+      />
+      <CircularProgress
+        variant="determinate"
+        value={porcentagem}
+        size={size}
+        thickness={4}
+        color={getColor()}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column'
+        }}
+      >
+        <Typography variant="h6" component="div" color="text.primary" fontWeight="bold">
+          {Math.round(porcentagem)}%
+        </Typography>
+        {!isPercentage && (
+          <Typography variant="caption" component="div" color="text.secondary">
+            {progresso}/{total}
+          </Typography>
+        )}
+      </Box>
+    </Box>
   );
 };
 

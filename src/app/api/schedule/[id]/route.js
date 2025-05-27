@@ -1,12 +1,168 @@
 import connectToDB from '@/lib/db';
 import CollectionScheduling from '@/models/collectionScheduling';
+import '@/models/waste';
+import '@/models/user';
+import '@/models/responsable';
+import '@/models/address';
+import '@/models/collectionPoint';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
 import mongoose from 'mongoose';
+import Score from '@/models/score';
 
 // Função auxiliar para verificar se o ID é válido
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
+}
+
+// Função auxiliar para verificar o token do Firebase
+async function verifyFirebaseToken(req) {
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null;
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(token);
+    return decodedToken;
+  } catch (error) {
+    console.error('Error verifying Firebase token:', error);
+    return null;
+  }
+}
+
+// Função para atualizar os scores do usuário
+async function updateUserScores(userId, wastes) {
+  try {
+    console.log('Iniciando atualização de scores para o usuário:', userId);
+    console.log('Resíduos coletados:', JSON.stringify(wastes, null, 2));
+
+    // Buscar scores ativos do usuário
+    const activeScores = await Score.find({
+      clientId: userId,
+      status: 'active'
+    }).populate({
+      path: 'goalId',
+      populate: {
+        path: 'challenges.waste',
+        model: 'Waste'
+      }
+    });
+
+    if (!activeScores || activeScores.length === 0) {
+      console.log('Nenhum score ativo encontrado para o usuário');
+      return { updatedScores: 0, completedGoals: 0 };
+    }
+
+    console.log('Scores ativos encontrados:', activeScores.length);
+
+    let updatedCount = 0;
+    let completedCount = 0;
+
+    // Para cada score ativo
+    for (const score of activeScores) {
+      console.log('\nProcessando score:', score._id);
+      console.log('Desafios da meta:', JSON.stringify(score.goalId.challenges, null, 2));
+      
+      let scoreUpdated = false;
+      
+      // Inicializar progresso se não existir
+      if (!score.progress) {
+        score.progress = {};
+      }
+
+      // Para cada desafio na meta
+      for (const challenge of score.goalId.challenges) {
+        const challengeId = challenge._id.toString();
+        
+        // Inicializar progresso do desafio se não existir
+        if (!score.progress[challengeId]) {
+          score.progress[challengeId] = {
+            currentValue: 0,
+            targetValue: parseFloat(challenge.value),
+            completed: false
+          };
+        }
+
+        // Para cada resíduo coletado
+        for (const waste of wastes) {
+          // Verificar se o tipo de resíduo corresponde
+          const wasteIdToCompare = typeof waste.wasteId === 'string' ? waste.wasteId : waste.wasteId._id.toString();
+          const challengeWasteId = challenge.waste._id.toString();
+
+          console.log('Comparando resíduos:', {
+            wasteId: wasteIdToCompare,
+            challengeWasteId: challengeWasteId,
+            match: wasteIdToCompare === challengeWasteId
+          });
+
+          if (wasteIdToCompare === challengeWasteId) {
+            const progress = score.progress[challengeId];
+            const oldValue = progress.currentValue || 0;
+            
+            // Atualizar o valor com base no tipo de desafio
+            if (challenge.type === 'weight' && waste.weight) {
+              progress.currentValue = (progress.currentValue || 0) + parseFloat(waste.weight);
+              scoreUpdated = true;
+            } else if (challenge.type !== 'weight' && waste.quantity) {
+              progress.currentValue = (progress.currentValue || 0) + parseInt(waste.quantity);
+              scoreUpdated = true;
+            }
+
+            console.log('Atualizando progresso:', {
+              challengeId,
+              oldValue,
+              newValue: progress.currentValue,
+              targetValue: progress.targetValue
+            });
+
+            // Verificar se o desafio foi completado
+            progress.completed = progress.currentValue >= progress.targetValue;
+            
+            // Atualizar o progresso no score
+            score.progress[challengeId] = progress;
+          }
+        }
+      }
+
+      // Se o score foi atualizado
+      if (scoreUpdated) {
+        updatedCount++;
+
+        // Verificar se todos os desafios foram completados
+        const allCompleted = Object.values(score.progress).every(p => p.completed);
+        if (allCompleted) {
+          score.status = 'completed';
+          score.earnedPoints = score.goalId.points;
+          completedCount++;
+        }
+
+        // Marcar o campo progress como modificado
+        score.markModified('progress');
+        
+        // Salvar as alterações
+        await score.save();
+        
+        console.log('Score atualizado:', {
+          scoreId: score._id,
+          progress: JSON.stringify(score.progress, null, 2),
+          status: score.status,
+          earnedPoints: score.earnedPoints
+        });
+      }
+    }
+
+    console.log('Atualização concluída:', {
+      updatedScores: updatedCount,
+      completedGoals: completedCount
+    });
+
+    return { updatedScores: updatedCount, completedGoals: completedCount };
+  } catch (error) {
+    console.error('Error updating user scores:', error);
+    throw error;
+  }
 }
 
 // GET - Buscar um agendamento específico pelo ID
@@ -72,125 +228,66 @@ export async function GET(request, { params }) {
 // PUT - Atualizar um agendamento específico
 export async function PUT(request, { params }) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
-    if (!isValidObjectId(id)) {
-      console.error('Invalid ID:', id);
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
     }
     
     await connectToDB();
     
-    // Verificar autenticação do usuário
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.error("Token de autenticação não fornecido");
-      return NextResponse.json(
-        { error: "Token de autenticação não fornecido" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-    let decodedToken;
-
-    try {
-      decodedToken = await auth.verifyIdToken(token);
-    } catch (error) {
-      console.error("Erro ao verificar token:", error);
-      return NextResponse.json(
-        { error: "Token inválido ou expirado" },
-        { status: 401 }
-      );
+    // Verificar autenticação com Firebase
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Buscar o agendamento existente
-    const existingSchedule = await CollectionScheduling.findById(id);
-    if (!existingSchedule) {
+    // Buscar o agendamento atual
+    const currentScheduling = await CollectionScheduling.findById(id);
+    if (!currentScheduling) {
       return NextResponse.json({ message: 'Agendamento não encontrado' }, { status: 404 });
     }
     
     // Obter dados do corpo da requisição
-    const updateData = await request.json();
-    
-    // Campos permitidos para atualização
-    const allowedFields = [
-      'status', 
-      'collector', 
-      'collectedAt', 
-      'wastes',
-      'date',
-    ];
-    
-    // Filtrar apenas os campos permitidos
-    const filteredData = {};
-    for (const field of allowedFields) {
-      if (updateData[field] !== undefined) {
-        filteredData[field] = updateData[field];
-      }
-    }
-    
-    // Validar status
-    const validStatus = [
-      'Aguardando confirmação do Ponto de Coleta',
-      'Confirmado',
-      'Coletado',
-      'Cancelado'
-    ];
-    
-    if (filteredData.status && !validStatus.includes(filteredData.status)) {
-      return NextResponse.json({ message: 'Status inválido' }, { status: 400 });
-    }
-    
-    // Se o status for alterado para "Coletado" e não houver data de coleta, definir para a data atual
-    if (filteredData.status === 'Coletado' && !filteredData.collectedAt) {
-      filteredData.collectedAt = new Date();
-    }
-    
-    // Validar wastes se fornecido
-    if (filteredData.wastes) {
-      // Verificar se é um array
-      if (!Array.isArray(filteredData.wastes)) {
-        return NextResponse.json({ message: 'O campo wastes deve ser um array' }, { status: 400 });
-      }
-      
-      // Verificar cada item do array
-      for (const waste of filteredData.wastes) {
-        if (!waste.wasteId || !mongoose.Types.ObjectId.isValid(waste.wasteId)) {
-          return NextResponse.json({ message: 'ID de resíduo inválido' }, { status: 400 });
-        }
-        
-        if (typeof waste.quantity !== 'number' || waste.quantity < 0) {
-          return NextResponse.json({ message: 'Quantidade de resíduo inválida' }, { status: 400 });
-        }
-        
-        if (typeof waste.weight !== 'number' || waste.weight < 0) {
-          return NextResponse.json({ message: 'Peso de resíduo inválido' }, { status: 400 });
-        }
-      }
-    }
+    const data = await request.json();
     
     // Atualizar o agendamento
-    const updatedSchedule = await CollectionScheduling.findByIdAndUpdate(
+    const updatedScheduling = await CollectionScheduling.findByIdAndUpdate(
       id,
-      filteredData,
-      { new: true }
-    )
-    .populate('userId')
-    .populate('collectionPointId')
-    .populate('addressId')
-    .populate({
-      path: 'wastes.wasteId',
-      model: 'Waste'
-    });
+      { ...data },
+      { new: true, runValidators: true }
+    ).populate('userId').populate('wastes.wasteId');
+    
+    // Se o status foi alterado para "Coletado", atualizar os scores do usuário
+    if (data.status === 'Coletado' && currentScheduling.status !== 'Coletado') {
+      try {
+        const { updatedScores, completedGoals } = await updateUserScores(
+          updatedScheduling.userId._id,
+          updatedScheduling.wastes
+        );
+        
+        return NextResponse.json({
+          message: 'Agendamento atualizado e metas processadas com sucesso',
+          scheduling: updatedScheduling,
+          updatedScores,
+          completedGoals
+        });
+      } catch (error) {
+        console.error('Erro ao processar metas:', error);
+        return NextResponse.json({
+          message: 'Agendamento atualizado, mas houve um erro ao processar as metas',
+          scheduling: updatedScheduling,
+          error: error.message
+        });
+      }
+    }
     
     return NextResponse.json({
-      success: true,
       message: 'Agendamento atualizado com sucesso',
-      schedule: updatedSchedule
+      scheduling: updatedScheduling
     });
   } catch (error) {
-    console.error('Error updating schedule:', error);
+    console.error('Error updating scheduling:', error);
     return NextResponse.json(
       { message: 'Erro ao atualizar agendamento', error: error.message },
       { status: 500 }
@@ -201,51 +298,29 @@ export async function PUT(request, { params }) {
 // DELETE - Excluir um agendamento específico
 export async function DELETE(request, { params }) {
   try {
-    const { id } = await params;
+    const { id } = params;
     
-    if (!isValidObjectId(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
     }
     
     await connectToDB();
     
-    // Verificar autenticação do usuário
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json(
-        { error: "Token de autenticação não fornecido" },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.split(" ")[1];
-    let decodedToken;
-
-    try {
-      decodedToken = await auth.verifyIdToken(token);
-    } catch (error) {
-      console.error("Erro ao verificar token:", error);
-      return NextResponse.json(
-        { error: "Token inválido ou expirado" },
-        { status: 401 }
-      );
+    // Verificar autenticação com Firebase
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Buscar o agendamento
-    const schedule = await CollectionScheduling.findById(id);
-    if (!schedule) {
+    const scheduling = await CollectionScheduling.findByIdAndDelete(id);
+    
+    if (!scheduling) {
       return NextResponse.json({ message: 'Agendamento não encontrado' }, { status: 404 });
     }
     
-    // Excluir o agendamento
-    await CollectionScheduling.findByIdAndDelete(id);
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Agendamento excluído com sucesso'
-    });
+    return NextResponse.json({ message: 'Agendamento excluído com sucesso' });
   } catch (error) {
-    console.error('Error deleting schedule:', error);
+    console.error('Error deleting scheduling:', error);
     return NextResponse.json(
       { message: 'Erro ao excluir agendamento', error: error.message },
       { status: 500 }

@@ -1,14 +1,13 @@
 import connectToDB from '@/lib/db';
 import Goal from '@/models/goal';
-import User from '@/models/user';
-import Admin from '@/models/admin';
-import  '@/models/waste';
-import { auth } from '@/config/firebase/firebaseAdmin';
+import Waste from '@/models/waste';
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
+import { auth } from '@/config/firebase/firebaseAdmin';
+import Admin from '@/models/admin';
+import Responsable from '@/models/responsable';
 
-// Verificar autenticação
-async function verifyAuth(req) {
+// Função auxiliar para verificar o token do Firebase
+async function verifyFirebaseToken(req) {
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -17,15 +16,9 @@ async function verifyAuth(req) {
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await auth.verifyIdToken(token);
-    
-    const user = await User.findOne({ firebaseId: decodedToken.uid });
-    if (!user) {
-      const Admins = await Admin.findOne({ firebaseId: decodedToken.uid });
-      return Admins;
-    }
-    return user;
+    return decodedToken;
   } catch (error) {
-    console.error('Error verifying auth:', error);
+    console.error('Error verifying Firebase token:', error);
     return null;
   }
 }
@@ -33,36 +26,42 @@ async function verifyAuth(req) {
 // GET - Buscar metas
 export async function GET(request) {
   try {
+    // Verificar autenticação
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
+      return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
+    }
+
+    // Conectar ao banco de dados
     await connectToDB();
-    
+
     // Obter parâmetros de consulta
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
     const status = searchParams.get('status');
-    
-    // Construir filtro de consulta
-    const query = {};
-    
-    if (id) {
-      if (!mongoose.Types.ObjectId.isValid(id)) {
-        return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
-      }
-      query._id = id;
-    }
-    
+
+    // Construir query base
+    let query = {};
     if (status) {
       query.status = status;
     }
-    
+
     // Buscar metas
     const goals = await Goal.find(query)
-      .populate({
-        path: 'challenges.waste',
-        model: 'Waste'
-      })
+      .populate('challenges.waste')
       .sort({ createdAt: -1 });
-    
-    return NextResponse.json({ goals });
+
+    // Verificar e atualizar status de metas expiradas
+    const now = new Date();
+    const updatedGoals = await Promise.all(goals.map(async (goal) => {
+      if (goal.status === 'active' && goal.validUntil && now > new Date(goal.validUntil)) {
+        goal.status = 'expired';
+        await goal.save();
+        console.log(`Meta ${goal._id} atualizada para expirada`);
+      }
+      return goal;
+    }));
+
+    return NextResponse.json({ goals: updatedGoals });
   } catch (error) {
     console.error('Error fetching goals:', error);
     return NextResponse.json(
@@ -72,60 +71,51 @@ export async function GET(request) {
   }
 }
 
-// POST - Criar meta
+// POST - Criar nova meta
 export async function POST(request) {
   try {
-    await connectToDB();
-    
     // Verificar autenticação
-    const user = await verifyAuth(request);
-    if (!user) {
-      console.error('Error user:');
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
-    
+
+    // Conectar ao banco de dados
+    await connectToDB();
+
     // Verificar se é admin
-    if (user.role !== 'Administrador') {
-      console.error("Erro administrador:");
-      return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
+    const admin = await Admin.findOne({ firebaseId: decodedToken.uid });
+    if (!admin) {
+      return NextResponse.json(
+        { message: 'Apenas administradores podem criar metas' },
+        { status: 403 }
+      );
     }
-    
-    // Obter dados do corpo da requisição
+
+    // Obter dados da requisição
     const data = await request.json();
     
-    // Validar dados
-    if (!data.title || !data.description || !data.initialDate || !data.validUntil || 
-        !data.points || !data.targetType || !data.targetValue || !data.challenges || 
-        data.challenges.length === 0) {
-      return NextResponse.json({ message: 'Dados incompletos' }, { status: 400 });
+    // Validar dados obrigatórios
+    if (!data.title || !data.description || !data.initialDate || !data.validUntil || !data.points) {
+      return NextResponse.json(
+        { message: 'Dados incompletos' },
+        { status: 400 }
+      );
     }
-    
+
     // Criar nova meta
     const goal = new Goal({
-      title: data.title,
-      description: data.description,
-      initialDate: new Date(data.initialDate),
-      validUntil: new Date(data.validUntil),
-      status: 'active',
-      points: data.points,
-      targetType: data.targetType,
-      targetValue: data.targetValue,
-      challenges: data.challenges.map(challenge => ({
-        waste: challenge.waste,
-        weight: data.targetType === 'weight' ? challenge.weight : 0,
-        quantity: data.targetType === 'quantity' ? challenge.quantity : 0
-      }))
+      ...data,
+      createdBy: admin._id,
+      status: 'active'
     });
-    
+
     await goal.save();
-    
-    // Retornar meta criada
-    const savedGoal = await Goal.findById(goal._id).populate({
-      path: 'challenges.waste',
-      model: 'Waste'
+
+    return NextResponse.json({ 
+      message: 'Meta criada com sucesso',
+      goal: goal 
     });
-    
-    return NextResponse.json({ message: 'Meta criada com sucesso', goal: savedGoal });
   } catch (error) {
     console.error('Error creating goal:', error);
     return NextResponse.json(
@@ -135,63 +125,56 @@ export async function POST(request) {
   }
 }
 
-// PUT - Atualizar meta
+// PUT - Atualizar meta existente
 export async function PUT(request) {
   try {
-    await connectToDB();
-    
     // Verificar autenticação
-    const user = await verifyAuth(request);
-    if (!user) {
-      console.error('Error user:');
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
-    
+
+    // Conectar ao banco de dados
+    await connectToDB();
+
     // Verificar se é admin
-    if (user.role !== 'Administrador') {
-      console.error("Erro administrador:");
-      return NextResponse.json({ message: 'Acesso negado' }, { status: 403 });
+    const admin = await Admin.findOne({ firebaseId: decodedToken.uid });
+    if (!admin) {
+      return NextResponse.json(
+        { message: 'Apenas administradores podem atualizar metas' },
+        { status: 403 }
+      );
     }
-    
-    // Obter dados do corpo da requisição
+
+    // Obter dados da requisição
     const data = await request.json();
-    
-    // Validar ID
-    if (!data.id || !mongoose.Types.ObjectId.isValid(data.id)) {
-      return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
+    const { id, ...updateData } = data;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: 'ID da meta é obrigatório' },
+        { status: 400 }
+      );
     }
-    
-    // Verificar se a meta existe
-    const existingGoal = await Goal.findById(data.id);
-    if (!existingGoal) {
-      return NextResponse.json({ message: 'Meta não encontrada' }, { status: 404 });
-    }
-    
+
     // Atualizar meta
-    const updatedGoal = await Goal.findByIdAndUpdate(
-      data.id,
-      {
-        title: data.title,
-        description: data.description,
-        initialDate: new Date(data.initialDate),
-        validUntil: new Date(data.validUntil),
-        status: data.status || existingGoal.status,
-        points: data.points,
-        targetType: data.targetType,
-        targetValue: data.targetValue,
-        challenges: data.challenges.map(challenge => ({
-          waste: challenge.waste,
-          weight: data.targetType === 'weight' ? challenge.weight : 0,
-          quantity: data.targetType === 'quantity' ? challenge.quantity : 0
-        }))
-      },
+    const goal = await Goal.findByIdAndUpdate(
+      id,
+      { ...updateData, updatedAt: new Date() },
       { new: true }
-    ).populate({
-      path: 'challenges.waste',
-      model: 'Waste'
+    );
+
+    if (!goal) {
+      return NextResponse.json(
+        { message: 'Meta não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ 
+      message: 'Meta atualizada com sucesso',
+      goal: goal 
     });
-    
-    return NextResponse.json({ message: 'Meta atualizada com sucesso', goal: updatedGoal });
   } catch (error) {
     console.error('Error updating goal:', error);
     return NextResponse.json(
@@ -204,38 +187,49 @@ export async function PUT(request) {
 // DELETE - Excluir meta
 export async function DELETE(request) {
   try {
-    await connectToDB();
-    
     // Verificar autenticação
-    const user = await verifyAuth(request);
-    if (!user) {
+    const decodedToken = await verifyFirebaseToken(request);
+    if (!decodedToken) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
-    
+
+    // Conectar ao banco de dados
+    await connectToDB();
+
     // Verificar se é admin
-    if (user.role !== "Administrador") {
-      return NextResponse.json({ message: "Acesso negado" }, { status: 403 });
+    const admin = await Admin.findOne({ firebaseId: decodedToken.uid });
+    if (!admin) {
+      return NextResponse.json(
+        { message: 'Apenas administradores podem excluir metas' },
+        { status: 403 }
+      );
     }
-    
-    // Obter parâmetros de consulta
+
+    // Obter ID da meta
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
-    // Validar ID
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
+
+    if (!id) {
+      return NextResponse.json(
+        { message: 'ID da meta é obrigatório' },
+        { status: 400 }
+      );
     }
-    
-    // Verificar se a meta existe
-    const existingGoal = await Goal.findById(id);
-    if (!existingGoal) {
-      return NextResponse.json({ message: 'Meta não encontrada' }, { status: 404 });
-    }
-    
+
     // Excluir meta
-    await Goal.findByIdAndDelete(id);
-    
-    return NextResponse.json({ message: 'Meta excluída com sucesso' });
+    const goal = await Goal.findByIdAndDelete(id);
+
+    if (!goal) {
+      return NextResponse.json(
+        { message: 'Meta não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ 
+      message: 'Meta excluída com sucesso',
+      goal: goal 
+    });
   } catch (error) {
     console.error('Error deleting goal:', error);
     return NextResponse.json(

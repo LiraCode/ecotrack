@@ -6,6 +6,7 @@ import React from 'react';
 import { Geist, Geist_Mono, Roboto, Cabin_Sketch, Crimson_Pro } from 'next/font/google';
 import ClientProviders from './ClientProviders';
 import { AuthContextProvider } from '@/context/AuthContext';
+import { MetasProvider } from '@/context/metas/MetasContext';
 import { Toaster } from "@/components/ui/toaster"
 
 const cabinSketch = Cabin_Sketch({
@@ -46,12 +47,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased bg-gray-50`}
       >
-        <ClientProviders>
-          <AuthContextProvider>
-          {children}
-          </AuthContextProvider>
-        </ClientProviders>
-        <Toaster />
+        <AuthContextProvider>
+          <MetasProvider>
+            <ClientProviders>
+              {children}
+            </ClientProviders>
+            <Toaster />
+          </MetasProvider>
+        </AuthContextProvider>
       </body>
     </html>
   );

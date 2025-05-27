@@ -11,6 +11,14 @@ import {
 import { Trophy } from 'lucide-react';
 
 export default function RankingTable({ ranking, clientId }) {
+  if (!ranking || ranking.length === 0) {
+    return (
+      <div className="text-center p-4 text-muted-foreground">
+        Nenhum dado de ranking disponível
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -26,7 +34,7 @@ export default function RankingTable({ ranking, clientId }) {
           {ranking.map((item) => (
             <TableRow 
               key={item.clientId} 
-              className={item.clientId === clientId ? "bg-muted/50" : ""}
+              className={item.isCurrentUser ? "bg-muted/50" : ""}
             >
               <TableCell className="font-medium">
                 {item.position <= 3 ? (
@@ -46,10 +54,10 @@ export default function RankingTable({ ranking, clientId }) {
               </TableCell>
               <TableCell>
                 {item.name}
-                {item.clientId === clientId && <span className="ml-2 text-xs text-muted-foreground">(Você)</span>}
+                {item.isCurrentUser && <span className="ml-2 text-xs text-muted-foreground">(Você)</span>}
               </TableCell>
               <TableCell className="text-right font-medium">{item.totalPoints}</TableCell>
-              <TableCell className="text-right">{item.goalsCompleted}</TableCell>
+              <TableCell className="text-right">{item.completedChallenges}</TableCell>
             </TableRow>
           ))}
         </TableBody>

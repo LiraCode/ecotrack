@@ -1,13 +1,36 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { Tabs, Tab, Box } from '@mui/material'
+import { useState } from 'react'
+import { Box, Tabs, Tab, Typography } from '@mui/material'
 import DesafioAtivo from './DesafioAtivo'
 import DesafioConcluido from './DesafioConcluido'
 import DesafioExpirado from './DesafioExpirado'
-import { useToast } from '@/components/ui/use-toast'
-import { useAuth } from '@/context/AuthContext'
-import { getAuthToken } from '@/services/authService'
-import { checkExpiredScores } from '@/services/scoreService'
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  )
+}
+
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  }
+}
 
 const MetasTabs = ({ 
   abaAtiva, 
@@ -15,109 +38,81 @@ const MetasTabs = ({
   desafiosAtivos, 
   desafiosConcluidos, 
   desafiosExpirados, 
-  removerDesafio
+  concluirDesafio, 
+  removerDesafio, 
+  atualizarProgresso 
 }) => {
-  const { toast } = useToast()
-  const { user } = useAuth()
-
-  // Verificar scores expirados
-  useEffect(() => {
-    const verifyExpiredScores = async () => {
-      try {
-        const result = await checkExpiredScores()
-        
-        if (result.success && result.expiredCount > 0) {
-          console.log(`${result.expiredCount} metas foram marcadas como expiradas`)
-          toast({
-            title: "Metas expiradas",
-            description: `${result.expiredCount} meta(s) foram marcadas como expiradas`,
-            variant: "warning"
-          })
-        }
-      } catch (error) {
-        console.error('Erro ao verificar metas expiradas:', error)
-      }
-    }
-    
-    if (user) {
-      verifyExpiredScores()
-    }
-  }, [user, toast])
-
-  const handleChangeTab = (event, newValue) => {
+  const handleChange = (event, newValue) => {
     setAbaAtiva(newValue)
   }
 
   return (
-    <Box className="mb-8">
-      <Tabs
-        value={abaAtiva}
-        onChange={handleChangeTab}
-        variant="fullWidth"
-        indicatorColor="primary"
-        textColor="primary"
-        className="mb-4"
-      >
-        <Tab value="andamento" label="Em Andamento" />
-        <Tab value="concluidos" label="Concluídos" />
-        <Tab value="expirados" label="Expirados" />
-      </Tabs>
-
-      {abaAtiva === 'andamento' && (
-        <div className="space-y-4">
-          {desafiosAtivos.length === 0 ? (
-            <div className="text-center p-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Você não tem desafios em andamento.</p>
-              <p className="text-gray-500">Participe de um desafio abaixo!</p>
-            </div>
-          ) : (
+    <Box sx={{ width: '100%', mt: 4 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs 
+          value={abaAtiva} 
+          onChange={handleChange} 
+          aria-label="metas tabs"
+          variant="fullWidth"
+        >
+          <Tab label="Em Andamento" {...a11yProps('andamento')} value="andamento" />
+          <Tab label="Concluídos" {...a11yProps('concluidos')} value="concluidos" />
+          <Tab label="Expirados" {...a11yProps('expirados')} value="expirados" />
+        </Tabs>
+      </Box>
+      
+      <TabPanel value={abaAtiva} index="andamento">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
+          {desafiosAtivos && desafiosAtivos.length > 0 ? (
             desafiosAtivos.map((desafio) => (
-              <DesafioAtivo
-                key={desafio.id}
-                desafio={desafio}
+              <DesafioAtivo 
+                key={desafio._id || desafio.id} 
+                desafio={desafio} 
                 onRemover={removerDesafio}
-              
               />
             ))
-          )}
-        </div>
-      )}
-
-      {abaAtiva === 'concluidos' && (
-        <div className="space-y-4">
-          {desafiosConcluidos.length === 0 ? (
-            <div className="text-center p-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Você ainda não concluiu nenhum desafio.</p>
-            </div>
           ) : (
+            <Typography variant="body1" align="center" color="text.secondary" sx={{ py: 4, gridColumn: '1/-1' }}>
+              Você não tem desafios em andamento no momento.
+            </Typography>
+          )}
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={abaAtiva} index="concluidos">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {desafiosConcluidos && desafiosConcluidos.length > 0 ? (
             desafiosConcluidos.map((desafio) => (
-              <DesafioConcluido
-                key={desafio.id}
-                desafio={desafio}
-                onRemover={removerDesafio}
+              <DesafioConcluido 
+                key={desafio._id || desafio.id} 
+                desafio={desafio} 
               />
             ))
-          )}
-        </div>
-      )}
-
-      {abaAtiva === 'expirados' && (
-        <div className="space-y-4">
-          {desafiosExpirados.length === 0 ? (
-            <div className="text-center p-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Você não tem desafios expirados.</p>
-            </div>
           ) : (
+            <Typography variant="body1" align="center" color="text.secondary" sx={{ py: 4 }}>
+              Você ainda não concluiu nenhum desafio.
+            </Typography>
+          )}
+        </Box>
+      </TabPanel>
+      
+      <TabPanel value={abaAtiva} index="expirados">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {desafiosExpirados && desafiosExpirados.length > 0 ? (
             desafiosExpirados.map((desafio) => (
-              <DesafioExpirado
-                key={desafio.id}
-                desafio={desafio}
+              <DesafioExpirado 
+                key={desafio._id || desafio.id} 
+                desafio={desafio} 
                 onRemover={removerDesafio}
               />
             ))
+          ) : (
+            <Typography variant="body1" align="center" color="text.secondary" sx={{ py: 4 }}>
+              Você não tem desafios expirados.
+            </Typography>
           )}
-        </div>
-      )}
+        </Box>
+      </TabPanel>
     </Box>
   )
 }

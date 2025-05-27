@@ -6,13 +6,11 @@ import { useAuth } from '@/context/AuthContext';
 
 const RankingSection = ({ ranking }) => {
   const { user } = useAuth();
-  const clientId = user?._id;
 
   // Garantir que ranking é um array, mesmo que seja undefined
   const safeRanking = Array.isArray(ranking) ? ranking : [];
   
-  //console.log("RankingSection recebeu:", ranking);
-  //console.log("safeRanking:", safeRanking);
+  console.log("RankingSection recebeu:", ranking);
 
   return (
     <Paper elevation={3} className="p-6 mb-8">
@@ -27,8 +25,8 @@ const RankingSection = ({ ranking }) => {
             <i className="fa-solid fa-medal text-gray-100 text-3xl"></i>
           </div>
           <div className="bg-gray-200 p-4 rounded-lg text-center shadow-sm transform hover:scale-105 transition-transform"> 
-            <div className="font-medium">{safeRanking[1]?.nome || 'Carregando...'}</div>
-            <div className="text-sm text-gray-700">{safeRanking[1]?.pontos || 0} pts</div>
+            <div className="font-medium">{safeRanking[1]?.name || 'Carregando...'}</div>
+            <div className="text-sm text-gray-700">{safeRanking[1]?.totalPoints || 0} pts</div>
           </div>
         </div>
         
@@ -38,8 +36,8 @@ const RankingSection = ({ ranking }) => {
             <i className="fa-solid fa-trophy-star text-amber-100 text-4xl"></i>
           </div>
           <div className="bg-yellow-100 p-4 rounded-lg text-center shadow-md transform hover:scale-105 transition-transform">
-            <div className="font-bold text-lg">{safeRanking[0]?.nome || 'Carregando...'}</div>
-            <div className="text-sm font-medium text-yellow-800">{safeRanking[0]?.pontos || 0} pts</div>
+            <div className="font-bold text-lg">{safeRanking[0]?.name || 'Carregando...'}</div>
+            <div className="text-sm font-medium text-yellow-800">{safeRanking[0]?.totalPoints || 0} pts</div>
           </div>
         </div>
         
@@ -49,8 +47,8 @@ const RankingSection = ({ ranking }) => {
             <i className="fa-solid fa-medal text-amber-200 text-2xl"></i>
           </div>
           <div className="bg-amber-50 p-4 rounded-lg text-center shadow-sm transform hover:scale-105 transition-transform">
-            <div className="font-medium">{safeRanking[2]?.nome || 'Carregando...'}</div>
-            <div className="text-sm text-amber-800">{safeRanking[2]?.pontos || 0} pts</div>
+            <div className="font-medium">{safeRanking[2]?.name || 'Carregando...'}</div>
+            <div className="text-sm text-amber-800">{safeRanking[2]?.totalPoints || 0} pts</div>
           </div>
         </div>
       </div>
@@ -67,14 +65,14 @@ const RankingSection = ({ ranking }) => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {safeRanking.length > 0 ? (
-              safeRanking.map((item, index) => (
-                <tr key={index} className={item.clientId === clientId ? "bg-green-50" : ""}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.posicao || index + 1}</td>
+              safeRanking.map((item) => (
+                <tr key={item.clientId} className={item.isCurrentUser ? "bg-green-50" : ""}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.position}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.nome || 'Usuário'}
-                    {item.clientId === clientId && <span className="ml-2 text-xs text-green-600">(Você)</span>}
+                    {item.name}
+                    {item.isCurrentUser && <span className="ml-2 text-xs text-green-600">(Você)</span>}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.pontos || 0}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{item.totalPoints}</td>
                 </tr>
               ))
             ) : (
