@@ -5,7 +5,18 @@ import CardTitle from '../ui/cardTitleLeft'
 
 
 const MetasHeader = ({ meusPontos = 0 }) => {
-  //console.log("MetasHeader recebeu pontos:", meusPontos);
+  console.log("MetasHeader recebeu pontos:", {
+    valor: meusPontos,
+    tipo: typeof meusPontos
+  });
+  
+  // Garantir que meusPontos seja um número
+  const pontos = typeof meusPontos === 'number' ? meusPontos : parseInt(meusPontos) || 0;
+  
+  console.log("Pontos após conversão:", {
+    valor: pontos,
+    tipo: typeof pontos
+  });
   
   return (
     <Paper elevation={3} className="p-6 mb-8 ">
@@ -26,7 +37,7 @@ const MetasHeader = ({ meusPontos = 0 }) => {
             Meus Pontos
           </Typography>
           <Typography variant="h3" className="text-green-600 font-bold">
-            {meusPontos}
+            {pontos}
           </Typography>
         </div>
       </Box>

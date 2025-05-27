@@ -1,8 +1,6 @@
 import connectToDB from '@/lib/db';
 import Score from '@/models/score';
 import User from '@/models/user';
-import Admin from '@/models/admin';
-import Responsable from '@/models/responsable';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
 
@@ -34,21 +32,16 @@ export async function GET(request) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Buscar usuário em todas as coleções
-    const [regularUser, adminUser, responsibleUser] = await Promise.all([
-      User.findOne({ firebaseId: decodedToken.uid }),
-      Admin.findOne({ firebaseId: decodedToken.uid }),
-      Responsable.findOne({ firebaseId: decodedToken.uid })
-    ]);
-
-    // Usar o primeiro usuário encontrado
-    const user = regularUser || adminUser || responsibleUser;
+    console.log('Token decodificado:', decodedToken);
     
+    // Buscar usuário
+    const user = await User.findOne({ firebaseId: decodedToken.uid });
     if (!user) {
+      console.log('Usuário não encontrado para firebaseId:', decodedToken.uid);
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
     
-    console.log('Buscando pontos para o usuário:', user._id);
+    console.log('Usuário encontrado:', user._id);
     
     // Buscar scores concluídos do usuário
     const scores = await Score.find({

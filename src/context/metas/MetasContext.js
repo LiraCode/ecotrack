@@ -47,22 +47,6 @@ export const MetasProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // Verificar se é um usuário admin
-      const adminResponse = await fetch('/api/admin/me', {
-        headers: {
-          'Authorization': `Bearer ${user.accessToken}`
-        }
-      });
-      
-      const isAdmin = adminResponse.ok;
-      
-      // Se for admin, não buscar pontos nem ranking
-      if (isAdmin) {
-        setMeusPontos(0);
-        setRanking([]);
-        return;
-      }
-      
       // Buscar scores (desafios) do usuário
       const scoresResponse = await fetch('/api/scores', {
         headers: {
@@ -129,10 +113,16 @@ export const MetasProvider = ({ children }) => {
       
       if (pointsResponse.ok) {
         const pointsData = await pointsResponse.json();
-        console.log('Pontos recebidos:', pointsData);
-        setMeusPontos(pointsData.points || 0);
+        console.log('Pontos recebidos da API:', pointsData);
+        
+        // Garantir que os pontos sejam um número
+        const pontos = typeof pointsData.points === 'number' ? pointsData.points : parseInt(pointsData.points) || 0;
+        console.log('Pontos após conversão:', pontos);
+        
+        setMeusPontos(pontos);
       } else {
         console.error('Erro ao buscar pontos:', await pointsResponse.text());
+        setMeusPontos(0);
       }
       
       // Buscar ranking
@@ -148,6 +138,7 @@ export const MetasProvider = ({ children }) => {
         setRanking(rankingData.ranking || []);
       } else {
         console.error('Erro ao buscar ranking:', await rankingResponse.text());
+        setRanking([]);
       }
       
     } catch (error) {
