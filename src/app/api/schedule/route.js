@@ -8,6 +8,7 @@ import  '@/models/waste';
 import  '@/models/address';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
+import { sendNewCollectionScheduledNotification } from '@/utils/notifications';
 
 // Função auxiliar para verificar o token do Firebase
 async function verifyFirebaseToken(req) {
@@ -117,6 +118,7 @@ export async function GET(request) {
 
 // POST - Criar um novo agendamento
 export async function POST(request) {
+  console.log('Iniciando criação de agendamento...');
   try {
     await connectToDB();
     
@@ -126,55 +128,70 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    // Buscar o usuário para obter o ID do MongoDB
-    const user = await User.findOne({ firebaseId: decodedToken.uid });
-    if (!user) {
-      return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
-    }
-    
     // Obter dados do corpo da requisição
     const body = await request.json();
+    console.log('Dados recebidos:', body);
     
     // Validar dados obrigatórios
-    console.log("body", body);
     if (!body.collectionPointId || !body.date || !body.wastes || !body.addressId) {
+      console.error('Dados incompletos:', body);
       return NextResponse.json(
         { message: 'Dados incompletos para o agendamento' },
         { status: 400 }
       );
     }
     
-    // Verificar se o ecoponto existe
-    const collectionPoint = await CollectionPoint.findById(body.collectionPointId);
-    if (!collectionPoint) {
-      return NextResponse.json({ message: 'Ecoponto não encontrado' }, { status: 404 });
+    // Buscar o usuário para obter o ID do MongoDB
+    const user = await User.findOne({ firebaseId: decodedToken.uid });
+    if (!user) {
+      console.error('Usuário não encontrado:', decodedToken.uid);
+      return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
     
-    // Verificar se os tipos de resíduos são aceitos pelo ecoponto
-    const wasteIds = body.wastes.map(waste => waste.wasteId);
-    const validWastes = collectionPoint.typeOfWasteId.some(id => 
-      wasteIds.includes(id.toString())
-    );
+    // Buscar o ponto de coleta e seu responsável
+    const collectionPoint = await CollectionPoint.findById(body.collectionPointId)
+      .populate('responsableId');
     
-    if (!validWastes) {
+    if (!collectionPoint) {
+      console.error('Ponto de coleta não encontrado:', body.collectionPointId);
       return NextResponse.json(
-        { message: 'Um ou mais tipos de resíduos não são aceitos por este ecoponto' },
-        { status: 400 }
+        { message: 'Ponto de coleta não encontrado' },
+        { status: 404 }
       );
     }
     
     // Criar o agendamento
     const newSchedule = new CollectionScheduling({
-      userId: user._id, // Usar o ID do MongoDB do usuário
+      userId: user._id,
       collectionPointId: body.collectionPointId,
       addressId: body.addressId,
       date: new Date(body.date),
       wastes: body.wastes,
-      status: 'Aguardando confirmação do Ponto de Coleta',
-      collector: 'Pendente'
+      status: 'Aguardando confirmação do Ponto de Coleta'
     });
     
     await newSchedule.save();
+    console.log('Agendamento criado com sucesso:', newSchedule._id);
+    
+    // Enviar notificação para o responsável
+    try {
+      const responsible = collectionPoint.responsableId;
+      if (responsible && responsible.firebaseId) {
+        console.log('Enviando notificação para responsável:', responsible.firebaseId);
+        await sendNewCollectionScheduledNotification({
+          collectorId: responsible.firebaseId,
+          userName: user.name,
+          collectionDate: body.date,
+          ecoPointName: collectionPoint.name
+        });
+        console.log('Notificação enviada com sucesso');
+      } else {
+        console.error('Responsável não encontrado ou sem firebaseId:', responsible);
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+      // Não retornamos erro aqui para não afetar a criação do agendamento
+    }
     
     // Retornar o agendamento criado com os dados populados
     const populatedSchedule = await CollectionScheduling.findById(newSchedule._id)
@@ -188,7 +205,7 @@ export async function POST(request) {
     
     return NextResponse.json(populatedSchedule, { status: 201 });
   } catch (error) {
-    console.error('Error creating schedule:', error);
+    console.error('Erro ao criar agendamento:', error);
     return NextResponse.json(
       { message: 'Erro ao criar agendamento', error: error.message },
       { status: 500 }

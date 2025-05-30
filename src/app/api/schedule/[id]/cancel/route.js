@@ -2,6 +2,8 @@ import connectToDB from '@/lib/db';
 import CollectionScheduling from '@/models/collectionScheduling';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
+import User from '@/models/user';
+import { sendCollectionCanceledByCollectorNotification } from '@/utils/notifications';
 
 // Função auxiliar para verificar o token do Firebase
 async function verifyFirebaseToken(req) {
@@ -22,6 +24,7 @@ async function verifyFirebaseToken(req) {
 
 export async function PUT(request, { params }) {
   try {
+    console.log('Iniciando cancelamento de agendamento...');
     await connectToDB();
     
     // Verificar autenticação com Firebase
@@ -31,7 +34,7 @@ export async function PUT(request, { params }) {
     }
     
     // Extrair o ID do parâmetro de rota
-    const { id } = await params;
+    const { id } = params;
     
     if (!id) {
       return NextResponse.json(
@@ -41,7 +44,9 @@ export async function PUT(request, { params }) {
     }
 
     // Buscar o agendamento para verificar se existe e se já está cancelado
-    const schedule = await CollectionScheduling.findById(id);
+    const schedule = await CollectionScheduling.findById(id)
+      .populate('userId')
+      .populate('collectionPointId');
     
     if (!schedule) {
       console.error('Agendamento não encontrado');
@@ -58,11 +63,32 @@ export async function PUT(request, { params }) {
         { status: 400 }
       );
     }
+
+    // Buscar informações do responsável que está cancelando
+    console.log('Buscando informações do responsável...');
+    const responsible = await User.findOne({ firebaseId: decodedToken.uid });
+    if (!responsible) {
+      console.error('Responsável não encontrado:', decodedToken.uid);
+      return NextResponse.json({ message: 'Responsável não encontrado' }, { status: 404 });
+    }
     
     // Atualizar o agendamento para cancelado
     schedule.status = 'Cancelado';
     schedule.canceledAt = new Date();
     await schedule.save();
+    
+    // Enviar notificação para o usuário
+    console.log('Enviando notificação de cancelamento para o usuário:', {
+      userId: schedule.userId.firebaseId,
+      collectorName: responsible.name,
+      collectionDate: schedule.date
+    });
+
+    await sendCollectionCanceledByCollectorNotification({
+      userId: schedule.userId.firebaseId,
+      collectorName: responsible.name,
+      collectionDate: schedule.date
+    });
     
     // Responder com sucesso
     console.log('Agendamento cancelado com sucesso');

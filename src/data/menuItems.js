@@ -153,6 +153,18 @@ const menuGroups = [
       {
         icon: (
           <i
+            className="fa-solid fa-bell"
+            style={{ fontSize: "32px", color: "#08B75B" }}
+          />
+        ),
+        label: "Notificações",
+        route: "/administracao/notificacoes",
+        role: "Administrador",
+        pos: 2,
+      },
+      {
+        icon: (
+          <i
             className="fa-solid fa-trophy-star"
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
@@ -160,7 +172,7 @@ const menuGroups = [
         label: "Metas",
         route: "/administracao/metas",
         role: "Administrador",
-        pos: 2,
+        pos: 3,
       },
       {
         icon: (
@@ -172,7 +184,7 @@ const menuGroups = [
         label: "Parceiros",
         route: "/administracao/parceiro",
         role: "Administrador",
-        pos: 3,
+        pos: 4,
       },
       {
         icon: (
@@ -184,7 +196,7 @@ const menuGroups = [
         label: "Gerenciar Eco Pontos",
         route: "/administracao/ecopontos/",
         role: "Administrador",
-        pos: 4,
+        pos: 5,
       },
       {
         icon: (
@@ -196,7 +208,7 @@ const menuGroups = [
         label: "Tipos de Resíduos",
         route: "/administracao/residuos/",
         role: "Administrador",
-        pos: 5,
+        pos: 6,
       },
       {
         icon: (
@@ -208,7 +220,7 @@ const menuGroups = [
         label: "Administradores & Funcionários",
         route: "/administracao/funcionario",
         role: "Administrador",
-        pos: 6,
+        pos: 7,
       },
       {
         icon: (
@@ -220,7 +232,7 @@ const menuGroups = [
         label: "Perfil",
         route: "/administracao/perfil",
         role: "Administrador",
-        pos: 7,
+        pos: 8,
       },
       {
         icon: (
@@ -232,7 +244,7 @@ const menuGroups = [
         label: "Gerenciar Postagens",
         route: "/administracao/posts",
         role: "Administrador",
-        pos: 8,
+        pos: 9,
       },
       // #######################################################################################
     ],

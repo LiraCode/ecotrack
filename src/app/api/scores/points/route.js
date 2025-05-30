@@ -1,7 +1,9 @@
+import { NextResponse } from 'next/server';
 import connectToDB from '@/lib/db';
 import Score from '@/models/score';
 import User from '@/models/user';
-import { NextResponse } from 'next/server';
+import Admin from '@/models/admin';
+import Responsable from '@/models/responsable';
 import { auth } from '@/config/firebase/firebaseAdmin';
 
 // Função auxiliar para verificar o token do Firebase
@@ -32,35 +34,34 @@ export async function GET(request) {
       return NextResponse.json({ message: 'Não autorizado' }, { status: 401 });
     }
     
-    console.log('Token decodificado:', decodedToken);
-    
-    // Buscar usuário
+    // Verificar se é admin ou responsável
+    const [admin, responsable] = await Promise.all([
+      Admin.findOne({ firebaseId: decodedToken.uid }),
+      Responsable.findOne({ firebaseId: decodedToken.uid })
+    ]);
+
+    // Se for admin ou responsável, retorna 0 pontos
+    if (admin || responsable) {
+      return NextResponse.json({ points: 0 });
+    }
+
+    // Buscar usuário comum
     const user = await User.findOne({ firebaseId: decodedToken.uid });
     if (!user) {
       console.log('Usuário não encontrado para firebaseId:', decodedToken.uid);
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
     
-    console.log('Usuário encontrado:', user._id);
-    
     // Buscar scores concluídos do usuário
     const scores = await Score.find({
-      clientId: user._id,
+      userId: user._id,
       status: 'completed'
     });
     
-    console.log('Scores concluídos encontrados:', scores.length);
-    
     // Calcular pontos totais
     const totalPoints = scores.reduce((sum, score) => {
-      console.log('Score:', {
-        id: score._id,
-        earnedPoints: score.earnedPoints
-      });
       return sum + (score.earnedPoints || 0);
     }, 0);
-    
-    console.log('Total de pontos calculado:', totalPoints);
     
     return NextResponse.json({ points: totalPoints });
   } catch (error) {

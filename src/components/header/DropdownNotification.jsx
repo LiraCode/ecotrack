@@ -1,132 +1,265 @@
 'use client';
-import { useState } from "react";
-import Link from "next/link";
-import ClickOutside from "@/components/ClickOutside";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useEffect } from "react";
+import { getAuth } from 'firebase/auth';
+import {
+  IconButton,
+  Badge,
+  Popover,
+  List,
+  ListItem,
+  Typography,
+  Box,
+  Divider,
+  CircularProgress,
+  Stack
+} from '@mui/material';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import InfoIcon from '@mui/icons-material/Info';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
+import ErrorIcon from '@mui/icons-material/Error';
+
+// Configurações
+const NOTIFICATION_REFRESH_INTERVAL = 60 * 1000; // 1 minuto em milissegundos
+
+const notificationConfig = {
+  info: {
+    icon: <InfoIcon color="info" />,
+    color: 'info.main',
+    bgColor: 'info.lighter',
+    label: 'Informação'
+  },
+  success: {
+    icon: <CheckCircleIcon color="success" />,
+    color: 'success.main',
+    bgColor: 'success.lighter',
+    label: 'Sucesso'
+  },
+  warning: {
+    icon: <WarningIcon color="warning" />,
+    color: 'warning.main',
+    bgColor: 'warning.lighter',
+    label: 'Aviso'
+  },
+  error: {
+    icon: <ErrorIcon color="error" />,
+    color: 'error.main',
+    bgColor: 'error.lighter',
+    label: 'Erro'
+  }
+};
+
+const NotificationIcon = ({ type }) => {
+  const config = notificationConfig[type] || notificationConfig.info;
+  return config.icon;
+};
 
 const DropdownNotification = () => {
-  const { user, logout } = useAuth();
-  const uid = user?.uid;
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user } = useAuth();
+  const auth = getAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
   const [notifying, setNotifying] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [readNotifications, setReadNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // const userFetch = async (id, token) => {
-  //   const user = await fetch(`/api/user/${id}`, {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   });
-  //   const userData = await user.json();
-  //   return userData;
-  // };
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    if (notifying) {
+      markAsRead();
+    }
+  };
 
-  // const notificationFetch = async (id, token) => {
-  //   const notificationsResponse = await fetch(`/api/notifications/${id}`, {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   });
-  //   return notificationsResponse;
-  // };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
-  // useEffect(() => {
-  //   const fetchNotificationsAndUser = async () => {
-  //     if (!uid) {
-  //       setLoading(false);
-  //       return;
-  //     }
-  //     try {
-  //       const token = await user?.getIdToken();
-  //       const notificationsResponse = await notificationFetch(uid, token);
-  //       const notificationsData = await notificationsResponse.json();
-  //       const userData = await userFetch(uid, token);
+  const open = Boolean(anchorEl);
 
-  //       if (notificationsData.message === "No unread notifications") {
-  //         setNotifying(false);
-  //         setNotifications([
-  //           { _id: "0", title: "Sem Novas Notificações", content: "", createdAt: new Date().toISOString() }
-  //         ]);
-  //         return;
-  //       } else {
-  //         setNotifications(notificationsData);
-  //       }
-  //       setReadNotifications(userData.readded || []);
+  // Buscar notificações
+  const fetchNotifications = async () => {
+    if (!user) {
+      setLoading(false);
+      setNotifications([]);
+      return;
+    }
 
-  //       const hasUnreadNotifications = notificationsData.some(
-  //         (notification) => !userData.readded.includes(notification._id)
-  //       );
-  //       setNotifying(hasUnreadNotifications);
-  //     } catch (error) {
-  //       console.error("Erro ao buscar notificações e dados do usuário:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
+    try {
+      setError(null);
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch('/api/notifications', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-  //   fetchNotificationsAndUser();
-  // }, [uid, user]);
+      if (!response.ok) {
+        throw new Error('Erro ao buscar notificações');
+      }
 
-  const convertDate = (date) => {
+      const data = await response.json();
+      
+      // Se a resposta for uma mensagem de "nenhuma notificação", definir array vazio
+      if (data.message === 'Nenhuma notificação encontrada') {
+        setNotifications([]);
+        setNotifying(false);
+      } else {
+        // Caso contrário, usar o array de notificações retornado
+        const notificationsArray = Array.isArray(data) ? data : [];
+        setNotifications(notificationsArray);
+        // Verificar se há notificações não lidas
+        const hasUnread = notificationsArray.some(notification => !notification.read);
+        setNotifying(hasUnread);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar notificações:', error);
+      setError('Erro ao carregar notificações');
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAsRead = async () => {
+    if (!user) return;
+
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await fetch('/api/notifications/read', {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao marcar notificações como lidas');
+      }
+
+      setNotifying(false);
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
+    } catch (error) {
+      console.error('Erro ao marcar notificações como lidas:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    // Atualizar notificações no intervalo definido
+    const interval = setInterval(fetchNotifications, NOTIFICATION_REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  const formatDate = (date) => {
     const options = { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric" };
     return new Date(date).toLocaleDateString("pt-BR", options);
   };
 
-  const markAsRead = async () => {
-    try {
-      if (uid) {
-        await fetch(`/api/notifications/readded/${uid}`, { method: "POST" });
-        setNotifying(false);
-      }
-    } catch (error) {
-      console.error("Erro ao marcar notificações como lidas:", error);
-    }
-  };
-
   return (
-    <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
-      <li>
-        <Link
-          onClick={() => {
-            setDropdownOpen(!dropdownOpen);
-            if (!loading) {
-              if (notifying) {
-                markAsRead();
-              }
-            }
-          }}
-          href="#"
-          className={`relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:text-white ${
-            loading ? "cursor-wait" : ""
-          }`}
-        >
-          <span
-            className={`absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1 ${
-              notifying === false ? "hidden" : "inline"
-            }`}
-          >
-            <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
-          </span>
+    <>
+      <IconButton
+        onClick={handleClick}
+        size="large"
+        sx={{
+          color: 'white',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          },
+        }}
+      >
+        <Badge color="error" variant="dot" invisible={!notifying}>
+          <NotificationsIcon />
+        </Badge>
+      </IconButton>
 
-          <svg
-            className="fill-current duration-300 ease-in-out"
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M16.1999 14.9343L15.6374 14.0624C15.5249 13.8937 15.4687 13.7249 15.4687 13.528V7.67803C15.4687 6.01865 14.7655 4.47178 13.4718 3.31865C12.4312 2.39053 11.0812 1.7999 9.64678 1.6874V1.1249C9.64678 0.787402 9.36553 0.478027 8.9999 0.478027C8.6624 0.478027 8.35303 0.759277 8.35303 1.1249V1.65928C8.29678 1.65928 8.24053 1.65928 8.18428 1.6874C4.92178 2.05303 2.4749 4.66865 2.4749 7.79053V13.528C2.44678 13.8093 2.39053 13.9499 2.33428 14.0343L1.7999 14.9343C1.63115 15.2155 1.63115 15.553 1.7999 15.8343C1.96865 16.0874 2.2499 16.2562 2.55928 16.2562H8.38115V16.8749C8.38115 17.2124 8.6624 17.5218 9.02803 17.5218C9.36553 17.5218 9.6749 17.2405 9.6749 16.8749V16.2562H15.4687C15.778 16.2562 16.0593 16.0874 16.228 15.8343C16.3968 15.553 16.3968 15.2155 16.1999 14.9343Z"
-              fill=""
-            />
-          </svg>
-        </Link>
-      </li>
-    </ClickOutside>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            width: 360,
+            maxHeight: '70vh',
+            overflowY: 'auto'
+          }
+        }}
+      >
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">Notificações</Typography>
+        </Box>
+
+        <Divider />
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Box sx={{ p: 2 }}>
+            <Typography color="error">{error}</Typography>
+          </Box>
+        ) : notifications.length === 0 ? (
+          <Box sx={{ p: 2 }}>
+            <Typography variant="body2" color="textSecondary">
+              Nenhuma notificação
+            </Typography>
+          </Box>
+        ) : (
+          <List sx={{ p: 0 }}>
+            {notifications.map((notification) => (
+              <Box key={notification._id}>
+                <ListItem
+                  sx={{
+                    py: 2,
+                    px: 2.5,
+                    ...(notification.read && {
+                      bgcolor: 'action.hover'
+                    })
+                  }}
+                >
+                  <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+                    <NotificationIcon type={notification.type} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant="subtitle2"
+                        color={notificationConfig[notification.type]?.color || 'info.main'}
+                      >
+                        {notification.title}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="textPrimary"
+                        sx={{ mb: 0.5, mt: 0.5 }}
+                      >
+                        {notification.content}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="textSecondary"
+                      >
+                        {formatDate(notification.createdAt)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </ListItem>
+                <Divider />
+              </Box>
+            ))}
+          </List>
+        )}
+      </Popover>
+    </>
   );
 };
 

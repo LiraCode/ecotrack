@@ -37,12 +37,13 @@ export const cancelScheduling = async (schedulingId) => {
       throw new Error('Usuário não autenticado');
     }
     
-    const response = await fetch(`/api/schedule/${schedulingId}/cancel`, {
+    const response = await fetch(`/api/schedule/${schedulingId}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
+      body: JSON.stringify({ status: 'Cancelado' })
     });
     
     if (!response.ok) {

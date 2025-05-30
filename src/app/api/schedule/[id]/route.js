@@ -5,10 +5,17 @@ import '@/models/user';
 import '@/models/responsable';
 import '@/models/address';
 import '@/models/collectionPoint';
+import '@/models/admin';
 import { NextResponse } from 'next/server';
 import { auth } from '@/config/firebase/firebaseAdmin';
 import mongoose from 'mongoose';
 import Score from '@/models/score';
+import User from '@/models/user';
+import { 
+  sendCollectionCanceledByCollectorNotification,
+  sendCollectionConfirmedNotification,
+  sendCollectionCompletedNotification
+} from '@/utils/notifications';
 
 // Função auxiliar para verificar se o ID é válido
 function isValidObjectId(id) {
@@ -165,6 +172,38 @@ async function updateUserScores(userId, wastes) {
   }
 }
 
+// Função auxiliar para buscar o responsável
+async function findResponsible(firebaseId) {
+  console.log('Buscando responsável com firebaseId:', firebaseId);
+  
+  // Primeiro tenta buscar como usuário normal
+  let responsible = await User.findOne({ firebaseId });
+  if (responsible) {
+    console.log('Encontrado como usuário normal');
+    return responsible;
+  }
+  
+  // Se não encontrar, tenta buscar como responsável
+  const responsable = await mongoose.model('Responsable').findOne({ firebaseId });
+  if (responsable) {
+    console.log('Encontrado como responsável');
+    return responsable;
+  }
+
+  // Se não encontrar, tenta buscar como administrador
+  const admin = await mongoose.model('Admin').findOne({ firebaseId });
+  if (admin) {
+    console.log('Encontrado como administrador');
+    return {
+      ...admin.toObject(),
+      name: 'Administrador' // Nome padrão para administrador
+    };
+  }
+  
+  console.log('Não encontrado em nenhuma coleção');
+  return null;
+}
+
 // GET - Buscar um agendamento específico pelo ID
 export async function GET(request, { params }) {
   try {
@@ -228,7 +267,7 @@ export async function GET(request, { params }) {
 // PUT - Atualizar um agendamento específico
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ message: 'ID inválido' }, { status: 400 });
@@ -243,13 +282,78 @@ export async function PUT(request, { params }) {
     }
     
     // Buscar o agendamento atual
-    const currentScheduling = await CollectionScheduling.findById(id);
+    const currentScheduling = await CollectionScheduling.findById(id)
+      .populate('userId');
     if (!currentScheduling) {
       return NextResponse.json({ message: 'Agendamento não encontrado' }, { status: 404 });
     }
     
     // Obter dados do corpo da requisição
     const data = await request.json();
+
+    // Buscar informações do responsável que está fazendo a ação
+    const responsible = await findResponsible(decodedToken.uid);
+    if (!responsible) {
+      console.error('Usuário não encontrado em nenhuma coleção:', decodedToken.uid);
+      return NextResponse.json({ 
+        message: 'Usuário não encontrado ou sem permissão para esta ação',
+        details: 'O usuário precisa ser um administrador, responsável ou o próprio usuário do agendamento'
+      }, { status: 404 });
+    }
+
+    // Verificar permissões
+    const isAdmin = responsible.role === 'Administrador';
+    const isResponsible = responsible.role === 'Responsável';
+    const isOwner = currentScheduling.userId.firebaseId === decodedToken.uid;
+
+    if (!isAdmin && !isResponsible && !isOwner) {
+      console.error('Usuário sem permissão:', {
+        userRole: responsible.role,
+        isOwner,
+        userId: decodedToken.uid
+      });
+      return NextResponse.json({ 
+        message: 'Sem permissão para atualizar este agendamento'
+      }, { status: 403 });
+    }
+
+    // Enviar notificações baseadas na mudança de status
+    if (data.status !== currentScheduling.status) {
+      console.log(`Mudança de status detectada: ${currentScheduling.status} -> ${data.status}`);
+
+      try {
+        switch (data.status) {
+          case 'Cancelado':
+            console.log('Enviando notificação de cancelamento...');
+            await sendCollectionCanceledByCollectorNotification({
+              userId: currentScheduling.userId.firebaseId,
+              collectorName: responsible.name || 'Administrador',
+              collectionDate: currentScheduling.date
+            });
+            break;
+
+          case 'Confirmado':
+            console.log('Enviando notificação de confirmação...');
+            await sendCollectionConfirmedNotification({
+              userId: currentScheduling.userId.firebaseId,
+              collectorName: responsible.name || 'Administrador',
+              collectionDate: currentScheduling.date
+            });
+            break;
+
+          case 'Coletado':
+            console.log('Enviando notificação de coleta realizada...');
+            await sendCollectionCompletedNotification({
+              userId: currentScheduling.userId.firebaseId,
+              collectionDate: currentScheduling.date
+            });
+            break;
+        }
+      } catch (notificationError) {
+        console.error('Erro ao enviar notificação:', notificationError);
+        // Continuar com a atualização mesmo se a notificação falhar
+      }
+    }
     
     // Atualizar o agendamento
     const updatedScheduling = await CollectionScheduling.findByIdAndUpdate(

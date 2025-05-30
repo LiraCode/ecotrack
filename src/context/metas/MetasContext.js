@@ -60,18 +60,18 @@ export const MetasProvider = ({ children }) => {
       
       const scoresData = await scoresResponse.json();
       
-      console.log('Scores recebidos:', scoresData.scores);
+      //console.log('Scores recebidos:', scoresData.scores);
       
       // Separar os desafios por status
       const ativos = scoresData.scores.filter(score => score.status === 'active') || [];
       const concluidos = scoresData.scores.filter(score => score.status === 'completed') || [];
       const expirados = scoresData.scores.filter(score => score.status === 'expired') || [];
       
-      console.log('Desafios separados:', {
-        ativos: ativos.length,
-        concluidos: concluidos.length,
-        expirados: expirados.length
-      });
+      // //console.log('Desafios separados:', {
+      //   ativos: ativos.length,
+      //   concluidos: concluidos.length,
+      //   expirados: expirados.length
+      // });
       
       // Atualizar estados
       setDesafiosAtivos(ativos);
@@ -97,10 +97,10 @@ export const MetasProvider = ({ children }) => {
         !activeScoreIds.includes(goal._id)
       );
       
-      console.log('Metas disponíveis:', {
-        total: goalsData.goals.length,
-        disponiveis: availableGoals.length
-      });
+      // //console.log('Metas disponíveis:', {
+      //   total: goalsData.goals.length,
+      //   disponiveis: availableGoals.length
+      // });
       
       setDesafiosDisponiveis(availableGoals);
       
@@ -113,11 +113,11 @@ export const MetasProvider = ({ children }) => {
       
       if (pointsResponse.ok) {
         const pointsData = await pointsResponse.json();
-        console.log('Pontos recebidos da API:', pointsData);
+        //console.log('Pontos recebidos da API:', pointsData);
         
         // Garantir que os pontos sejam um número
         const pontos = typeof pointsData.points === 'number' ? pointsData.points : parseInt(pointsData.points) || 0;
-        console.log('Pontos após conversão:', pontos);
+        //console.log('Pontos após conversão:', pontos);
         
         setMeusPontos(pontos);
       } else {
@@ -134,7 +134,7 @@ export const MetasProvider = ({ children }) => {
       
       if (rankingResponse.ok) {
         const rankingData = await rankingResponse.json();
-        console.log('Dados do ranking:', rankingData);
+        //console.log('Dados do ranking:', rankingData);
         setRanking(rankingData.ranking || []);
       } else {
         console.error('Erro ao buscar ranking:', await rankingResponse.text());
