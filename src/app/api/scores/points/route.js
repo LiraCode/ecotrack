@@ -54,17 +54,19 @@ export async function GET(request) {
     
     // Buscar scores concluídos do usuário
     const scores = await Score.find({
-      userId: user._id,
+      clientId: user._id,
       status: 'completed'
     });
     
     // Calcular pontos totais
     const totalPoints = scores.reduce((sum, score) => {
-      return sum + (score.earnedPoints || 0);
+      return sum + (typeof score.earnedPoints === 'number' ? score.earnedPoints : 0);
     }, 0);
     
+    //console.log("totalpoints: ", totalPoints)
     return NextResponse.json({ points: totalPoints });
   } catch (error) {
+    console.log("erro points");
     console.error('Error fetching user points:', error);
     return NextResponse.json(
       { message: 'Erro ao buscar pontos do usuário', error: error.message },

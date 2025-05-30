@@ -46,13 +46,13 @@ const MetasPage = () => {
     concluirDesafio
   } = useMetasContext();
 
-  console.log("MetasPage recebeu do contexto:", {
-    meusPontos,
-    tipo: typeof meusPontos,
-    ranking: ranking?.length || 0,
-    desafiosAtivos: desafiosAtivos?.length || 0,
-    desafiosConcluidos: desafiosConcluidos?.length || 0
-  });
+  // console.log("MetasPage recebeu do contexto:", {
+  //   meusPontos,
+  //   tipo: typeof meusPontos,
+  //   ranking: ranking?.length || 0,
+  //   desafiosAtivos: desafiosAtivos?.length || 0,
+  //   desafiosConcluidos: desafiosConcluidos?.length || 0
+  // });
 
   if (loading) {
     return (

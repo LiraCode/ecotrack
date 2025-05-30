@@ -5,7 +5,7 @@ import { auth } from '@/config/firebase/firebaseAdmin';
 
 // Função auxiliar para verificar o token do Firebase
 async function verifyFirebaseToken(req) {
-  console.log('Verificando token do Firebase...');
+  //console.log('Verificando token do Firebase...');
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -14,9 +14,9 @@ async function verifyFirebaseToken(req) {
     }
 
     const token = authHeader.split('Bearer ')[1];
-    console.log('Decodificando token...');
+    //console.log('Decodificando token...');
     const decodedToken = await auth.verifyIdToken(token);
-    console.log('Token decodificado com sucesso:', { uid: decodedToken.uid });
+    //console.log('Token decodificado com sucesso:', { uid: decodedToken.uid });
     return decodedToken;
   } catch (error) {
     console.error('Erro ao verificar token Firebase:', {
@@ -58,9 +58,9 @@ export async function GET(request) {
 export async function POST(request) {
   console.log('Recebendo requisição POST para criar notificação');
   try {
-    console.log('Conectando ao banco de dados...');
+    //console.log('Conectando ao banco de dados...');
     await connectToDB();
-    console.log('Conectado ao banco de dados');
+    //console.log('Conectado ao banco de dados');
 
     const decodedToken = await verifyFirebaseToken(request);
     if (!decodedToken) {
@@ -69,10 +69,10 @@ export async function POST(request) {
     }
 
     const data = await request.json();
-    console.log('Dados recebidos:', {
-      ...data,
-      content: data.content?.substring(0, 50) + '...' // Log parcial do conteúdo
-    });
+    // console.log('Dados recebidos:', {
+    //   ...data,
+    //   content: data.content?.substring(0, 50) + '...' // Log parcial do conteúdo
+    // });
 
     const { userId, title, content, type = 'info' } = data;
 
@@ -101,7 +101,7 @@ export async function POST(request) {
       }
     }
 
-    console.log('Criando notificação no banco de dados...');
+    //console.log('Criando notificação no banco de dados...');
     // Criar notificação
     const notification = await Notification.create({
       userId,
@@ -111,11 +111,11 @@ export async function POST(request) {
       read: false
     });
 
-    console.log('Notificação criada com sucesso:', {
-      id: notification._id,
-      userId: notification.userId,
-      title: notification.title
-    });
+    // console.log('Notificação criada com sucesso:', {
+    //   id: notification._id,
+    //   userId: notification.userId,
+    //   title: notification.title
+    // });
 
     return NextResponse.json(
       { message: 'Notificação criada com sucesso', notification },

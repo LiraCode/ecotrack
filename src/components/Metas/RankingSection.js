@@ -10,7 +10,7 @@ const RankingSection = ({ ranking }) => {
   // Garantir que ranking é um array, mesmo que seja undefined
   const safeRanking = Array.isArray(ranking) ? ranking : [];
   
-  console.log("RankingSection recebeu:", ranking);
+  // console.log("RankingSection recebeu:", ranking);
 
   return (
     <Paper elevation={3} className="p-6 mb-8">

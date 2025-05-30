@@ -48,7 +48,7 @@ export async function GET(request) {
       return NextResponse.json({ message: 'Usuário não encontrado' }, { status: 404 });
     }
     
-    console.log('Buscando ranking para o usuário:', currentUser._id);
+    //console.log('Buscando ranking para o usuário:', currentUser._id);
     
     // Obter parâmetros de consulta
     const { searchParams } = new URL(request.url);
@@ -80,12 +80,12 @@ export async function GET(request) {
     // Limitar resultados
     pipeline.push({ $limit: limit });
     
-    console.log('Pipeline de agregação:', JSON.stringify(pipeline, null, 2));
+    //console.log('Pipeline de agregação:', JSON.stringify(pipeline, null, 2));
     
     // Executar agregação
     const rankingData = await Score.aggregate(pipeline);
     
-    console.log('Dados do ranking após agregação:', rankingData);
+    //console.log('Dados do ranking após agregação:', rankingData);
     
     // Buscar informações dos usuários em todas as coleções
     const userIds = rankingData.map(item => item._id);
@@ -95,11 +95,11 @@ export async function GET(request) {
       Responsable.find({ _id: { $in: userIds } }, 'name')
     ]);
     
-    console.log('Usuários encontrados:', {
-      users: users.length,
-      admins: admins.length,
-      responsibles: responsibles.length
-    });
+    // console.log('Usuários encontrados:', {
+    //   users: users.length,
+    //   admins: admins.length,
+    //   responsibles: responsibles.length
+    // });
     
     // Mapear IDs para nomes de usuários
     const userMap = {};
@@ -117,7 +117,7 @@ export async function GET(request) {
       isCurrentUser: item._id.toString() === currentUser._id.toString()
     }));
     
-    console.log('Ranking formatado:', ranking);
+    //console.log('Ranking formatado:', ranking);
     
     // Encontrar posição do usuário atual
     const currentUserPosition = ranking.findIndex(item => item.isCurrentUser) + 1;
