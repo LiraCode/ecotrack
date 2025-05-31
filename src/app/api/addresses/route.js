@@ -8,15 +8,21 @@ import { auth } from '@/config/firebase/firebaseAdmin';
 async function verifyFirebaseToken(req) {
   try {
     const authHeader = req.headers.get('authorization');
+    console.log('Auth Header:', authHeader); // Log para debug
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('Header inválido ou ausente'); // Log para debug
       return null;
     }
 
     const token = authHeader.split('Bearer ')[1];
+    console.log('Token extraído com sucesso'); // Log para debug
+    
     const decodedToken = await auth.verifyIdToken(token);
+    console.log('Token verificado com sucesso:', decodedToken.uid); // Log para debug
     return decodedToken;
   } catch (error) {
-    console.error('Error verifying Firebase token:', error);
+    console.error('Erro na verificação do token:', error);
     return null;
   }
 }

@@ -8,7 +8,7 @@ import {
 import { auth } from "@/config/firebase/firebase";
 
 // Função para registrar um novo usuário
-export const registerUser = async (email, password, userData) => {
+export const registerUser = async (email, password, userFormData) => {
   try {
     console.log("Iniciando registro de usuário:", email);
     
@@ -21,73 +21,73 @@ export const registerUser = async (email, password, userData) => {
     
     // Atualizar o perfil do usuário com o nome
     await updateProfile(user, {
-      displayName: userData.nomeCompleto
+      displayName: userFormData.nomeCompleto
     });
     console.log("Perfil do usuário atualizado:", user.displayName);
       
-    // preparar dados do usuário para enviar à API, registerUser é somente para usuários comuns	não precisa de verificação de tipo
-      const addressData = {
-        street: userData.endereco || '',
-        number: userData.numero || '',
-        complement: userData.complemento || '',
-        neighborhood: userData.bairro || '',
-        city: userData.cidade || '',
-        state: userData.estado || '',
-        zipCode: userData.cep || '',
-        isDefault: true
-      };
+    // Preparar dados do usuário para enviar à API
+    const userDataForAPI = {
+      firebaseId: user.uid,
+      cpf: userFormData.cpf,
+      name: userFormData.nomeCompleto,
+      email: userFormData.email,
+      phone: userFormData.telefone,
+      role: 'user'
+    };
+    
+    // Primeiro criar o usuário no MongoDB
+    console.log("Enviando dados para a API:", userDataForAPI);
+    const userResponse = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(userDataForAPI),
+    });
+    
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json();
+      throw new Error(errorData.error || 'Erro ao criar usuário no banco de dados');
+    }
+    
+    const userDataFromAPI = await userResponse.json();
+    console.log("Usuário criado com sucesso:", userDataFromAPI);
+
+    // Depois criar o endereço
+    const addressData = {
+      street: userFormData.endereco || '',
+      number: userFormData.numero || '',
+      complement: userFormData.complemento || '',
+      neighborhood: userFormData.bairro || '',
+      city: userFormData.cidade || '',
+      state: userFormData.estado || '',
+      zipCode: userFormData.cep || '',
+      isDefault: true
+    };
       
-      const addressResponse = await fetch('/api/addresses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(addressData),
-      });
+    const addressResponse = await fetch('/api/addresses', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(addressData),
+    });
       
-      if (!addressResponse.ok) {
-        const errorData = await addressResponse.json();
-        throw new Error(errorData.error || 'Erro ao criar endereço no banco de dados');
-      }
+    if (!addressResponse.ok) {
+      const errorData = await addressResponse.json();
+      throw new Error(errorData.error || 'Erro ao criar endereço no banco de dados');
+    }
       
-      const addressResult = await addressResponse.json();
-      const addressId = addressResult.address._id;
-      console.log("Endereço criado com sucesso, ID:", addressId);
+    const addressResult = await addressResponse.json();
+    console.log("Endereço criado com sucesso:", addressResult);
       
-      // Preparar dados do usuário com a referência ao endereço
-      const userDataForAPI = {
-        firebaseId: user.uid,
-        cpf: userData.cpf,
-        name: userData.nomeCompleto,
-        email: userData.email,
-        phone: userData.telefone,
-        role: 'user',
-        address: addressId,
-      };
-      
-      // Enviar dados para o MongoDB através da API
-      console.log("Enviando dados para a API:", userDataForAPI);
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userDataForAPI),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao criar usuário no banco de dados');
-      }
-      
-      const responseData = await response.json();
-      console.log("Usuário criado com sucesso:", responseData);
-      
-      return {
-        success: true,
-        user: responseData.user
-      };
-    }  catch (error) {
+    return {
+      success: true,
+      user: userDataFromAPI.user
+    };
+  } catch (error) {
     console.error("Erro no registro:", error);
     return { success: false, error: error.message };
   }

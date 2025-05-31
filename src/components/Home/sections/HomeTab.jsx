@@ -4,7 +4,6 @@ import Link from 'next/link';
 import LatestPosts from '../components/LatestPosts';
 import UpcomingSchedules from '../components/UpcomingSchedules';
 import GoalsList from '../components/GoalsList';
-import WasteTypePreview from '../components/WasteTypePreview';
 import ImpactStats from './ImpactStats';
 
 const HomeTab = ({ 
