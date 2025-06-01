@@ -7,7 +7,20 @@ import DOMPurify from 'dompurify';
 
   const renderHTML = (content) => {
     if (!content) return null;
-    return { __html: DOMPurify.sanitize(content) };
+    
+    // Sanitizar o HTML
+    const sanitizedContent = DOMPurify.sanitize(content, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li'],
+      ALLOWED_ATTR: ['href', 'target']
+    });
+
+    // Remover tags HTML para a prévia
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = sanitizedContent;
+    let textContent = tempDiv.textContent || tempDiv.innerText;
+
+    
+    return { __html: textContent };
   };
 
 export default function LatestPosts({ post, loading }) {
@@ -108,10 +121,35 @@ export default function LatestPosts({ post, loading }) {
                     {post.title || "Sem título"}
                   </Typography>
                   <Typography
-                    dangerouslySetInnerHTML={renderHTML(post.content?.substring(0, 50))}
+                    dangerouslySetInnerHTML={{__html: post.content
+                      .replace(/<br\s*\/?>/gi, '\n') // Substitui <br> por quebra de linha
+                      .replace(/<\/?p>/gi, '\n') // Substitui <p> e </p> por quebra de linha
+                      .replace(/<\/?h[1-5]>/gi, '\n') // Substitui tags h1-h5 por quebra de linha
+                      .replace(/<[^>]*>/g, '') // Remove outras tags HTML
+                      .replace(/\n\s*\n/g, '\n') // Remove linhas em branco extras
+                      .replace(/^\s+|\s+$/gm, '') // Remove espaços em branco no início e fim de cada linha
+                      .trim() // Remove espaços em branco no início e fim do texto todo
+                      .split('\n') // Divide por quebras de linha
+                      .filter(line => line.trim() !== '') // Remove linhas vazias
+                      .slice(0, 3) // Pega apenas as 3 primeiras linhas
+                      .join('\n') // Junta novamente com quebras de linha
+                      .substring(0, 150) // Limita a 150 caracteres
+                      .split(' ') // Divide em palavras
+                      .slice(0, -1) // Remove a última palavra se estiver cortada
+                      .join(' ') // Junta novamente com espaços
+                      + '...'}}
                     variant="body2"
                     color="text.secondary"
-                    sx={{ mb: 2, textAlign: "center" }}
+                    sx={{ 
+                      mb: 2, 
+                      textAlign: "center",
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      lineHeight: 1.5
+                    }}
                   />
                   <Box
                     sx={{

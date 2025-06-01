@@ -44,13 +44,16 @@ const ImpactStats = ({ impactStats }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
+              width: { xs: '300px', sm: '100%' },
               height: '100%',
+              minHeight: '250px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#f1f8e9',
               transition: 'transform 0.3s',
+              mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
                 boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
@@ -73,13 +76,16 @@ const ImpactStats = ({ impactStats }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
+              width: { xs: '300px', sm: '100%' },
               height: '100%',
+              minHeight: '250px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#f1f8e9',
               transition: 'transform 0.3s',
+              mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
                 boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
@@ -102,13 +108,16 @@ const ImpactStats = ({ impactStats }) => {
             sx={{ 
               p: 3, 
               textAlign: 'center',
+              width: { xs: '300px', sm: '100%' },
               height: '100%',
+              minHeight: '250px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: '#f1f8e9',
               transition: 'transform 0.3s',
+              mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
                 boxShadow: '0 8px 16px rgba(0,0,0,0.1)'

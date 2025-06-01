@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from "react";
 import {
-  Box, Container, Tabs, Tab
+  Box, Container, Tabs, Tab, useTheme, useMediaQuery
 } from "@mui/material";
 import useLocalStorage from "@/hooks/useLocalStorage";
 // Import sub-components
@@ -13,6 +13,8 @@ import WasteDetailDialog from "./dialogs/WasteDetailDialog";
 import { useAuth } from "@/context/AuthContext"; // Importar o contexto de autenticação
 
 export default function HomePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, isAuthenticated } = useAuth(); // Obter informações do usuário
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedWaste, setSelectedWaste] = useState(null);
@@ -294,27 +296,52 @@ export default function HomePage() {
 
       {/* Main Content Tabs */}
       <Box sx={{ Width: { sm: '30vh', xs: '40vh', lg: '90vh' }, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%', overflowX: 'auto' }}>
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
             textColor="primary"
             indicatorColor="primary"
-            centered
+            variant={isMobile ? "scrollable" : "standard"}
+            scrollButtons={isMobile ? "auto" : false}
+            centered={!isMobile}
             sx={{
               '& .MuiTab-root': {
                 fontWeight: 'bold',
-                padding: { xs: '1px 5px', sm: '0px s0px' },
-                ontSize: { xs: '10px', sm: '10px' },
+                padding: { xs: '12px 16px', sm: '12px 24px' },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                minWidth: { xs: 'auto', sm: 120 },
                 color: '#555',
                 '&.Mui-selected': { color: '#2e8b57' }
               },
-              '& .MuiTabs-indicator': { backgroundColor: '#2e8b57' }
+              '& .MuiTabs-indicator': { backgroundColor: '#2e8b57' },
+              '& .MuiTabs-scrollButtons': {
+                color: '#2e8b57',
+                '&.Mui-disabled': { opacity: 0.3 }
+              }
             }}
           >
-            <Tab label="Início" />
-            <Tab label="Ecopontos" />
-            <Tab label="Info Resíduos" />
+            <Tab 
+              label="Início" 
+              sx={{ 
+                whiteSpace: 'nowrap',
+                minHeight: { xs: '48px', sm: '64px' }
+              }}
+            />
+            <Tab 
+              label="Ecopontos" 
+              sx={{ 
+                whiteSpace: 'nowrap',
+                minHeight: { xs: '48px', sm: '64px' }
+              }}
+            />
+            <Tab 
+              label="Info Resíduos" 
+              sx={{ 
+                whiteSpace: 'nowrap',
+                minHeight: { xs: '48px', sm: '64px' }
+              }}
+            />
           </Tabs>
         </Box>
 
@@ -330,7 +357,7 @@ export default function HomePage() {
             impactStats={impactStats}
             handleOpenDialog={handleOpenDialog}
             onViewAllWasteTypes={handleViewAllWasteTypes}
-            isUserLoggedIn={isUserLoggedIn} // Passar o estado de login para o componente
+            isUserLoggedIn={isUserLoggedIn}
           />
         )}
 
@@ -339,14 +366,14 @@ export default function HomePage() {
 
         {/* Waste Guide Tab */}
         {activeTab === 2 && <WasteGuideTab handleOpenDialog={handleOpenDialog} />}
-      </Box>
 
-      {/* Dialog with detailed information */}
-      <WasteDetailDialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        selectedWaste={selectedWaste}
-      />
+        {/* Waste Detail Dialog */}
+        <WasteDetailDialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          wasteType={selectedWaste}
+        />
+      </Box>
     </Container>
   );
 }

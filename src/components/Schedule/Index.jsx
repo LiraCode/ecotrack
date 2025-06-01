@@ -129,13 +129,14 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
     <Box sx={{ 
       p: isMobile ? 1 : 3,
       backgroundColor: 'gray.50',
-      minHeight: '100vh',
       width: '100%',
       maxWidth: '1200px',
       margin: '0 auto',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
+      height: '100%',
+      flex: 1
     }}>
       {/* Título principal centralizado */}
       <Box sx={{ 
@@ -169,7 +170,8 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        px: isMobile ? 0 : 3
+        px: isMobile ? 0 : 3,
+        flex: 1
       }}>
         <Calendar 
           schedules={schedules} 
@@ -226,7 +228,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         {/* Lista de agendamentos futuros */}
        <ScheduleList 
         title="Próximos Agendamentos"
-        schedules={schedules.filter(s => !s.completed)}
+        schedules={schedules.filter(s => s.status !== 'Cancelado' && s.status !== 'Coletado')}
         setSchedules={setSchedules} 
         isMobile={isMobile}
         onViewSchedule={(date) => {
@@ -240,7 +242,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         {showPastSchedules && (
         <ScheduleList 
           title="Agendamentos Anteriores"
-          schedules={schedules.filter(s => s.completed)}
+          schedules={schedules.filter(s => s.status === 'Coletado')}
           setSchedules={setSchedules} 
           isMobile={isMobile}
           onViewSchedule={(date) => {

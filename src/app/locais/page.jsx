@@ -5,6 +5,8 @@ import AppLayout from '@/components/Layout/page';
 import EcoPointsList from '@/components/EcoPoints/EcoPointsList';
 import PageTitle from '@/components/ui/PageTitle';
 import MapContainer from '@/components/EcoPoints/MapContainer';
+import { Box, Container, Typography, Paper, Chip, useTheme, useMediaQuery } from '@mui/material';
+import { LocationOn as LocationOnIcon } from '@mui/icons-material';
 
 const MapWithNoSSR = dynamic(
   () => import('@/components/Map/page'),
@@ -19,6 +21,8 @@ const MapWithNoSSR = dynamic(
 );
 
 export default function LocaisPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
   const [activeMarker, setActiveMarker] = useState(null);
@@ -42,17 +46,12 @@ export default function LocaisPage() {
         }
         
         const data = await response.json();
-        
-        // Get ecopoints array from response
         const ecopointsArray = data.ecopoints || [];
-        console.log('Ecopoints array:', );
         
-        // Format data to match the expected structure
         const formattedEcoPoints = ecopointsArray
           .filter(point => {
-            // Filter points without valid coordinates
             const hasLat = point.lat;
-            const hasLng = point.lng ;
+            const hasLng = point.lng;
             return hasLat && hasLng;
           })
           .map(point => ({
@@ -92,9 +91,23 @@ export default function LocaisPage() {
     }
   };
 
+  if (!isClient) {
+    return (
+      <AppLayout>
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <PageTitle title="Ecopontos por Maceió" />
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
+            <Typography sx={{ ml: 2, color: 'text.secondary' }}>Carregando...</Typography>
+          </Box>
+        </Container>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
-      <div className="p-3 bg-gray-50 flex-1 max-w-6xl mx-auto box-border w-full">
+      <Container maxWidth="lg" sx={{ py: 3 }}>
         <PageTitle title="Ecopontos por Maceió" />
         
         <MapContainer ref={mapContainerRef}>
@@ -107,34 +120,55 @@ export default function LocaisPage() {
           )}
         </MapContainer>
         
-        <div className="flex justify-center mb-6">
-          <span className="bg-green-600 text-white py-2 px-4 rounded-full text-sm font-bold">
-            Ecopontos Oficiais
-          </span>
-        </div>
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Chip
+            label="Lista de Ecopontos Parceiros"
+            color="primary"
+            sx={{
+              bgcolor: '#2e8b57',
+              color: 'white',
+              fontSize: '1rem',
+              py: 2,
+              px: 3,
+              '& .MuiChip-label': {
+                px: 2
+              }
+            }}
+          />
+        </Box>
         
-        {/* Render the EcoPointsList directly, just like in the original code */}
-        <EcoPointsList 
-          points={loading ? [] : ecoPoints} 
-          activeMarker={activeMarker} 
-          onMarkerClick={handleMarkerClick} 
-        />
-        
-        {/* Show loading indicator if needed */}
-        {loading && (
-          <div className="text-center py-4">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
-            <p className="mt-2 text-gray-600">Carregando ecopontos...</p>
-          </div>
-        )}
-        
-        {/* Show error if needed */}
-        {error && (
-          <div className="text-center py-4 text-red-600">
-            Erro ao carregar ecopontos: {error}
-          </div>
-        )}
-      </div>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            borderRadius: 2,
+            overflow: 'hidden',
+            mb: 4
+          }}
+        >
+          <Box sx={{ p: 0 }}>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent"></div>
+                <Typography sx={{ ml: 2, color: 'text.secondary' }}>
+                  Carregando ecopontos...
+                </Typography>
+              </Box>
+            ) : error ? (
+              <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
+                <Typography color="error">
+                  Erro ao carregar ecopontos: {error}
+                </Typography>
+              </Box>
+            ) : (
+              <EcoPointsList 
+                points={ecoPoints} 
+                activeMarker={activeMarker} 
+                onMarkerClick={handleMarkerClick} 
+              />
+            )}
+          </Box>
+        </Paper>
+      </Container>
     </AppLayout>
   );
 }

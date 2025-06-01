@@ -31,8 +31,6 @@ export default function AgendamentoPage() {
           sx={{ 
             flexGrow: 1, 
             width: '100%',
-            maxWidth: '1200px',
-            margin: '0 auto',
             p: isMobile ? 0 : 3, 
             overflow: 'auto',
             display: 'flex',

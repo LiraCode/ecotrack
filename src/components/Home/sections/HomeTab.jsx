@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography, Button } from '@mui/material';
+import { Box, Paper, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
 import Link from 'next/link';
 import LatestPosts from '../components/LatestPosts';
 import UpcomingSchedules from '../components/UpcomingSchedules';
@@ -18,20 +18,25 @@ const HomeTab = ({
   onViewAllWasteTypes,
   isUserLoggedIn // Nova prop para verificar se o usuário está logado e é do tipo "user"
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   // Estilo comum para todos os componentes
   const componentStyle = {
     width: '100%',
     maxWidth: '800px',
-    mx: 'auto'  // margin horizontal auto para centralizar
+    mx: 'auto',
+    px: { xs: 2, sm: 0 }
   };
 
   return (
     <Box sx={{ 
       width: '100%', 
-      mt: 4,
+      mt: { xs: 2, sm: 4 },
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
+      overflow: 'hidden'
     }}>
       {/* Estatísticas de Impacto */}
       <Box sx={componentStyle}>
@@ -44,15 +49,31 @@ const HomeTab = ({
       </Box>
       
       {/* Próximos Agendamentos - mostrar apenas se o usuário estiver logado como "user" */}
-      <Box sx={{ ...componentStyle, mb: 5 }}>
+      <Box sx={{ ...componentStyle, mb: { xs: 3, sm: 5 } }}>
         {isUserLoggedIn ? (
           <UpcomingSchedules 
             schedules={upcomingSchedules} 
             loading={loadingSchedules} 
           />
         ) : (
-          <Paper elevation={1} sx={{ p: 3, textAlign: 'center', bgcolor: '#f9f9f9', mb: 3 }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              textAlign: 'center', 
+              bgcolor: '#f9f9f9', 
+              mb: 3,
+              mx: { xs: 2, sm: 0 }
+            }}
+          >
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary', 
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               Faça login como usuário para ver seus próximos agendamentos.
             </Typography>
             <Button 
@@ -60,11 +81,12 @@ const HomeTab = ({
               href="/cliente/login" 
               variant="outlined" 
               color="primary" 
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{ 
                 borderColor: '#2e8b57', 
                 color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' }
+                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
               }}
             >
               Fazer Login
@@ -81,8 +103,23 @@ const HomeTab = ({
             loading={loadingGoals} 
           />
         ) : (
-          <Paper elevation={1} sx={{ p: 3, textAlign: 'center', bgcolor: '#f9f9f9' }}>
-            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              textAlign: 'center', 
+              bgcolor: '#f9f9f9',
+              mx: { xs: 2, sm: 0 }
+            }}
+          >
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: 'text.secondary', 
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
               Faça login como usuário para ver suas metas sustentáveis.
             </Typography>
             <Button 
@@ -90,11 +127,12 @@ const HomeTab = ({
               href="/cliente/login" 
               variant="outlined" 
               color="primary" 
-              size="small"
+              size={isMobile ? "small" : "medium"}
               sx={{ 
                 borderColor: '#2e8b57', 
                 color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' }
+                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
               }}
             >
               Fazer Login
