@@ -36,7 +36,20 @@ export default function PostsContent({ posts }) {
   // Function to safely render HTML content
   const renderHTML = (content) => {
     if (!content) return null;
-    return { __html: DOMPurify.sanitize(content) };
+    // Remove tags HTML para a prévia
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = DOMPurify.sanitize(content);
+    const textContent = tempDiv.textContent || tempDiv.innerText;
+    // Limita o texto a 150 caracteres, preservando palavras completas
+    let previewText = '';
+    if (textContent.length > 150) {
+      // Encontra o último espaço antes do limite de 150 caracteres
+      const lastSpace = textContent.substring(0, 150).lastIndexOf(' ');
+      previewText = textContent.substring(0, lastSpace).trim() + '...';
+    } else {
+      previewText = textContent;
+    }
+    return { __html: previewText };
   };
   
   if (localPosts.length === 0) {
@@ -60,7 +73,14 @@ export default function PostsContent({ posts }) {
         {localPosts.map((post) => (
           <article key={post._id} className={styles.postCard}>
             <header className={styles.postHeader}>
-              <h2 className={styles.postTitle}>{post.title}</h2>
+              <h2 className={styles.postTitle}>
+                {post.title.split(' ').map((word, index, array) => (
+                  <span key={index}>
+                    {word}
+                    {index < array.length - 1 ? ' ' : ''}
+                  </span>
+                ))}
+              </h2>
               {post.subtitle && (
                 <p className={styles.postSubtitle}>{post.subtitle}</p>
               )}
@@ -86,14 +106,29 @@ export default function PostsContent({ posts }) {
             )}
             
             <div className={styles.postBody}>
-              {/* Render a preview of the content */}
-              <div 
-                dangerouslySetInnerHTML={renderHTML(
-                  post.content?.length > 150 
-                    ? post.content.substring(0, 150) + '...' 
-                    : post.content
-                )} 
-              />
+              <p className={styles.postPreview}>
+                {post.content && (
+                  <>
+                    {post.content
+                      .replace(/<br\s*\/?>/gi, '\n') // Substitui <br> por quebra de linha
+                      .replace(/<\/?p>/gi, '\n') // Substitui <p> e </p> por quebra de linha
+                      .replace(/<\/?h[1-5]>/gi, '\n') // Substitui tags h1-h5 por quebra de linha
+                      .replace(/<[^>]*>/g, '') // Remove outras tags HTML
+                      .replace(/\n\s*\n/g, '\n') // Remove linhas em branco extras
+                      .replace(/^\s+|\s+$/gm, '') // Remove espaços em branco no início e fim de cada linha
+                      .trim() // Remove espaços em branco no início e fim do texto todo
+                      .split('\n') // Divide por quebras de linha
+                      .filter(line => line.trim() !== '') // Remove linhas vazias
+                      .slice(0, 3) // Pega apenas as 3 primeiras linhas
+                      .join('\n') // Junta novamente com quebras de linha
+                      .substring(0, 150) // Limita a 150 caracteres
+                      .split(' ') // Divide em palavras
+                      .slice(0, -1) // Remove a última palavra se estiver cortada
+                      .join(' ') // Junta novamente com espaços
+                      + '...'}
+                  </>
+                )}
+              </p>
             </div>
             
             {expandedPost === post._id && (

@@ -121,7 +121,14 @@ export default function ResponsibleProfilePage() {
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: 4, 
+          mb: 8,
+          px: isMobile ? 1 : 3
+        }}
+      >
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", my: 8 }}>
             <CircularProgress color="success" />
@@ -136,32 +143,40 @@ export default function ResponsibleProfilePage() {
             <Paper
               elevation={2}
               sx={{
-                p: 3,
+                p: isMobile ? 2 : 3,
                 mb: 4,
                 borderRadius: 2,
                 background: "linear-gradient(to right, #e8f5e9, #f1f8e9)",
               }}
             >
               <Box
-                sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}
+                sx={{ 
+                  display: "flex", 
+                  alignItems: isMobile ? "flex-start" : "center",
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: isMobile ? 2 : 0
+                }}
               >
                 <Avatar
                   src={(user && user.photoURL) || "/images/generic-user.png"}
                   alt={userData?.name || "Perfil"}
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: isMobile ? 60 : 80,
+                    height: isMobile ? 60 : 80,
                     bgcolor: "#2e7d32",
-                    mr: 3,
+                    mr: isMobile ? 0 : 3,
                   }}
-                ></Avatar>
+                />
 
-                <Box sx={{ flexGrow: 1 }}>
+                <Box sx={{ 
+                  flexGrow: 1,
+                  mb: isMobile ? 2 : 0 
+                }}>
                   <Typography
-                    variant="h4"
+                    variant={isMobile ? "h5" : "h4"}
                     sx={{ color: "#2e7d32", fontWeight: "bold" }}
                   >
-                    {userData?.name || user?.displayName || "Responsável"}
+                    {userData?.name || user?.displayName || "Usuário"}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
                     {userData?.email || user?.email}
@@ -171,12 +186,9 @@ export default function ResponsibleProfilePage() {
                       Telefone: {userData.phone}
                     </Typography>
                   )}
-                  <Typography variant="body2" color="text.secondary">
-                    Função: {userData?.role || "Responsável"}
-                  </Typography>
                 </Box>
 
-                {/* <Button
+                <Button
                   variant="outlined"
                   startIcon={<Edit />}
                   onClick={handleEditProfile}
@@ -187,28 +199,56 @@ export default function ResponsibleProfilePage() {
                       borderColor: "#1b5e20",
                       backgroundColor: "#f1f8e9",
                     },
+                    width: isMobile ? "100%" : "auto"
                   }}
                 >
                   Editar Perfil
-                </Button> */}
+                </Button>
               </Box>
             </Paper>
 
             {/* Abas de Conteúdo */}
             <Box sx={{ width: "100%", mb: 4 }}>
-              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <Box sx={{ 
+                borderBottom: 1, 
+                borderColor: "divider",
+                overflowX: isMobile ? 'auto' : 'hidden',
+                '.MuiTabs-flexContainer': {
+                  gap: isMobile ? 1 : 0
+                },
+                '.MuiTabs-root': {
+                  minHeight: isMobile ? '48px' : '64px'
+                },
+                '.MuiTab-root': {
+                  minHeight: isMobile ? '48px' : '64px',
+                  fontSize: isMobile ? '0.75rem' : 'inherit',
+                  minWidth: isMobile ? '120px' : '160px',
+                  padding: isMobile ? '6px 12px' : '12px 16px'
+                }
+              }}>
                 <Tabs
                   value={activeTab}
                   onChange={handleTabChange}
                   variant={isMobile ? "scrollable" : "standard"}
                   scrollButtons={isMobile ? "auto" : false}
+                  allowScrollButtonsMobile
                   sx={{
                     "& .MuiTab-root": {
                       fontWeight: "bold",
                       color: "#555",
                       "&.Mui-selected": { color: "#2e7d32" },
+                      "& .MuiSvgIcon-root": {
+                        fontSize: isMobile ? '1.2rem' : '1.5rem',
+                        marginBottom: isMobile ? '0' : '4px'
+                      }
                     },
                     "& .MuiTabs-indicator": { backgroundColor: "#2e7d32" },
+                    "& .MuiTabs-scrollButtons": {
+                      color: "#2e7d32",
+                      '&.Mui-disabled': {
+                        opacity: 0.3
+                      }
+                    }
                   }}
                 >
                   <Tab
@@ -231,12 +271,12 @@ export default function ResponsibleProfilePage() {
 
               {/* Aba de Dados Pessoais */}
               {activeTab === 0 && (
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: isMobile ? 1 : 3 }}>
                   <Typography variant="h6" sx={{ mb: 3, color: "#2e7d32" }}>
                     Informações Pessoais
                   </Typography>
 
-                  <Grid container spacing={3}>
+                  <Grid container spacing={isMobile ? 2 : 3}>
                     <Grid item xs={12} sm={6}>
                       <Paper sx={{ p: 2, height: "100%" }}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -283,24 +323,6 @@ export default function ResponsibleProfilePage() {
                       </Paper>
                     </Grid>
                   </Grid>
-
-                  <Box
-                    sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}
-                  >
-                    <Button
-                      variant="contained"
-                      startIcon={<Edit />}
-                      onClick={handleEditProfile}
-                      sx={{
-                        backgroundColor: "#2e7d32",
-                        "&:hover": {
-                          backgroundColor: "#1b5e20",
-                        },
-                      }}
-                    >
-                      Editar Informações
-                    </Button>
-                  </Box>
                 </Box>
               )}
 
@@ -343,7 +365,7 @@ export default function ResponsibleProfilePage() {
         )}
       </Container>
 
-      {/* Diálogo de Edição de Perfil */}
+      {/* Diálogos */}
       <EditResponsibleProfileDialog
         open={openEditDialog}
         onClose={handleCloseEditDialog}

@@ -6,7 +6,7 @@ import LogoClickable from '@/components/Icons/logoClick/page';
 import { useAuth } from '@/context/AuthContext';
 import { registerUser } from '@/services/authService';
 import { fetchAddressByCEP } from '@/services/cepService';
-import { formatCPF, validateCPF, formatCEP } from '@/utils/validators';
+import { formatCPF, validateCPF, formatCEP, formatPhone, validatePhone } from '@/utils/validators';
 
 export default function Cadastro() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export default function Cadastro() {
   const [error, setError] = useState('');
   const [cpfError, setCpfError] = useState('');
   const [cepError, setCepError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   // Redirecionar se o usuário já estiver logado
   useEffect(() => {
@@ -66,6 +67,22 @@ export default function Cadastro() {
       // Buscar endereço automaticamente quando o CEP tiver 8 dígitos
       if (value.replace(/[^\d]/g, '').length === 8) {
         handleCEPSearch(formattedCEP);
+      }
+    } else if (name === 'telefone') {
+      // Formatar telefone enquanto digita
+      const formattedPhone = formatPhone(value);
+      setFormData((prevData) => ({ ...prevData, [name]: formattedPhone }));
+      
+      // Validar telefone quando tiver 10 ou 11 dígitos
+      const numericPhone = value.replace(/[^\d]/g, '');
+      if (numericPhone.length >= 10) {
+        if (!validatePhone(value)) {
+          setPhoneError('Telefone inválido');
+        } else {
+          setPhoneError('');
+        }
+      } else {
+        setPhoneError('');
       }
     } else {
       setFormData((prevData) => ({ ...prevData, [name]: value }));
@@ -119,6 +136,18 @@ export default function Cadastro() {
     if (!validateCPF(formData.cpf)) {
       setCpfError('CPF inválido');
       setError('Por favor, insira um CPF válido.');
+      return;
+    }
+    
+    // Validar telefone
+    if (phoneError) {
+      setError('Por favor, corrija o telefone antes de continuar.');
+      return;
+    }
+    
+    if (!validatePhone(formData.telefone)) {
+      setPhoneError('Telefone inválido');
+      setError('Por favor, insira um telefone válido.');
       return;
     }
     
@@ -316,14 +345,16 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className={`w-full px-4 py-2 border ${phoneError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
               type="text"
               name="telefone"
-              placeholder="Telefone"
+              placeholder="Telefone ((00) 00000-0000)"
               value={formData.telefone}
               onChange={handleChange}
               required
+              maxLength={15}
             />
+            {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
           </div>
           
           <div>

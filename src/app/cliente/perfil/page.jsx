@@ -126,17 +126,13 @@ export default function ProfilePage() {
     }
   };
 
-
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
   const handleEditProfile = () => {
-
     setOpenEditDialog(true);
   };
-
 
   const handleEditAddress = (address) => {
     console.log("Editando endereço:", address);
@@ -147,8 +143,6 @@ export default function ProfilePage() {
       alert('Selecione um endereço para editar.');
       setOpenEditAddressDialog(true);
     }
-
-
   };
 
   const handleCloseEditDialog = () => {
@@ -199,6 +193,7 @@ export default function ProfilePage() {
   // Obter status com cor
   const getStatusChip = (status) => {
     let color = 'default';
+    const shouldBreakLine = status.length > 15;
 
     if (status.toLowerCase().includes('aguardando')) {
       color = 'warning';
@@ -215,14 +210,24 @@ export default function ProfilePage() {
         label={status}
         size="small"
         color={color}
-        sx={{ ml: 1 }}
+        sx={{ 
+          ml: shouldBreakLine ? 0 : 1,
+          mt: shouldBreakLine ? 0.5 : 0
+        }}
       />
     );
   };
 
   return (
     <AppLayout>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          mt: 4, 
+          mb: 8,
+          px: isMobile ? 1 : 3, // Reduz padding horizontal em mobile
+        }}
+      >
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", my: 8 }}>
             <CircularProgress color="success" />
@@ -237,29 +242,37 @@ export default function ProfilePage() {
             <Paper
               elevation={2}
               sx={{
-                p: 3,
+                p: isMobile ? 2 : 3,
                 mb: 4,
                 borderRadius: 2,
                 background: "linear-gradient(to right, #e8f5e9, #f1f8e9)",
               }}
             >
               <Box
-                sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}
+                sx={{ 
+                  display: "flex", 
+                  alignItems: isMobile ? "flex-start" : "center",
+                  flexDirection: isMobile ? "column" : "row",
+                  gap: isMobile ? 2 : 0
+                }}
               >
                 <Avatar
                   src={(user && user.photoURL) || "images/generic-user.png"}
                   alt={userData.name || "Perfil"}
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: isMobile ? 60 : 80,
+                    height: isMobile ? 60 : 80,
                     bgcolor: "#2e7d32",
-                    mr: 3,
+                    mr: isMobile ? 0 : 3,
                   }}
                 ></Avatar>
 
-                <Box sx={{ flexGrow: 1 }}>
+                <Box sx={{ 
+                  flexGrow: 1,
+                  mb: isMobile ? 2 : 0 
+                }}>
                   <Typography
-                    variant="h4"
+                    variant={isMobile ? "h5" : "h4"}
                     sx={{ color: "#2e7d32", fontWeight: "bold" }}
                   >
                     {userData?.name || user?.displayName || "Usuário"}
@@ -285,6 +298,7 @@ export default function ProfilePage() {
                       borderColor: "#1b5e20",
                       backgroundColor: "#f1f8e9",
                     },
+                    width: isMobile ? "100%" : "auto"
                   }}
                 >
                   Editar Perfil
@@ -294,56 +308,84 @@ export default function ProfilePage() {
 
             {/* Abas de Conteúdo */}
             <Box sx={{ width: "100%", mb: 4 }}>
-              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+              <Box sx={{ 
+                borderBottom: 1, 
+                borderColor: "divider",
+                overflowX: isMobile ? 'auto' : 'hidden',
+                '.MuiTabs-flexContainer': {
+                  gap: isMobile ? 1 : 0
+                },
+                '.MuiTabs-root': {
+                  minHeight: isMobile ? '48px' : '64px'
+                },
+                '.MuiTab-root': {
+                  minHeight: isMobile ? '48px' : '64px',
+                  fontSize: isMobile ? '0.75rem' : 'inherit',
+                  minWidth: isMobile ? '120px' : '160px',
+                  padding: isMobile ? '6px 12px' : '12px 16px'
+                }
+              }}>
                 <Tabs
                   value={activeTab}
                   onChange={handleTabChange}
                   variant={isMobile ? "scrollable" : "standard"}
                   scrollButtons={isMobile ? "auto" : false}
+                  allowScrollButtonsMobile
                   sx={{
                     "& .MuiTab-root": {
                       fontWeight: "bold",
                       color: "#555",
                       "&.Mui-selected": { color: "#2e7d32" },
+                      "& .MuiSvgIcon-root": {
+                        fontSize: isMobile ? '1.2rem' : '1.5rem',
+                        marginBottom: isMobile ? '0' : '4px'
+                      }
                     },
                     "& .MuiTabs-indicator": { backgroundColor: "#2e7d32" },
+                    "& .MuiTabs-scrollButtons": {
+                      color: "#2e7d32",
+                      '&.Mui-disabled': {
+                        opacity: 0.3
+                      }
+                    }
                   }}
                 >
                   <Tab
-                    icon={<Person />}
+                    icon={<Person sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />}
                     label="Dados Pessoais"
                     iconPosition="start"
                   />
                   <Tab
-                    icon={<LocationOn />}
+                    icon={<LocationOn sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />}
                     label="Endereços"
                     iconPosition="start"
                   />
                   <Tab
-                    icon={<History />}
+                    icon={<History sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />}
                     label="Histórico"
                     iconPosition="start"
                   />
                   <Tab
-                    icon={<EmojiEvents />}
+                    icon={<EmojiEvents sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />}
                     label="Conquistas"
                     iconPosition="start"
                   />
                   <Tab
-                    icon={<Security />}
+                    icon={<Security sx={{ fontSize: isMobile ? '1.2rem' : '1.5rem' }} />}
                     label="Senha e Segurança"
-                    iconPosition="start" />
+                    iconPosition="start"
+                  />
                 </Tabs>
               </Box>
 
               {/* Aba de Dados Pessoais */}
               {activeTab === 0 && (
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: isMobile ? 1 : 3 }}>
                   <Typography variant="h6" sx={{ mb: 3, color: "#2e7d32" }}>
                     Informações Pessoais
                   </Typography>
 
-                  <Grid container spacing={3}>
+                  <Grid container spacing={isMobile ? 2 : 3}>
                     <Grid item xs={12} sm={6}>
                       <Paper sx={{ p: 2, height: "100%" }}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -413,13 +455,15 @@ export default function ProfilePage() {
 
               {/* Aba de Endereços */}
               {activeTab === 1 && (
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: isMobile ? 1 : 3 }}>
                   <Box
                     sx={{
                       mb: 3,
                       display: "flex",
+                      flexDirection: isMobile ? "column" : "row",
                       justifyContent: "space-between",
-                      alignItems: "center",
+                      alignItems: isMobile ? "stretch" : "center",
+                      gap: isMobile ? 2 : 0
                     }}
                   >
                     <Typography variant="h6" sx={{ color: "#2e7d32" }}>
@@ -434,6 +478,7 @@ export default function ProfilePage() {
                         "&:hover": {
                           backgroundColor: "#1b5e20",
                         },
+                        width: isMobile ? "100%" : "auto"
                       }}
                     >
                       Adicionar Endereço
@@ -450,7 +495,7 @@ export default function ProfilePage() {
 
               {/* Aba de Histórico */}
               {activeTab === 2 && (
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: isMobile ? 1 : 3 }}>
                   <Typography variant="h6" sx={{ mb: 3, color: "#2e7d32" }}>
                     Histórico de Agendamentos
                   </Typography>
@@ -468,55 +513,90 @@ export default function ProfilePage() {
                           key={schedule._id}
                           elevation={1}
                           sx={{
-                            p: 2,
+                            p: isMobile ? 1.5 : 2,
                             mb: 2,
                             borderRadius: 2,
                             border: "1px solid #e0e0e0",
+                            width: "100%",
+                            overflow: "hidden"
                           }}
                         >
                           <Box
                             sx={{
                               display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "flex-start",
-                              flexWrap: "wrap",
+                              flexDirection: "column",
+                              width: "100%"
                             }}
                           >
-                            <Box>
+                            {/* Cabeçalho com Nome e Status */}
+                            <Box sx={{ 
+                              display: "flex",
+                              flexDirection: isMobile && schedule.status.length > 15 ? "column" : "row",
+                              alignItems: isMobile && schedule.status.length > 15 ? "flex-start" : "center",
+                              mb: 1,
+                              width: "100%"
+                            }}>
                               <Typography
                                 variant="subtitle1"
-                                sx={{ fontWeight: "bold" }}
+                                sx={{ 
+                                  fontWeight: "bold",
+                                  fontSize: isMobile ? "0.9rem" : "inherit",
+                                  mb: isMobile && schedule.status.length > 15 ? 0.5 : 0,
+                                  mr: isMobile && schedule.status.length > 15 ? 0 : 1
+                                }}
                               >
                                 {schedule.collectionPointId?.name || "Ecoponto"}
-                                {getStatusChip(schedule.status)}
                               </Typography>
+                              <Box>
+                                {getStatusChip(schedule.status)}
+                              </Box>
+                            </Box>
+
+                            {/* Informações do Agendamento */}
+                            <Box sx={{ mb: 2 }}>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
+                                sx={{ 
+                                  fontSize: isMobile ? "0.8rem" : "inherit",
+                                  mb: 0.5
+                                }}
                               >
                                 Data: {formatDate(schedule.date)}
-                                {schedule.time &&
-                                  ` - Horário: ${schedule.time}`}
+                                {schedule.time && ` - Horário: ${schedule.time}`}
                               </Typography>
                               <Typography
                                 variant="body2"
                                 color="text.secondary"
+                                sx={{ 
+                                  fontSize: isMobile ? "0.8rem" : "inherit",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: "2",
+                                  WebkitBoxOrient: "vertical"
+                                }}
                               >
-                                Materiais:{" "}
-                                {schedule.wastes
+                                Materiais: {schedule.wastes
                                   ?.map((w) => w.wasteId?.name || "Resíduo")
                                   .join(", ")}
                               </Typography>
                             </Box>
 
-                            <Box sx={{ mt: { xs: 2, sm: 0 } }}>
+                            {/* Botões de Ação */}
+                            <Box sx={{ 
+                              display: "flex",
+                              gap: 1,
+                              width: "100%"
+                            }}>
                               <Button
                                 variant="outlined"
                                 size="small"
                                 sx={{
                                   borderColor: "#2e7d32",
                                   color: "#2e7d32",
-                                  mr: 1,
+                                  flex: isMobile ? 1 : "initial",
+                                  minWidth: isMobile ? "auto" : 100
                                 }}
                                 href={`/agendamento/`}
                               >
@@ -529,6 +609,10 @@ export default function ProfilePage() {
                                     variant="outlined"
                                     size="small"
                                     color="error"
+                                    sx={{
+                                      flex: isMobile ? 1 : "initial",
+                                      minWidth: isMobile ? "auto" : 100
+                                    }}
                                     onClick={() =>
                                       handleCancelSchedule(schedule._id)
                                     }

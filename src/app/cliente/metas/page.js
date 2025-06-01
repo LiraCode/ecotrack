@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, useTheme, useMediaQuery } from '@mui/material';
 import { useToast } from '@/components/ui/use-toast';
 import { useMetasContext } from '@/context/metas/MetasContext';
 import { useAuth } from '@/context/AuthContext';
@@ -16,6 +16,8 @@ const MetasPage = () => {
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
+  const theme = useTheme();
+  const isMobileView = useMediaQuery(theme.breakpoints.down('sm'));
   
   // Obter status da sidebar do localStorage
   useEffect(() => {
@@ -68,12 +70,12 @@ const MetasPage = () => {
     <AppLayout>
       <Box
         sx={{
-          p: 3,
-          width: "90vw",
-          maxWidth: "1600px",
-          margin: "0 auto",
+          p: { xs: 1, sm: 2, md: 3 },
+          width: '100%',
+          maxWidth: { xs: '95vw', md: '1600px' },
+          margin: '0 auto',
           flexGrow: 1,
-          overflow: "auto",
+          overflow: 'auto',
         }}
       >
         <MetasHeader meusPontos={meusPontos} />

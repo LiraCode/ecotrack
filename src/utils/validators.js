@@ -90,3 +90,46 @@ export const formatCPF = (cpf) => {
   cpf = cpf.replace(/[^\d]/g, '');
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 };
+
+// Validação de telefone
+export const validatePhone = (phone) => {
+  // Remove caracteres não numéricos
+  const numericPhone = phone.replace(/[^\d]/g, '');
+  
+  // Verifica se tem 10 ou 11 dígitos (com DDD)
+  if (numericPhone.length < 10 || numericPhone.length > 11) {
+    return false;
+  }
+  
+  // Verifica se o DDD é válido (entre 11 e 99)
+  const ddd = parseInt(numericPhone.substring(0, 2));
+  if (ddd < 11 || ddd > 99) {
+    return false;
+  }
+  
+  // Se tiver 11 dígitos, verifica se o primeiro dígito após o DDD é 9 (celular)
+  if (numericPhone.length === 11 && numericPhone.charAt(2) !== '9') {
+    return false;
+  }
+  
+  return true;
+};
+
+// Formatação de telefone
+export const formatPhone = (phone) => {
+  // Remove caracteres não numéricos
+  const numericPhone = phone.replace(/[^\d]/g, '');
+  
+  // Se tiver 11 dígitos (celular com DDD)
+  if (numericPhone.length === 11) {
+    return numericPhone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  
+  // Se tiver 10 dígitos (fixo com DDD)
+  if (numericPhone.length === 10) {
+    return numericPhone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  
+  // Se não tiver o tamanho correto, retorna o que foi digitado
+  return phone;
+};

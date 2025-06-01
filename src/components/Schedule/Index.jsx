@@ -130,12 +130,9 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
       p: isMobile ? 1 : 3,
       backgroundColor: 'gray.50',
       minHeight: '100vh',
-      marginLeft: sidebarOpen && !isMobile ? '240px' : '0',
-      width: sidebarOpen && !isMobile ? 'calc(100% - 240px)' : '100%',
-      transition: theme.transitions.create(['margin', 'width'], {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen,
-      }),
+      width: '100%',
+      maxWidth: '1200px',
+      margin: '0 auto',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center'
@@ -143,11 +140,11 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
       {/* Título principal centralizado */}
       <Box sx={{ 
         width: '100%',
-        maxWidth: '1200px',
+        maxWidth: isMobile ? '100%' : '800px',
         display: 'flex',
         justifyContent: 'center',
         mb: 3,
-        px: isMobile ? 1 : 3
+        px: isMobile ? 0 : 3
       }}>
         <Typography 
           variant={isMobile ? 'h4' : 'h3'} 
@@ -168,11 +165,11 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
       {/* Conteúdo principal */}
       <Box sx={{
         width: '100%',
-        maxWidth: '1200px',
+        maxWidth: isMobile ? '100%' : '1200px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        px: isMobile ? 1 : 3
+        px: isMobile ? 0 : 3
       }}>
         <Calendar 
           schedules={schedules} 

@@ -25,6 +25,8 @@ import AddressList from './AddressList';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/config/firebase/firebase';
 import { data } from 'autoprefixer';
+import { formatPhone, validatePhone } from '@/utils/validators';
+import { toast } from '@/components/ui/use-toast';
 
 
 
@@ -51,6 +53,7 @@ export default function EditProfileDialog({
   const [errorMessage, setErrorMessage] = useState('');
   const [photoURL, setPhotoURL] = useState('');
   const fileInputRef = useRef(null);
+  const [phoneError, setPhoneError] = useState('');
 
   // Buscar dados do usuário quando o diálogo é aberto
   useEffect(() => {
@@ -134,14 +137,50 @@ export default function EditProfileDialog({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setUserData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === 'phone') {
+      // Formatar telefone enquanto digita
+      const formattedPhone = formatPhone(value);
+      setUserData(prev => ({ ...prev, [name]: formattedPhone }));
+      
+      // Validar telefone quando tiver 10 ou 11 dígitos
+      const numericPhone = value.replace(/[^\d]/g, '');
+      if (numericPhone.length >= 10) {
+        if (!validatePhone(value)) {
+          setPhoneError('Telefone inválido');
+        } else {
+          setPhoneError('');
+        }
+      } else {
+        setPhoneError('');
+      }
+    } else {
+      setUserData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmitProfile = async () => {
     try {
+      // Validar telefone antes de salvar
+      if (phoneError) {
+        toast({
+          title: "Erro",
+          description: "Por favor, corrija o telefone antes de salvar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (userData.phone && !validatePhone(userData.phone)) {
+        setPhoneError('Telefone inválido');
+        toast({
+          title: "Erro",
+          description: "Por favor, insira um telefone válido.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setLoading(true);
       setErrorMessage('');
 
@@ -467,6 +506,12 @@ export default function EditProfileDialog({
                       onChange={handleInputChange}
                       margin="normal"
                       variant="outlined"
+                      error={!!phoneError}
+                      helperText={phoneError}
+                      placeholder="(00) 00000-0000"
+                      inputProps={{
+                        maxLength: 15
+                      }}
                     />
                   </Grid>
                 </Grid>
