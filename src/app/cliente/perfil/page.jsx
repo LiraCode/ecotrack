@@ -117,6 +117,7 @@ export default function ProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setSchedules(data || []);
       } else {
         console.error('Failed to fetch user schedules:', await response.text());
@@ -190,6 +191,14 @@ export default function ProfilePage() {
     });
   };
 
+  const formatTime = (timeString) => {
+    const time = new Date(timeString);
+    return time.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Obter status com cor
   const getStatusChip = (status) => {
     let color = 'default';
@@ -199,7 +208,7 @@ export default function ProfilePage() {
       color = 'warning';
     } else if (status.toLowerCase().includes('confirmado')) {
       color = 'info';
-    } else if (status.toLowerCase().includes('concluído')) {
+    } else if (status.toLowerCase().includes('coletado')) {
       color = 'success';
     } else if (status.toLowerCase().includes('cancelado')) {
       color = 'error';
@@ -562,7 +571,7 @@ export default function ProfilePage() {
                                   mb: 0.5
                                 }}
                               >
-                                Data: {formatDate(schedule.date)}
+                                Data: {formatDate(schedule.date)} - {formatTime(schedule.date)}
                                 {schedule.time && ` - Horário: ${schedule.time}`}
                               </Typography>
                               <Typography
@@ -577,8 +586,8 @@ export default function ProfilePage() {
                                   WebkitBoxOrient: "vertical"
                                 }}
                               >
-                                Materiais: {schedule.wastes
-                                  ?.map((w) => w.wasteId?.name || "Resíduo")
+                                Resíduos: {schedule.wastes
+                                  ?.map((w) => w.wasteId?.type || "Resíduo")
                                   .join(", ")}
                               </Typography>
                             </Box>
