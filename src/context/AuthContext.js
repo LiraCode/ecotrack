@@ -27,7 +27,9 @@ const publicRoutes = [
   '/locais',
   '/posts',
   '/posts/:slug',
-  '/api/users'
+  '/api/users',
+  '/api/contato',
+  '/contato'
   // Adicione outras rotas públicas aqui
 ];
 

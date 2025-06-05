@@ -94,6 +94,19 @@ const menuGroups = [
         pos: 5,
       },
 
+      {
+        icon: (
+          <i
+            className="fa-solid fa-message-dots"
+            style={{ fontSize: "32px", color: "#08B75B" }}
+          />
+        ),
+        label: "Contato",
+        route: "/contato",
+        role: ["User", "not-logged"],
+        pos: 6,
+      },
+
       // ####################################################################################
 
       // ################################ RESPONSÁVEL #######################################

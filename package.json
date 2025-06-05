@@ -45,6 +45,7 @@
     "lucide-react": "^0.511.0",
     "mongoose": "^8.14.2",
     "next": "^15.3.0",
+    "nodemailer": "^7.0.3",
     "postcss": "^8.5.3",
     "punycode": "^2.3.1",
     "react": "^19.0.0",
