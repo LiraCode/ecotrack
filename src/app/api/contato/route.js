@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
-// Configuração do transportador do nodemailer
+// Configuração do nodemailer
 const createTransporter = () => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error('Credenciais de email não configuradas. Configure EMAIL_USER e EMAIL_PASS no arquivo .env.local');
@@ -19,8 +19,8 @@ const createTransporter = () => {
 export async function POST(request) {
   try {
     const { nome, email, ecoponto, mensagem, tipoContato } = await request.json();
+    let ecopontoData = null;
 
-    // Criar o transportador com verificação de credenciais
     const transporter = createTransporter();
 
     // Verificar a conexão com o servidor de email
@@ -53,7 +53,7 @@ export async function POST(request) {
         throw new Error('Erro ao buscar informações do ecoponto');
       }
       const response = await ecopontoResponse.json();
-      const ecopontoData = response.collectionPoint;
+      ecopontoData = response.collectionPoint;
 
       if (!ecopontoData?.responsableId?.email) {
         throw new Error('Erro na busca dos dados do ecoponto');
@@ -76,31 +76,33 @@ export async function POST(request) {
           <p>${ecopontoData.address.city} - ${ecopontoData.address.state}</p>
         `,
       });
-
-      // Email de confirmação para o usuário
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Confirmação de mensagem - EcoTrack',
-        html: `
-          <h2>Obrigado por entrar em contato!</h2>
-          <p>Confirmamos a recebimento da sua mensagem.</p>
-          ${tipoContato === 'ecoponto' ? `
-          <p>Sua mensagem foi enviada para o email fornecido pelo responsável do ecoponto selecionado.</p>
-          <p>Detalhes do Ecoponto:</p>
-          <p><strong>Nome:</strong> ${ecopontoData.name}</p>
-          <p><strong>Endereço:</strong> ${ecopontoData.address.street}, ${ecopontoData.address.number} . ${ecopontoData.address.neighborhood} - ${ecopontoData.address.city}-${ecopontoData.address.state}.</p>
-          ` : ''}
-          <p>Atenciosamente,<br>Equipe EcoTrack</p>
-        `,
-      });
     }
+
+    // Email de confirmação para o usuário
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Confirmação de mensagem - EcoTrack',
+      html: `
+        <h2>Obrigado por entrar em contato!</h2>
+        <p>Confirmamos o envio da sua mensagem.</p>
+        ${tipoContato === 'admin' ? `
+        <p>Sua mensagem foi enviada para a administração do EcoTrack.</p>
+        ` : `
+        <p>Sua mensagem foi enviada para o email fornecido pelo responsável do ecoponto selecionado.</p>
+        <p>Detalhes do Ecoponto:</p>
+        <p><strong>Nome:</strong> ${ecopontoData.name}</p>
+        <p><strong>Endereço:</strong> ${ecopontoData.address.street}, ${ecopontoData.address.number} . ${ecopontoData.address.neighborhood} - ${ecopontoData.address.city}-${ecopontoData.address.state}.</p>
+        `}
+        <p>Atenciosamente,<br>Equipe EcoTrack</p>
+      `,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Erro ao enviar email:', error);
     
-    // Retornar mensagem de erro mais específica
+    // Retornar mensagem de erro 
     const errorMessage = error.code === 'EAUTH' 
       ? 'Erro de autenticação do email. Verifique as configurações do Gmail.'
       : error.message || 'Erro ao processar sua solicitação';
