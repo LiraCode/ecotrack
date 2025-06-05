@@ -136,14 +136,14 @@ export default function NotificacoesAdmin() {
       <Box
         sx={{
           p: 3,
-          width: '100%',
-          maxWidth: '1600px',
-          marginLeft: '100px',
+          minWidth: "80vw",
+          maxWidth: "1600px",
+          marginLeft: "100px",
           flexGrow: 1,
-          overflow: 'auto',
-          transition: 'margin-left 0.3s',
-          xs: { marginLeft: sidebarOpen ? '240px' : '0px' },
-          marginRight: isMobile ? '0' : '100px',
+          overflow: "auto",
+          transition: "margin-left 0.3s",
+          xs: { marginLeft: sidebarOpen ? "240px" : "0px" },
+          marginRight: isMobile ? "0" : "100px",
         }}
       >
         <Paper

@@ -430,7 +430,7 @@ export default function EcopontoManagement() {
       <Box
         sx={{
           p: 3,
-          width: "100%",
+          minWidth: "80vw",
           maxWidth: "1600px",
           marginLeft: "100px",
           flexGrow: 1,

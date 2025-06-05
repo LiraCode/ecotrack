@@ -193,7 +193,7 @@ const menuGroups = [
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
         ),
-        label: "Gerenciar Eco Pontos",
+        label: "Eco Pontos",
         route: "/administracao/ecopontos/",
         role: "Administrador",
         pos: 5,
@@ -205,7 +205,7 @@ const menuGroups = [
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
         ),
-        label: "Tipos de Resíduos",
+        label: "Resíduos",
         route: "/administracao/residuos/",
         role: "Administrador",
         pos: 6,
@@ -217,7 +217,7 @@ const menuGroups = [
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
         ),
-        label: "Administradores & Funcionários",
+        label: "Admins & Funcionários",
         route: "/administracao/funcionario",
         role: "Administrador",
         pos: 7,
@@ -241,7 +241,7 @@ const menuGroups = [
             style={{ fontSize: "32px", color: "#08B75B" }}
           />
         ),
-        label: "Gerenciar Postagens",
+        label: "Gerenciar blog",
         route: "/administracao/posts",
         role: "Administrador",
         pos: 9,

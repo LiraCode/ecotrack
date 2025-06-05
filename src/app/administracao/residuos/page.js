@@ -12,6 +12,21 @@ export default function WasteManagementPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
+
+  // Get sidebar status from localStorage
+  useEffect(() => {
+    const sidebarStatus = localStorage.getItem('sidebarOpen');
+    if (sidebarStatus === 'true') {
+      setSidebarOpen(true);
+      if (window.innerWidth > 768) {
+        setSidebarOpen(true);
+        localStorage.setItem('sidebarOpen', 'false');
+        setIsMobile(false);
+      }
+    }
+  }, []);
 
   // Check if user is admin
   useEffect(() => {
@@ -59,7 +74,17 @@ export default function WasteManagementPage() {
 
   return (
     <AppLayout>
-      <Box sx={{ p: 3, width: '100%', maxWidth: '1600px', margin: '0 auto' }}>
+      <Box sx={{ 
+        p: 3, 
+        minWidth: "80vw",
+        maxWidth: '1600px', 
+        marginLeft: "100px",
+        flexGrow: 1,
+        overflow: "auto",
+        transition: "margin-left 0.3s",
+        xs: { marginLeft: sidebarOpen ? "240px" : "0px" },
+        marginRight: isMobile ? "0" : "100px",
+      }}>
         <Paper sx={{ p: 3, borderRadius: 2, boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.1)' }}>
           <WasteManager />
         </Paper>

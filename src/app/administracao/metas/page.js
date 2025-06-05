@@ -55,6 +55,8 @@ export default function GerenciamentoMetas() {
   const [currentId, setCurrentId] = useState(null);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
   const [fetchLoading, setFetchLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -70,9 +72,6 @@ export default function GerenciamentoMetas() {
     value: '',
     type: 'quantity'
   });
-  
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(true);
   
   // Get sidebar status from localStorage
   useEffect(() => {
@@ -362,7 +361,7 @@ export default function GerenciamentoMetas() {
       <Box
         sx={{
           p: 3,
-          width: "100%",
+          minWidth: "80vw",
           maxWidth: "1600px",
           marginLeft: "100px",
           flexGrow: 1,
