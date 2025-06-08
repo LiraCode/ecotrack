@@ -1,14 +1,28 @@
 'use client';
-
-import { ThemeProvider } from '@mui/material/styles';
+import { useEffect } from 'react';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import theme from './theme';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import getTheme from './theme';
+
+function MuiThemeWrapper({ children }) {
+  const { theme } = useTheme();
+  const muiTheme = getTheme(theme);
+
+  return (
+    <MuiThemeProvider theme={muiTheme}>
+      {children}
+    </MuiThemeProvider>
+  );
+}
 
 export default function ClientProviders({ children }) {
   return (
     <AppRouterCacheProvider>
-      <ThemeProvider theme={theme}>
-        {children}
+      <ThemeProvider>
+        <MuiThemeWrapper>
+          {children}
+        </MuiThemeWrapper>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

@@ -38,15 +38,10 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-
-export default function RootLayout({
-  children
-}) {
+export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased bg-gray-50`}
-      >
+    <html lang="pt-BR" data-theme="light">
+      <body className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased bg-gray-50`}>
         <AuthContextProvider>
           <MetasProvider>
             <ClientProviders>

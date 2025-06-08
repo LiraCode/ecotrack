@@ -16,7 +16,7 @@ const HomeTab = ({
   impactStats,
   handleOpenDialog, 
   onViewAllWasteTypes,
-  isUserLoggedIn // Nova prop para verificar se o usuário está logado e é do tipo "user"
+  isUserLoggedIn
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -27,6 +27,27 @@ const HomeTab = ({
     maxWidth: '800px',
     mx: 'auto',
     px: { xs: 2, sm: 0 }
+  };
+
+  // Estilo para os cards de login
+  const loginCardStyle = {
+    p: { xs: 2, sm: 3 }, 
+    textAlign: 'center', 
+    bgcolor: theme.palette.mode === 'dark' ? 'var(--boxdark-2)' : '#f9f9f9',
+    mb: 3,
+    mx: { xs: 2, sm: 0 },
+    border: theme.palette.mode === 'dark' ? '1px solid var(--strokedark)' : 'none'
+  };
+
+  // Estilo para os botões de login
+  const loginButtonStyle = {
+    borderColor: theme.palette.mode === 'dark' ? '#4CAF50' : '#2e8b57', 
+    color: theme.palette.mode === 'dark' ? '#4CAF50' : '#2e8b57',
+    '&:hover': { 
+      borderColor: theme.palette.mode === 'dark' ? '#81C784' : '#1b5e20', 
+      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.08)' : 'rgba(46, 139, 87, 0.04)' 
+    },
+    fontSize: { xs: '0.75rem', sm: '0.875rem' }
   };
 
   return (
@@ -58,18 +79,12 @@ const HomeTab = ({
         ) : (
           <Paper 
             elevation={1} 
-            sx={{ 
-              p: { xs: 2, sm: 3 }, 
-              textAlign: 'center', 
-              bgcolor: '#f9f9f9', 
-              mb: 3,
-              mx: { xs: 2, sm: 0 }
-            }}
+            sx={loginCardStyle}
           >
             <Typography 
               variant="body1" 
               sx={{ 
-                color: 'text.secondary', 
+                color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary', 
                 mb: 2,
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}
@@ -82,12 +97,7 @@ const HomeTab = ({
               variant="outlined" 
               color="primary" 
               size={isMobile ? "small" : "medium"}
-              sx={{ 
-                borderColor: '#2e8b57', 
-                color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }}
+              sx={loginButtonStyle}
             >
               Fazer Login
             </Button>
@@ -105,17 +115,12 @@ const HomeTab = ({
         ) : (
           <Paper 
             elevation={1} 
-            sx={{ 
-              p: { xs: 2, sm: 3 }, 
-              textAlign: 'center', 
-              bgcolor: '#f9f9f9',
-              mx: { xs: 2, sm: 0 }
-            }}
+            sx={loginCardStyle}
           >
             <Typography 
               variant="body1" 
               sx={{ 
-                color: 'text.secondary', 
+                color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'text.secondary', 
                 mb: 2,
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}
@@ -128,26 +133,13 @@ const HomeTab = ({
               variant="outlined" 
               color="primary" 
               size={isMobile ? "small" : "medium"}
-              sx={{ 
-                borderColor: '#2e8b57', 
-                color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }}
+              sx={loginButtonStyle}
             >
               Fazer Login
             </Button>
           </Paper>
         )}
       </Box>
-      
-      {/* Tipos de Resíduos */}
-      {/* <Box sx={componentStyle}>
-        <WasteTypePreview 
-          handleOpenDialog={handleOpenDialog} 
-          onViewAllWasteTypes={onViewAllWasteTypes} 
-        />
-      </Box> */}
     </Box>
   );
 };

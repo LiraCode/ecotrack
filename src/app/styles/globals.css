@@ -39,16 +39,63 @@
   --warning: #FFA70B;
 }
 
+/* Estilos para o modo escuro */
+[data-theme="dark"] {
+  --background: #121e26; /* Fundo mais escuro com tom azulado para melhor contraste */
+  --foreground: #e2e8f0;
+  --primary: #08B75B;  
+  --secondary: #0b772f; /* Verde mais escuro */
+  --stroke: #4A5568;
+  --graydark: #e2e8f0;
+  --body: #d1e0db; /* Texto principal com tom esverdeado claro */
+  --whiten: #2D3748;
+  --darks: #1a202c;
+  --black-2: #1a202c;
+  --bodydark: #a8c5b8; /* Texto secundário verde mais suave */
+  --bodydark1: #e2e8f0;
+  --bodydark2: #a0aec0;
+  --gray: #2D3748;
+  --gray-2: #2D3748;
+  --gray-3: #4A5568;
+  --whiter: #1a202c;
+  --boxdark: #0a1a14; /* Fundo escuro com tom verde */
+  --boxdark2: #1a202c;
+  --boxdark-2: #12281e; /* Boxes com tom verde escuro */
+  --strokedark: #4A5568;
+  --form-strokedark: #4A5568;
+  --form-input: #2D3748;
+  --meta-1: #DC3545;
+  --meta-2: #EFF2F7;
+  --meta-3: #08B75B;
+  --meta-4: #313D4A;
+  --meta-5: #259AE6;
+  --meta-6: #FFBA00;
+  --meta-7: #FF6766;
+  --meta-8: #F0950C;
+  --meta-9: #E5E7EB;
+  --meta-10: #0FADCF;
+  --success: #219653;
+  --danger: #D34053;
+  --warning: #FFA70B;
+}
+
+
 @layer utilities {
+  /* Utilities básicas */
   .bg-background { background-color: var(--background); }
   .bg-foreground { background-color: var(--foreground); }
-  .bg-primary { background-color: var(--primary); }
-  .bg-secondary { background-color: var(--secondary); }
   .text-primary { color: var(--primary); }
   .text-secondary { color: var(--secondary); }
-  .text-green { color: var(--meta-3); }
-  .border-primary { border-color: var(--primary); }
-  .border-secondary { border-color: var(--secondary); }
+  .text-body { color: var(--body); }
+  .text-bodydark { color: var(--bodydark); }
+  .border-strokedark { border-color: var(--strokedark); }
+
+  /* Utilities específicas para modo escuro */
+  .dark\:bg-boxdark { background-color: var(--boxdark); }
+  .dark\:bg-boxdark-2 { background-color: var(--boxdark-2); }
+  .dark\:text-body { color: var(--body); }
+  .dark\:text-bodydark { color: var(--bodydark); }
+  .dark\:border-strokedark { border-color: var(--strokedark); }
   .meta-1 { background-color: var(--meta-1); }
   .meta-2 { background-color: var(--meta-2); }
   .meta-3 { background-color: var(--meta-3); }
@@ -70,13 +117,25 @@
 
 @layer base {
   html {
-    font-size: 16px;
+    font-size: 16px; /* Tamanho padrão (mobile) */
+  }
+
+  /* Aumento da fonte apenas em desktop */
+  @media (min-width: 1024px) {
+    html {
+      font-size: 20px; /* Novo tamanho para desktop */
+    }
   }
 
   h1 {
-    font-size: 2.75rem; /* 44px */
-    line-height: 3.4375rem; /* 55px */
+  font-size: 2rem; /* Mobile */
+}
+
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 2.75rem; /* Desktop */
   }
+}
 
   h2 {
     font-size: 2.625rem; /* 42px */
