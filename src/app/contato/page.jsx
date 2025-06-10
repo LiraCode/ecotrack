@@ -160,8 +160,8 @@ export default function ContatoPage() {
           align="center" 
           sx={{ mb: 4 }}
         >
-          Preencha o formulário abaixo para entrar em contato com a nossa equipe. <br />
-          para parcerias de empresas com os ecopontos, escolha qual ecoponto deseja entrar em contato. <br />
+          *Preencha o formulário abaixo para entrar em contato com a nossa equipe. <br />
+          <p>para parcerias de empresas com os ecopontos, escolha qual ecoponto deseja entrar em contato.</p> <br />
           Para dúvidas sobre o site, reportar erros, sugestões, etc, selecione a opção administração.
         </Typography>
         
