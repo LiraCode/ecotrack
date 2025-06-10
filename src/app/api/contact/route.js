@@ -18,7 +18,7 @@ const createTransporter = () => {
 
 export async function POST(request) {
   try {
-    const { nome, email, ecoponto, mensagem, tipoContato } = await request.json();
+    const { nome, email, telefone, ecoponto, mensagem, tipoContato } = await request.json();
     let ecopontoData = null;
 
     const transporter = createTransporter();
@@ -42,6 +42,7 @@ export async function POST(request) {
           <h2>Nova mensagem de contato enviada do site EcoTrack</h2>
           <p><strong>Enviada por:</strong> ${nome}</p>
           <p><strong>Email de contato:</strong> ${email}</p>
+          <p><strong>Telefone:</strong> ${telefone}</p>
           <p><strong>Conteúdo da mensagem:</strong></p>
           <p>${mensagem}</p>
         `,
@@ -68,6 +69,7 @@ export async function POST(request) {
           <h2>Nova mensagem sobre seu Ecoponto</h2>
           <p><strong>Enviada por:</strong> ${nome}</p>
           <p><strong>Email para contato:</strong> ${email}</p>
+          <p><strong>Telefone:</strong> ${telefone}</p>
           <p><strong>sobre qual Ecoponto:</strong> ${ecopontoData.name}</p>
           <p><strong>Mensagem:</strong></p>
           <p>${mensagem}</p>
@@ -86,6 +88,7 @@ export async function POST(request) {
       html: `
         <h2>Obrigado por entrar em contato!</h2>
         <p>Confirmamos o envio da sua mensagem.</p>
+        <p><strong>Telefone informado:</strong> ${telefone}</p>
         ${tipoContato === 'admin' ? `
         <p>Sua mensagem foi enviada para a administração do EcoTrack.</p>
         ` : `

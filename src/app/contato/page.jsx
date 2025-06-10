@@ -38,6 +38,7 @@ export default function ContatoPage() {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
+    telefone: '',
     ecoponto: '',
     mensagem: '',
     tipoContato: 'ecoponto'
@@ -46,6 +47,7 @@ export default function ContatoPage() {
   const [loading, setLoading] = useState(false);
   const [ecopontos, setEcopontos] = useState([]);
   const [loadingEcopontos, setLoadingEcopontos] = useState(true);
+  const [errors, setErrors] = useState({});
 
   // Buscar lista de ecopontos quando a página carregar
   useEffect(() => {
@@ -69,12 +71,44 @@ export default function ContatoPage() {
     fetchEcopontos();
   }, []);
 
+  // Função para formatar telefone (formato brasileiro)
+  const formatPhone = (value) => {
+    let v = value.replace(/\D/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 10) {
+      return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (v.length > 5) {
+      return v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    } else if (v.length > 2) {
+      return v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+    } else {
+      return v;
+    }
+  };
+
+  // Validação do telefone
+  const validatePhone = (value) => {
+    const regex = /^\(\d{2}\) \d{4,5}-\d{4}$/;
+    return regex.test(value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    // Validação do telefone
+    const newErrors = {};
+    if (!formData.telefone || !validatePhone(formData.telefone)) {
+      newErrors.telefone = 'Telefone inválido. Use o formato (99) 99999-9999';
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/contato', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,6 +121,7 @@ export default function ContatoPage() {
         setFormData({
           nome: '',
           email: '',
+          telefone: '',
           ecoponto: '',
           mensagem: '',
           tipoContato: 'ecoponto'
@@ -345,6 +380,30 @@ export default function ContatoPage() {
                 color: '#08B75B'
               }
             }}
+          />
+
+          <TextField
+            fullWidth
+            label="Telefone"
+            required
+            value={formData.telefone}
+            onChange={(e) => {
+              const formatted = formatPhone(e.target.value);
+              setFormData({ ...formData, telefone: formatted });
+            }}
+            error={!!errors.telefone}
+            helperText={errors.telefone}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&.Mui-focused fieldset': {
+                  borderColor: '#08B75B'
+                }
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#08B75B'
+              }
+            }}
+            inputProps={{ maxLength: 15 }}
           />
 
           <TextField
