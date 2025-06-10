@@ -49,7 +49,7 @@ export async function POST(request) {
       });
     } else {
       // Buscar informações do ecoponto selecionado
-      const ecopontoResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/collection-points/${ecoponto}`);
+      const ecopontoResponse = await fetch(`/api/collection-points/${ecoponto}`);
       if (!ecopontoResponse.ok) {
         throw new Error('Erro ao buscar informações do ecoponto');
       }
