@@ -21,6 +21,7 @@ import {
   Paper
 } from '@mui/material';
 import AppLayout from '@/components/Layout/page';
+import { formatPhone, validatePhone } from '@/utils/validators';
 
 const formatAddress = (address) => {
   const parts = [
@@ -70,27 +71,6 @@ export default function ContatoPage() {
     };
     fetchEcopontos();
   }, []);
-
-  // Função para formatar telefone (formato brasileiro)
-  const formatPhone = (value) => {
-    let v = value.replace(/\D/g, '');
-    if (v.length > 11) v = v.slice(0, 11);
-    if (v.length > 10) {
-      return v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-    } else if (v.length > 5) {
-      return v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-    } else if (v.length > 2) {
-      return v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
-    } else {
-      return v;
-    }
-  };
-
-  // Validação do telefone
-  const validatePhone = (value) => {
-    const regex = /^\(\d{2}\) \d{4,5}-\d{4}$/;
-    return regex.test(value);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
