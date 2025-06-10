@@ -31,6 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect, useState, useCallback } from 'react';
+import { formatPhone, validatePhone } from '@/utils/validators';
 import {
   registerResponsible,
   updateResponsible,
@@ -147,10 +148,18 @@ export default function ResponsiblePage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    if (name === 'phone') {
+      const formatted = formatPhone(value);
+      setFormData({
+        ...formData,
+        [name]: formatted
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const validateForm = () => {
@@ -177,6 +186,11 @@ export default function ResponsiblePage() {
     
     if (!formData.cpf.trim()) {
       showAlert('CPF é obrigatório', 'error');
+      return false;
+    }
+    
+    if (formData.phone && !validatePhone(formData.phone)) {
+      showAlert('Telefone inválido. Use o formato (99) 99999-9999', 'error');
       return false;
     }
     
