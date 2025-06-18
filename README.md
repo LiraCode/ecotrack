@@ -3,11 +3,12 @@
 EcoTrack é uma plataforma inovadora que conecta ecopontos a usuários, facilitando a coleta seletiva e promovendo a educação ambiental. Nosso objetivo é tornar a reciclagem mais acessível e conscientizar a população sobre práticas sustentáveis.
 
 Criado para disciplina Programação 3 (web) no curso de ciência da computação - UFAL
+por:  Felipe L., Sthefany B., A. Guilherme, Jhenyfer K., Efraim L.
 
 ## 🚀 Tecnologias
 
-- [Next.js 15.3](https://nextjs.org) - Framework React para produção
-- [React](https://reactjs.org) - Biblioteca JavaScript para interfaces
+- [Next.js 15.3](https://nextjs.org) - Framework React usado no front e no back
+- [MUI](https://mui.com/) - biblioteca de componentes de interface de usuário para React
 - [Tailwind CSS](https://tailwindcss.com) - Framework CSS utilitário
 
 ## 📋 Pré-requisitos
