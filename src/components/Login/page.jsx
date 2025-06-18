@@ -181,8 +181,8 @@ export default function Login({ type }) {
 
   return (
     <div className="min-h-screen">
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
           {/* Cabeçalho verde arredondado com texto branco */}
           <div className="bg-green-600 text-white py-4 px-6 rounded-t-lg">
             <h1 className="text-2xl font-bold text-center">
@@ -197,7 +197,7 @@ export default function Login({ type }) {
             
             <div className={`relative mb-4 ${errors.login ? 'border-red-500' : 'border-gray-300'}`}>
               <input
-                className="w-full h-12 px-4 py-2 text-base border rounded-md focus:outline-none focus:border-green-500 transition-all"
+                className="w-full h-12 px-4 py-2 text-base border rounded-md focus:outline-none focus:border-green-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 type="email"
                 name="login"
                 value={formData.login}
@@ -214,7 +214,7 @@ export default function Login({ type }) {
             {!resetMode && (
               <div className={`relative mb-4 ${errors.senha ? 'border-red-500' : 'border-gray-300'}`}>
                 <input
-                  className="w-full h-12 px-4 py-2 text-base border rounded-md focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full h-12 px-4 py-2 text-base border rounded-md focus:outline-none focus:border-green-500 transition-all dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   type="password"
                   name="senha"
                   value={formData.senha}
