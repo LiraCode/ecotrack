@@ -2,20 +2,18 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import styles from './post.module.css';
-// Use isomorphic-dompurify for both client and server environments
+import { Box, Typography, Paper, Chip, useTheme } from '@mui/material';
 import DOMPurify from 'dompurify';
 
 export default function PostsContent({ posts }) {
   const [expandedPost, setExpandedPost] = useState(null);
   const [localPosts, setLocalPosts] = useState([]);
+  const theme = useTheme();
   
   useEffect(() => {
-    // If posts are provided as props, use them
     if (posts && posts.length > 0) {
       setLocalPosts(posts);
     } else {
-      // Otherwise fetch posts directly (fallback)
       const fetchPosts = async () => {
         try {
           const response = await fetch('/api/posts');
@@ -33,17 +31,13 @@ export default function PostsContent({ posts }) {
     }
   }, [posts]);
   
-  // Function to safely render HTML content
   const renderHTML = (content) => {
     if (!content) return null;
-    // Remove tags HTML para a prévia
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = DOMPurify.sanitize(content);
     const textContent = tempDiv.textContent || tempDiv.innerText;
-    // Limita o texto a 150 caracteres, preservando palavras completas
     let previewText = '';
     if (textContent.length > 150) {
-      // Encontra o último espaço antes do limite de 150 caracteres
       const lastSpace = textContent.substring(0, 150).lastIndexOf(' ');
       previewText = textContent.substring(0, lastSpace).trim() + '...';
     } else {
@@ -54,125 +48,200 @@ export default function PostsContent({ posts }) {
   
   if (localPosts.length === 0) {
     return (
-      <div className={styles.postsContainer}>
-        <h1 className={styles.pageTitle}>EcoTrack Sustentável</h1>
-        <p className={styles.pageSubtitle}>Esse é o nosso espaço para posts sobre sustentabilidade e tecnologia.</p>
-        <div className={styles.loadingContainer}>
-          <p>Carregando posts...</p>
-        </div>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" sx={{ color: theme.palette.primary.main, mb: 2 }}>
+          EcoTrack Sustentável
+        </Typography>
+        <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 3 }}>
+          Esse é o nosso espaço para posts sobre sustentabilidade e tecnologia.
+        </Typography>
+        <Typography>Carregando posts...</Typography>
+      </Box>
     );
   }
   
   return (
-    <div className={styles.postsContainer}>
-      <h1 className={styles.pageTitle}>EcoTrack Sustentável</h1>
-      <p className={styles.pageSubtitle}>Esse é o nosso espaço para posts sobre sustentabilidade e tecnologia.</p>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" sx={{ color: theme.palette.primary.main, mb: 2 }}>
+        EcoTrack Sustentável
+      </Typography>
+      <Typography variant="subtitle1" sx={{ color: theme.palette.text.secondary, mb: 3 }}>
+        Esse é o nosso espaço para posts sobre sustentabilidade e tecnologia.
+      </Typography>
       
-      <div className={styles.postsGrid}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: 3 
+      }}>
         {localPosts.map((post) => (
-          <article key={post._id} className={styles.postCard}>
-            <header className={styles.postHeader}>
-              <h2 className={styles.postTitle}>
-                {post.title.split(' ').map((word, index, array) => (
-                  <span key={index}>
-                    {word}
-                    {index < array.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
-              </h2>
+          <Paper
+            key={post._id}
+            elevation={1}
+            sx={{
+              p: 3,
+              backgroundColor: theme.palette.background.paper,
+              borderRadius: 2,
+              transition: 'transform 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                transform: 'translateY(-4px)',
+                boxShadow: theme.shadows[4]
+              }
+            }}
+          >
+            <Box>
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  color: theme.palette.primary.main,
+                  mb: 1,
+                  fontWeight: 'bold',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}
+              >
+                {post.title}
+              </Typography>
+              
               {post.subtitle && (
-                <p className={styles.postSubtitle}>{post.subtitle}</p>
+                <Typography 
+                  variant="subtitle1" 
+                  sx={{ 
+                    color: theme.palette.text.secondary,
+                    fontStyle: 'italic',
+                    mb: 2
+                  }}
+                >
+                  {post.subtitle}
+                </Typography>
               )}
-            </header>
+            </Box>
             
             {post.image && (
               <Link href={`/posts/${post._id}`} passHref>
-                <div 
-                  className={styles.postImage}
-                  role="button"
-                  tabIndex={0}
+                <Box 
+                  sx={{ 
+                    position: 'relative',
+                    width: '100%',
+                    height: { xs: 200, sm: 300, md: 400 },
+                    mb: 2,
+                    cursor: 'pointer',
+                    borderRadius: 1,
+                    overflow: 'hidden'
+                  }}
                 >
                   <Image
                     src={post.image}
                     alt={`Visualizar: ${post.title}`}
-                    width={800}
-                    height={400}
-                    className={styles.imageElement}
+                    fill
+                    style={{ objectFit: 'cover' }}
                   />
-                  <div className={styles.imageOverlay}>Clique para ver mais</div>
-                </div>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      bgcolor: 'rgba(0,0,0,0.5)',
+                      color: 'white',
+                      p: 1,
+                      textAlign: 'center'
+                    }}
+                  >
+                    Clique para ver mais
+                  </Box>
+                </Box>
               </Link>
             )}
             
-            <div className={styles.postBody}>
-              <p className={styles.postPreview}>
-                {post.content && (
-                  <>
-                    {post.content
-                      .replace(/<br\s*\/?>/gi, '\n') // Substitui <br> por quebra de linha
-                      .replace(/<\/?p>/gi, '\n') // Substitui <p> e </p> por quebra de linha
-                      .replace(/<\/?h[1-5]>/gi, '\n') // Substitui tags h1-h5 por quebra de linha
-                      .replace(/<[^>]*>/g, '') // Remove outras tags HTML
-                      .replace(/\n\s*\n/g, '\n') // Remove linhas em branco extras
-                      .replace(/^\s+|\s+$/gm, '') // Remove espaços em branco no início e fim de cada linha
-                      .trim() // Remove espaços em branco no início e fim do texto todo
-                      .split('\n') // Divide por quebras de linha
-                      .filter(line => line.trim() !== '') // Remove linhas vazias
-                      .slice(0, 3) // Pega apenas as 3 primeiras linhas
-                      .join('\n') // Junta novamente com quebras de linha
-                      .substring(0, 150) // Limita a 150 caracteres
-                      .split(' ') // Divide em palavras
-                      .slice(0, -1) // Remove a última palavra se estiver cortada
-                      .join(' ') // Junta novamente com espaços
-                      + '...'}
-                  </>
-                )}
-              </p>
-            </div>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: theme.palette.text.primary,
+                mb: 2,
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}
+            >
+              {post.content && (
+                post.content
+                  .replace(/<br\s*\/?>/gi, '\n')
+                  .replace(/<\/?p>/gi, '\n')
+                  .replace(/<\/?h[1-5]>/gi, '\n')
+                  .replace(/<[^>]*>/g, '')
+                  .replace(/\n\s*\n/g, '\n')
+                  .replace(/^\s+|\s+$/gm, '')
+                  .trim()
+                  .split('\n')
+                  .filter(line => line.trim() !== '')
+                  .slice(0, 3)
+                  .join('\n')
+                  .substring(0, 150)
+                  .split(' ')
+                  .slice(0, -1)
+                  .join(' ') + '...'
+              )}
+            </Typography>
             
-            {expandedPost === post._id && (
-              <div className={styles.expandedContent}>
-                {/* Render the full content with HTML formatting */}
-                <div 
-                  className={styles.fullContent}
-                  dangerouslySetInnerHTML={renderHTML(post.content)}
-                />
-                
-                {/* If there's additional description content, render it too */}
-                {post.description && (
-                  <div 
-                    className={styles.tipContent}
-                    dangerouslySetInnerHTML={renderHTML(post.description)}
-                  />
-                )}
-              </div>
-            )}
-            
-            <div className={styles.postFooter}>
-              <p className={styles.postDate}>
+            <Box 
+              sx={{ 
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mt: 2,
+                pt: 2,
+                borderTop: 1,
+                borderColor: 'divider'
+              }}
+            >
+              <Typography 
+                variant="body2" 
+                sx={{ color: theme.palette.text.secondary }}
+              >
                 {new Date(post.createdAt).toLocaleDateString('pt-BR', {
                   day: '2-digit',
                   month: '2-digit',
                   year: 'numeric'
                 })}
-              </p>
+              </Typography>
+              
               {post.category && post.category.length > 0 && (
-                <div className={styles.postCategories}>
+                <Box sx={{ display: 'flex', gap: 1 }}>
                   {post.category.map((cat, index) => (
-                    <span key={index} className={styles.categoryTag}>{cat}</span>
+                    <Chip
+                      key={index}
+                      label={cat}
+                      size="small"
+                      sx={{
+                        bgcolor: theme.palette.mode === 'dark' 
+                          ? 'rgba(76, 175, 80, 0.2)' 
+                          : 'rgba(46, 125, 50, 0.1)',
+                        color: theme.palette.mode === 'dark'
+                          ? 'primary.light'
+                          : 'primary.main'
+                      }}
+                    />
                   ))}
-                </div>
+                </Box>
               )}
               
-              {/* Adicionar botão para ver post completo */}
-              <Link href={`/posts/${post._id}`} className={styles.readMoreLink}>
+              <Link 
+                href={`/posts/${post._id}`}
+                style={{ 
+                  textDecoration: 'none',
+                  color: theme.palette.primary.main
+                }}
+              >
                 Ver post completo
               </Link>
-            </div>
-          </article>
+            </Box>
+          </Paper>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

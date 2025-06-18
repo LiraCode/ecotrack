@@ -36,19 +36,29 @@ const EcoPointsList = ({ points, activeMarker, onMarkerClick }) => {
             sx={{
               py: 2,
               px: { xs: 2, sm: 3 },
-              bgcolor: activeMarker === point.name ? '#e8f5e9' : 'background.paper',
+              bgcolor: activeMarker === point.name 
+                ? theme.palette.mode === 'dark' 
+                  ? 'rgba(76,175,80,0.2)' 
+                  : '#e8f5e9' 
+                : 'background.paper',
               '&:hover': {
-                bgcolor: '#f1f8e9',
-                cursor: 'pointer'
+                bgcolor: theme.palette.mode === 'dark' 
+                  ? 'rgba(76,175,80,0.15)' 
+                  : '#f1f8e9',
+                cursor: 'pointer',
+                transform: 'translateY(-1px)',
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 2px 8px rgba(76,175,80,0.2)'
+                  : '0 2px 8px rgba(0,0,0,0.1)'
               },
-              transition: 'background-color 0.2s'
+              transition: 'all 0.2s ease-in-out'
             }}
           >
             <Box sx={{ display: 'flex', width: '100%', flexDirection: 'column' }}>
               <Box sx={{ display: 'flex', width: '100%' }}>
                 <LocationOnIcon 
                   sx={{ 
-                    color: '#2e8b57', 
+                    color: theme.palette.mode === 'dark' ? 'primary.light' : '#2e8b57', 
                     mr: 2,
                     fontSize: isMobile ? '1.5rem' : '2rem',
                     mt: 0.5
@@ -59,7 +69,7 @@ const EcoPointsList = ({ points, activeMarker, onMarkerClick }) => {
                     variant={isMobile ? "subtitle1" : "h6"}
                     sx={{
                       fontWeight: activeMarker === point.name ? 700 : 600,
-                      color: '#2e8b57',
+                      color: theme.palette.mode === 'dark' ? 'primary.light' : '#2e8b57',
                       mb: 0.5
                     }}
                   >
@@ -89,7 +99,7 @@ const EcoPointsList = ({ points, activeMarker, onMarkerClick }) => {
               <Typography
                 variant="caption"
                 sx={{
-                  color: 'text.secondary',
+                  color: theme.palette.mode === 'dark' ? 'primary.light' : 'text.secondary',
                   mt: 1,
                   ml: 'auto',
                   fontStyle: 'italic'

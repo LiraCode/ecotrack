@@ -12,7 +12,9 @@ import {
   Divider,
   CircularProgress,
   Avatar,
-  Alert
+  Alert,
+  DialogTitle,
+  DialogActions
 } from '@mui/material';
 import {
   Person,
@@ -162,7 +164,7 @@ export default function AdminProfilePage() {
                 p: isMobile ? 2 : 3,
                 mb: 4,
                 borderRadius: 2,
-                background: "linear-gradient(to right, #e8f5e9, #f1f8e9)",
+                background: "linear-gradient(to right, primary.light, primary.main)",
               }}
             >
               <Box
@@ -179,7 +181,7 @@ export default function AdminProfilePage() {
                   sx={{
                     width: isMobile ? 60 : 80,
                     height: isMobile ? 60 : 80,
-                    bgcolor: "#2e7d32",
+                    bgcolor: "primary.main",
                     mr: isMobile ? 0 : 3,
                   }}
                 />
@@ -190,7 +192,7 @@ export default function AdminProfilePage() {
                 }}>
                   <Typography
                     variant={isMobile ? "h5" : "h4"}
-                    sx={{ color: "#2e7d32", fontWeight: "bold" }}
+                    sx={{ color: "primary.main", fontWeight: "bold" }}
                   >
                     {userData?.name || user?.displayName || "Administrador"}
                   </Typography>
@@ -212,11 +214,11 @@ export default function AdminProfilePage() {
                   startIcon={<Edit />}
                   onClick={handleEditProfile}
                   sx={{
-                    borderColor: "#2e7d32",
-                    color: "#2e7d32",
+                    borderColor: "primary.main",
+                    color: "primary.main",
                     "&:hover": {
-                      borderColor: "#1b5e20",
-                      backgroundColor: "#f1f8e9",
+                      borderColor: "primary.dark",
+                      backgroundColor: "action.hover",
                     },
                     width: isMobile ? "100%" : "auto"
                   }}
@@ -254,16 +256,16 @@ export default function AdminProfilePage() {
                   sx={{
                     "& .MuiTab-root": {
                       fontWeight: "bold",
-                      color: "#555",
-                      "&.Mui-selected": { color: "#2e7d32" },
+                      color: "text.secondary",
+                      "&.Mui-selected": { color: "primary.main" },
                       "& .MuiSvgIcon-root": {
                         fontSize: isMobile ? '1.2rem' : '1.5rem',
                         marginBottom: isMobile ? '0' : '4px'
                       }
                     },
-                    "& .MuiTabs-indicator": { backgroundColor: "#2e7d32" },
+                    "& .MuiTabs-indicator": { backgroundColor: "primary.main" },
                     "& .MuiTabs-scrollButtons": {
-                      color: "#2e7d32",
+                      color: "primary.main",
                       '&.Mui-disabled': {
                         opacity: 0.3
                       }
@@ -286,7 +288,7 @@ export default function AdminProfilePage() {
               {/* Aba de Dados Pessoais */}
               {activeTab === 0 && (
                 <Box sx={{ p: isMobile ? 1 : 3 }}>
-                  <Typography variant="h6" sx={{ mb: 3, color: "#2e7d32" }}>
+                  <Typography variant="h6" sx={{ mb: 3, color: "primary.main" }}>
                     Informações Pessoais
                   </Typography>
 
@@ -346,9 +348,9 @@ export default function AdminProfilePage() {
                       startIcon={<Edit />}
                       onClick={handleEditProfile}
                       sx={{
-                        backgroundColor: "#2e7d32",
+                        backgroundColor: "primary.main",
                         "&:hover": {
-                          backgroundColor: "#1b5e20",
+                          backgroundColor: "primary.dark",
                         },
                       }}
                     >
@@ -361,7 +363,7 @@ export default function AdminProfilePage() {
               {/* Aba de Senha e Segurança */}
               {activeTab === 1 && (
                 <Box sx={{ p: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 3, color: "#2e7d32" }}>
+                  <Typography variant="h6" sx={{ mb: 3, color: "primary.main" }}>
                     Senha e Segurança
                   </Typography>
                   

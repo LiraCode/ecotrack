@@ -179,8 +179,13 @@ export default function OrganizationsList({
                 
                 {/* Detalhes expandidos */}
                 <Collapse in={expandedId === org._id} timeout="auto" unmountOnExit>
-                  <Box sx={{ p: 3, bgcolor: '#f9f9f9', borderTop: '1px solid #e0e0e0' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: '#2e7d32' }}>
+                  <Box sx={{ 
+                    p: 3, 
+                    bgcolor: 'background.paper', 
+                    borderTop: 1,
+                    borderColor: 'divider'
+                  }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2, color: 'primary.main' }}>
                       Detalhes do Ecoponto
                     </Typography>
                     

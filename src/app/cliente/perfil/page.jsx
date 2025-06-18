@@ -249,63 +249,67 @@ export default function ProfilePage() {
           <>
             {/* Cabeçalho do Perfil */}
             <Paper
-              elevation={2}
+              elevation={3}
               sx={{
-                p: isMobile ? 2 : 3,
+                p: isMobile ? 2 : 4,
                 mb: 4,
                 borderRadius: 2,
-                background: "linear-gradient(to right, #e8f5e9, #f1f8e9)",
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider'
               }}
             >
               <Box
-                sx={{ 
-                  display: "flex", 
-                  alignItems: isMobile ? "flex-start" : "center",
+                sx={{
+                  display: "flex",
                   flexDirection: isMobile ? "column" : "row",
-                  gap: isMobile ? 2 : 0
+                  alignItems: isMobile ? "center" : "flex-start",
+                  gap: 2
                 }}
               >
                 <Avatar
-                  src={(user && user.photoURL) || "images/generic-user.png"}
-                  alt={userData.name || "Perfil"}
+                  src={userData?.photoURL || user?.photoURL}
+                  alt={userData?.name || user?.displayName}
                   sx={{
                     width: isMobile ? 60 : 80,
                     height: isMobile ? 60 : 80,
-                    bgcolor: "#2e7d32",
+                    bgcolor: "primary.main",
                     mr: isMobile ? 0 : 3,
                   }}
-                ></Avatar>
+                >
+                  {(userData?.name || user?.displayName || "C")[0].toUpperCase()}
+                </Avatar>
 
-                <Box sx={{ 
-                  flexGrow: 1,
-                  mb: isMobile ? 2 : 0 
-                }}>
+                <Box sx={{ flex: 1, textAlign: isMobile ? "center" : "left" }}>
                   <Typography
                     variant={isMobile ? "h5" : "h4"}
-                    sx={{ color: "#2e7d32", fontWeight: "bold" }}
+                    sx={{ color: "primary.main", fontWeight: "bold" }}
                   >
-                    {userData?.name || user?.displayName || "Usuário"}
+                    {userData?.name || user?.displayName || "Cliente"}
                   </Typography>
-                  <Typography variant="body1" color="text.secondary">
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "text.secondary" }}
+                  >
                     {userData?.email || user?.email}
                   </Typography>
-                  {userData?.phone && (
-                    <Typography variant="body2" color="text.secondary">
-                      Telefone: {userData.phone}
-                    </Typography>
-                  )}
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "text.secondary" }}
+                  >
+                    Telefone: {userData?.phone || "Não informado"}
+                  </Typography>
                 </Box>
 
                 <Button
                   variant="outlined"
-                  startIcon={<Edit />}
                   onClick={handleEditProfile}
                   sx={{
-                    borderColor: "#2e7d32",
-                    color: "#2e7d32",
+                    borderColor: "primary.main",
+                    color: "primary.main",
                     "&:hover": {
-                      borderColor: "#1b5e20",
-                      backgroundColor: "#f1f8e9",
+                      borderColor: "primary.dark",
+                      backgroundColor: "action.hover",
                     },
                     width: isMobile ? "100%" : "auto"
                   }}
@@ -607,7 +611,7 @@ export default function ProfilePage() {
                                   flex: isMobile ? 1 : "initial",
                                   minWidth: isMobile ? "auto" : 100
                                 }}
-                                href={`/agendamento/`}
+                                href={`/cliente/agendamento/`}
                               >
                                 Detalhes
                               </Button>

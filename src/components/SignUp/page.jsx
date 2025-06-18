@@ -195,8 +195,8 @@ export default function Cadastro() {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="w-full min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
         <div className="meta-3 text-white py-5 px-6">
           <h2 className="text-2xl font-bold text-center">
             Cadastro de Cliente
@@ -213,7 +213,7 @@ export default function Cadastro() {
         <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-4">
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="nomeCompleto"
               placeholder="Nome Completo"
@@ -225,7 +225,7 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="email"
               name="email"
               placeholder="Email"
@@ -280,7 +280,7 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="endereco"
               placeholder="Rua/Avenida"
@@ -292,7 +292,7 @@ export default function Cadastro() {
           
           <div className="grid grid-cols-2 gap-4">
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="numero"
               placeholder="Número"
@@ -301,7 +301,7 @@ export default function Cadastro() {
               required
             />
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="complemento"
               placeholder="Complemento"
@@ -312,7 +312,7 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="bairro"
               placeholder="Bairro"
@@ -324,7 +324,7 @@ export default function Cadastro() {
           
           <div className="grid grid-cols-2 gap-4">
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="cidade"
               placeholder="Cidade"
@@ -333,7 +333,7 @@ export default function Cadastro() {
               required
             />
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="text"
               name="estado"
               placeholder="Estado"
@@ -359,7 +359,7 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="password"
               name="senha"
               placeholder="Senha"
@@ -372,7 +372,7 @@ export default function Cadastro() {
           
           <div>
             <input
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:text-white"
               type="password"
               name="confirmarSenha"
               placeholder="Confirmar Senha"

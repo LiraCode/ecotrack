@@ -473,7 +473,7 @@ export default function AgendamentoManagement() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              sx={{ color: "primary.main", fontWeight: "bold" }}
             >
               Gerenciamento de Agendamentos
             </Typography>
@@ -590,7 +590,7 @@ export default function AgendamentoManagement() {
 
           <TableContainer>
             <Table>
-              <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
+              <TableHead sx={{ backgroundColor: "background.paper" }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: "bold" }}>Cliente</TableCell>
                   <TableCell sx={{ fontWeight: "bold" }}>Ecoponto</TableCell>
@@ -636,7 +636,7 @@ export default function AgendamentoManagement() {
                                 size="small"
                                 label={`${waste.wasteId?.type || "Desconhecido"
                                   } (${waste.quantity < 1 ? waste.weight : waste.quantity} ${waste.weight > 0 ? "kg" : "Un"}.)`}
-                                sx={{ bgcolor: "#e8f5e9", color: "#2e7d32" }}
+                                sx={{ bgcolor: "action.hover", color: "primary.main" }}
                               />
                             ))}
                           </Box>

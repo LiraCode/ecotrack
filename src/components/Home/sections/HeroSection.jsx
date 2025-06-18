@@ -29,57 +29,59 @@ export default function HeroSection() {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)'
+          backgroundColor: 'rgba(0,0,0,0.6)'
         }}
       />
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <Box>
+      <Container maxWidth="lg">
+        <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', color: 'white' }}>
           <Typography 
             variant="h2" 
             component="h1" 
             sx={{ 
-              color: 'white', 
-              fontWeight: 'bold', 
               mb: 2,
-              fontSize: { xs: '2rem', sm: 'inherit' }
+              fontWeight: 'bold',
+              fontSize: { xs: '2rem', sm: '3rem', md: '4rem' }
             }}
           >
             EcoTrack
           </Typography>
-        </Box>
-        <Box>
           <Typography 
             variant="h5" 
+            component="p" 
             sx={{ 
-              color: 'white', 
-              mb: 4, 
+              mb: 4,
+              maxWidth: '800px',
               mx: 'auto',
-              fontSize: { xs: '1rem', sm: 'inherit' }
+              fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' }
             }}
           >
-            Conectando você aos pontos de coleta para um descarte consciente e sustentável
+            Conectando você aos pontos de reciclagem mais próximos e ajudando a construir um futuro mais sustentável.
           </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Box
-            component="a"
-            href="/locais"
-            sx={{
-              backgroundColor: '#2e8b57',
-              color: 'white',
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              fontWeight: 500,
-              padding: { xs: '8px 16px', sm: '12px 24px' },
-              borderRadius: '4px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              '&:hover': { backgroundColor: '#1f6b47' }
-            }}
-          >
-            Encontrar Ecopontos
-            <ArrowForwardIcon sx={{ ml: 1 }} />
-          </Box>
+          <Link href="/signup" passHref>
+            <Box
+              component="button"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 4,
+                py: 2,
+                bgcolor: 'primary.main',
+                color: 'white',
+                border: 'none',
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Comece Agora
+              <ArrowForwardIcon />
+            </Box>
+          </Link>
         </Box>
       </Container>
     </Paper>

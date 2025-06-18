@@ -400,7 +400,7 @@ export default function AdminPage() {
       {/* Dialog para adicionar/editar administrador */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle
-          sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
+          sx={{ bgcolor: "background.paper", borderBottom: 1, borderColor: "divider" }}
         >
           {editMode ? "Editar Administrador" : "Novo Administrador"}
         </DialogTitle>
@@ -507,7 +507,7 @@ export default function AdminPage() {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ bgcolor: "background.paper", borderTop: 1, borderColor: "divider" }}>
           <Button onClick={handleClose} color="inherit">
             Cancelar
           </Button>

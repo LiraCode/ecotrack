@@ -5,13 +5,14 @@ import DropdownUser from "./DropdownUser";
 import clsx from "clsx";
 import LogoClickable from "../Icons/logoClick/page";
 import { useAuth } from "@/context/AuthContext";
+import { ThemeToggle } from "../ThemeToggle";
 
 const Header = ({ sidebarOpen, setSidebarOpen }) => {
   const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-999 flex w-full meta-3 drop-shadow-none">
-      <div className="flex flex-grow  px-4 py-2 sm:py-4 shadow-2 md:px-6 2xl:px-11">
+      <div className="flex flex-grow px-4 py-2 sm:py-4 shadow-2 md:px-6 2xl:px-11">
         <div className="flex items-center gap-2 sm:gap-4 lg:hidden w-10vh">
           {/* <!-- Hamburger Toggle BTN --> */}
           <button
@@ -86,19 +87,15 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
               </div>
         
         <div className="flex items-center gap-3 2xsm:gap-7">
-          {user && (
-            <>
-              <ul className="flex items-center gap-2 2xsm:gap-4">
-                {/* <!-- Menu de Notificações --> */}
+          <ul className="flex items-center gap-2 2xsm:gap-4">
+            <ThemeToggle />
+            {user && (
+              <>
                 <DropdownNotification />
-                {/* <!-- Menu de Notificações --> */}
-              </ul>
-
-              {/* <!-- Área do Usuário --> */}
-              <DropdownUser />
-              {/* <!-- Área do Usuário --> */}
-            </>
-          )}
+                <DropdownUser />
+              </>
+            )}
+          </ul>
         </div>
       </div>
     </header>

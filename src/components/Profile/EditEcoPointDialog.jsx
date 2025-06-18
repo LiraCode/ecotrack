@@ -9,7 +9,8 @@ import {
   Typography,
   Box,
   CircularProgress,
-  Alert
+  Alert,
+  IconButton
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { useAuth } from '@/context/AuthContext';
@@ -135,24 +136,22 @@ export default function EditEcoPointDialog({
       maxWidth="md"
       fullScreen={isMobile}
     >
-      <DialogTitle sx={{
-        backgroundColor: '#f5f5f5',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-            {ecoPointId ? 'Editar Ecoponto' : 'Novo Ecoponto'}
-          </Typography>
-        </Box>
-        <Button
-          onClick={handleClose}
-          sx={{ minWidth: 'auto', p: 0.5 }}
-          disabled={loading}
-        >
-          <Close />
-        </Button>
+      <DialogTitle
+        sx={{ bgcolor: 'background.paper', color: 'primary.main', fontWeight: 'bold', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}
+      >
+        <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main', flex: 1, minWidth: 0 }} noWrap>
+          {ecoPointId ? 'Editar Ecoponto' : 'Novo Ecoponto'}
+        </Typography>
+        {onClose && (
+          <IconButton
+            aria-label="close"
+            onClick={onClose}
+            edge="end"
+            sx={{ color: 'text.secondary', flexShrink: 0 }}
+          >
+            <Close />
+          </IconButton>
+        )}
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2, mt: 1 }}>
@@ -185,6 +184,10 @@ export default function EditEcoPointDialog({
           </>
         )}
       </DialogContent>
+
+      <DialogActions sx={{ p: 2, bgcolor: 'background.paper' }}>
+        {/* Actions content */}
+      </DialogActions>
     </Dialog>
   );
 }

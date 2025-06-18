@@ -415,8 +415,10 @@ export default function ContatoPage() {
             sx={{
               mt: 3,
               bgcolor: '#08B75B',
+              color: 'white',
               '&:hover': {
-                bgcolor: '#069c4b'
+                bgcolor: '#069c4b',
+                color: 'white'
               },
               height: '48px',
               borderRadius: '8px',

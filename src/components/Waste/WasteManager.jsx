@@ -162,7 +162,7 @@ export default function WasteManager() {
     <Box sx={{ width: '100%' }}>
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+        <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
           Gerenciamento de Tipos de Resíduos
         </Typography>
         <Button 
@@ -170,9 +170,9 @@ export default function WasteManager() {
           startIcon={<Add />}
           onClick={handleAddClick}
           sx={{ 
-            backgroundColor: '#2e7d32',
+            backgroundColor: 'primary.main',
             '&:hover': {
-              backgroundColor: '#1b5e20',
+              backgroundColor: 'primary.dark',
             }
           }}
         >
@@ -183,7 +183,7 @@ export default function WasteManager() {
       {/* Waste Types Table */}
       <TableContainer component={Paper} sx={{ mb: 4, boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableHead sx={{ backgroundColor: 'background.paper' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>Tipo</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Descrição</TableCell>
@@ -241,12 +241,12 @@ export default function WasteManager() {
         maxWidth="sm"
       >
         <DialogTitle sx={{ 
-          backgroundColor: '#f5f5f5',
+          backgroundColor: 'background.paper',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
             {dialogMode === 'add' ? 'Adicionar Tipo de Resíduo' : 'Editar Tipo de Resíduo'}
           </Typography>
           <IconButton onClick={() => setOpenDialog(false)} size="small">
@@ -286,7 +286,7 @@ export default function WasteManager() {
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button 
             onClick={() => setOpenDialog(false)}
-            sx={{ color: '#666' }}
+            sx={{ color: 'text.secondary' }}
           >
             Cancelar
           </Button>
@@ -294,9 +294,9 @@ export default function WasteManager() {
             onClick={handleSubmit}
             variant="contained"
             sx={{ 
-              backgroundColor: '#2e7d32',
+              backgroundColor: 'primary.main',
               '&:hover': {
-                backgroundColor: '#1b5e20',
+                backgroundColor: 'primary.dark',
               }
             }}
           >

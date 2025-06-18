@@ -13,7 +13,8 @@ import {
   Divider,
   Chip,
   Tooltip,
-  CircularProgress
+  CircularProgress,
+  useTheme
 } from '@mui/material';
 import { Close, Cancel, Add, LocationOn, Person, AccessTime } from '@mui/icons-material';
 
@@ -27,6 +28,7 @@ export default function ScheduleDialog({
   isMobile,
   fetchSchedules
 }) {
+  const theme = useTheme();
   const [cancellingSchedule, setCancellingSchedule] = useState(null);
   
   // Filtra os agendamentos para a data selecionada
@@ -94,7 +96,7 @@ export default function ScheduleDialog({
     >
       <DialogTitle
         sx={{
-          backgroundColor: "#f5f5f5",
+          backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f5f5f5',
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -103,7 +105,10 @@ export default function ScheduleDialog({
         <Box>
           <Typography
             variant="h6"
-            sx={{ fontWeight: "bold", color: "#2e7d32" }}
+            sx={{ 
+              fontWeight: "bold", 
+              color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main' 
+            }}
           >
             Agendamentos para {selectedDate}
           </Typography>
@@ -152,15 +157,20 @@ export default function ScheduleDialog({
                   </Box>
                 }
                 sx={{
-                  border: "1px solid #e0e0e0",
+                  border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e0e0'}`,
                   borderRadius: "4px",
                   mb: 2,
-                  backgroundColor:
-                    schedule.status === "Cancelado"
-                      ? "#ffebee"
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? schedule.status === "Cancelado"
+                      ? 'rgba(244,67,54,0.1)'
                       : schedule.status === "Coletado"
-                      ? "#f1f8e9"
-                      : "white",
+                      ? 'rgba(76,175,80,0.1)'
+                      : 'background.paper'
+                    : schedule.status === "Cancelado"
+                    ? "#ffebee"
+                    : schedule.status === "Coletado"
+                    ? "#f1f8e9"
+                    : "white",
                   flexDirection: "column",
                   alignItems: "flex-start",
                   padding: 2,
@@ -172,12 +182,17 @@ export default function ScheduleDialog({
                     variant="h6"
                     sx={{
                       fontWeight: "bold",
-                      color:
-                        schedule.status === "Cancelado"
-                          ? "#d32f2f"
+                      color: theme.palette.mode === 'dark'
+                        ? schedule.status === "Cancelado"
+                          ? 'error.light'
                           : schedule.status === "Coletado"
-                          ? "#4caf50"
-                          : "#333",
+                          ? 'success.light'
+                          : 'text.primary'
+                        : schedule.status === "Cancelado"
+                        ? "#d32f2f"
+                        : schedule.status === "Coletado"
+                        ? "#4caf50"
+                        : "#333",
                       textDecoration:
                         schedule.status === "Coletado" ||
                         schedule.status === "Cancelado"
@@ -192,8 +207,8 @@ export default function ScheduleDialog({
                     label={schedule.type}
                     size="small"
                     sx={{
-                      backgroundColor: "#e8f5e9",
-                      color: "#2e7d32",
+                      backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.2)' : '#e8f5e9',
+                      color: theme.palette.mode === 'dark' ? 'success.light' : '#2e7d32',
                       mt: 0.5,
                       mr: 1,
                     }}
@@ -202,32 +217,48 @@ export default function ScheduleDialog({
                     label={schedule.status}
                     size="small"
                     sx={{
-                      backgroundColor:
-                        schedule.status === "Cancelado"
-                          ? "#ffcdd2"
+                      backgroundColor: theme.palette.mode === 'dark'
+                        ? schedule.status === "Cancelado"
+                          ? 'rgba(244,67,54,0.2)'
                           : schedule.status === "Coletado"
-                          ? "#4caf50"
+                          ? 'rgba(76,175,80,0.2)'
                           : schedule.status === "Confirmado"
-                          ? "#007bff"
-                          : "#ffef9f",
-                      color:
-                        schedule.status === "Cancelado"
-                          ? "#d32f2f"
+                          ? 'rgba(0,123,255,0.2)'
+                          : 'rgba(255,111,0,0.2)'
+                        : schedule.status === "Cancelado"
+                        ? "#ffcdd2"
+                        : schedule.status === "Coletado"
+                        ? "#4caf50"
+                        : schedule.status === "Confirmado"
+                        ? "#007bff"
+                        : "#ffef9f",
+                      color: theme.palette.mode === 'dark'
+                        ? schedule.status === "Cancelado"
+                          ? 'error.light'
                           : schedule.status === "Coletado" || schedule.status === "Confirmado"
-                          ? "white"
-                          : "#ff6f00",
+                          ? 'success.light'
+                          : 'warning.light'
+                        : schedule.status === "Cancelado"
+                        ? "#d32f2f"
+                        : schedule.status === "Coletado" || schedule.status === "Confirmado"
+                        ? "white"
+                        : "#ff6f00",
                       mt: 0.5,
                     }}
                   />
                 </Box>
 
-                <Divider sx={{ width: "100%", my: 1 }} />
+                <Divider sx={{ 
+                  width: "100%", 
+                  my: 1,
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                }} />
 
                 <Box sx={{ width: "100%" }}>
                   <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                     <AccessTime
                       fontSize="small"
-                      sx={{ color: "#757575", mr: 1 }}
+                      sx={{ color: theme.palette.mode === 'dark' ? 'text.secondary' : '#757575', mr: 1 }}
                     />
                     <Typography variant="body2" color="textSecondary">
                       Horário: {getTimeFromDate(schedule.time, schedule)}
@@ -239,7 +270,7 @@ export default function ScheduleDialog({
                   >
                     <LocationOn
                       fontSize="small"
-                      sx={{ color: "#757575", mr: 1, mt: 0.5 }}
+                      sx={{ color: theme.palette.mode === 'dark' ? 'text.secondary' : '#757575', mr: 1, mt: 0.5 }}
                     />
                     <Typography variant="body2" color="textSecondary">
                       Endereço:{" "}
@@ -256,7 +287,7 @@ export default function ScheduleDialog({
                   </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Person fontSize="small" sx={{ color: "#757575", mr: 1 }} />
+                    <Person fontSize="small" sx={{ color: theme.palette.mode === 'dark' ? 'text.secondary' : '#757575', mr: 1 }} />
                     <Typography variant="body2" color="textSecondary">
                       Responsável pela coleta:{" "}
                       {schedule.collector || "Não informado"}
@@ -279,11 +310,12 @@ export default function ScheduleDialog({
           startIcon={<Add />}
           variant="outlined"
           sx={{
-            borderColor: "#2e7d32",
-            color: "#2e7d32",
+            borderColor: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main',
+            color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main',
             "&:hover": {
-              borderColor: "#1b5e20",
-              backgroundColor: "#f1f8e9",
+              borderColor: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark',
+              backgroundColor: theme.palette.mode === 'dark' ? 'action.hover' : 'primary.light',
+              color: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark'
             },
           }}
         >
@@ -293,9 +325,9 @@ export default function ScheduleDialog({
           onClick={onClose}
           variant="contained"
           sx={{
-            backgroundColor: "#2e7d32",
+            backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : 'primary.main',
             "&:hover": {
-              backgroundColor: "#1b5e20",
+              backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark',
             },
           }}
         >

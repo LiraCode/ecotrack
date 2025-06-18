@@ -1,11 +1,10 @@
-
 'use client';
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ClickOutside from "@/components/ClickOutside";
 import { useAuth } from "../../context/AuthContext";
-import { useEffect } from "react";
+import { useTheme } from '@mui/material/styles';
 
 
 // const userFetch = async (id, token) => {
@@ -24,6 +23,7 @@ import { useEffect } from "react";
 const DropdownUser = () => {
    const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user, logout } = useAuth();
+  const theme = useTheme();
   
   // const [dados, setDados] = useState(null);
   const role = user?.role;
@@ -39,7 +39,7 @@ const DropdownUser = () => {
       rota = "/administracao";
       break;
     case "responsavel":
-      rota = "/parceiro"; // Removed extra semicolon here
+      rota = "/parceiro";
       break;
     case "User":
       rota = "/cliente";
@@ -48,7 +48,7 @@ const DropdownUser = () => {
       rota = "#";
 }
 
-  if (rota !== "#") { // Changed condition here
+  if (rota !== "#") {
      url = rota.concat(page);
   } else {
     url = "#";
@@ -71,41 +71,37 @@ const DropdownUser = () => {
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
       <Link
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="flex items-center gap-4"
+        className="flex items-center gap-4 rounded-lg hover:bg-green-950/60 dark:hover:bg-green-950/70 transition-colors p-2"
         href="#"
       >
-        <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-white">
-            {   Name || "Usuário" }
-          </span>
-          <span className="text-white block text-xs">{ role || "Não Logado"  }</span>
+        <span className="h-12 w-12 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+          <img
+            src={user?.photoURL || "/images/user/user-01.png"}
+            alt="User"
+            className="h-full w-full object-cover"
+          />
         </span>
 
-        <span className="h-12 w-12 rounded-full">
-        <div className="relative w-12 h-12 sm:w-14 sm:h-14" style={{borderRadius:"50%"}}>
-          <Image
-            src={ urlPhoto || "/images/generic_user.png"} 
-            style={{  borderRadius: "50%", objectFit: "cover" }}
-            fill={true}
-            sizes="128px,128px"
-            alt="User"
-          />
-          </div>
+        <span className="hidden text-right lg:block">
+          <span className="block text-sm font-medium text-white">
+            {user?.displayName || 'Usuário'}
+          </span>
+          <span className="block text-xs text-gray-300">
+            {user?.role || 'Usuário'}
+          </span>
         </span>
 
         <svg
-          className="hidden fill-current sm:block"
+          className="fill-current text-white"
           width="12"
-          height="8"
-          viewBox="0 0 12 8"
+          height="12"
+          viewBox="0 0 12 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M0.410765 0.910734C0.736202 0.585297 1.26384 0.585297 1.58928 0.910734L6.00002 5.32148L10.4108 0.910734C10.7362 0.585297 11.2638 0.585297 11.5893 0.910734C11.9147 1.23617 11.9147 1.76381 11.5893 2.08924L6.58928 7.08924C6.26384 7.41468 5.7362 7.41468 5.41077 7.08924L0.410765 2.08924C0.0853277 1.76381 0.0853277 1.23617 0.410765 0.910734Z"
-            fill=""
+            d="M10.293 3.293L6 7.586L1.707 3.293C1.316 2.902 0.684 2.902 0.293 3.293C-0.098 3.684 -0.098 4.316 0.293 4.707L5.293 9.707C5.684 10.098 6.316 10.098 6.707 9.707L11.707 4.707C12.098 4.316 12.098 3.684 11.707 3.293C11.316 2.902 10.684 2.902 10.293 3.293Z"
+            fill="currentColor"
           />
         </svg>
       </Link>
@@ -113,13 +109,21 @@ const DropdownUser = () => {
       {/* <!-- Dropdown Start --> */}
       {dropdownOpen && (
         <div
-          className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border  meta-3 text-white shadow-default border-strokedark bg-boxdark`}
+          className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-lg border shadow-lg ${
+            theme.palette.mode === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'
+          }`}
         >
-          <ul className="flex flex-col gap-5 px-6 py-7.5 border-b border-strokedark">
+          <ul className="flex flex-col gap-2 px-4 py-3">
             <li>
               <Link
                 href= {url}
-                className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+                className={`flex items-center gap-3.5 px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  theme.palette.mode === 'dark' 
+                    ? 'text-gray-200 hover:bg-gray-700 hover:text-primary-400' 
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-primary-600'
+                }`}
               >
                 <svg
                   className="fill-current"
@@ -131,11 +135,11 @@ const DropdownUser = () => {
                 >
                   <path
                     d="M11 9.62499C8.42188 9.62499 6.35938 7.59687 6.35938 5.12187C6.35938 2.64687 8.42188 0.618744 11 0.618744C13.5781 0.618744 15.6406 2.64687 15.6406 5.12187C15.6406 7.59687 13.5781 9.62499 11 9.62499ZM11 2.16562C9.28125 2.16562 7.90625 3.50624 7.90625 5.12187C7.90625 6.73749 9.28125 8.07812 11 8.07812C12.7188 8.07812 14.0938 6.73749 14.0938 5.12187C14.0938 3.50624 12.7188 2.16562 11 2.16562Z"
-                    fill=""
+                    fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
                   />
                   <path
                     d="M17.7719 21.4156H4.2281C3.5406 21.4156 2.9906 20.8656 2.9906 20.1781V17.0844C2.9906 13.7156 5.7406 10.9656 9.10935 10.9656H12.925C16.2937 10.9656 19.0437 13.7156 19.0437 17.0844V20.1781C19.0094 20.8312 18.4594 21.4156 17.7719 21.4156ZM4.53748 19.8687H17.4969V17.0844C17.4969 14.575 15.4344 12.5125 12.925 12.5125H9.07498C6.5656 12.5125 4.5031 14.575 4.5031 17.0844V19.8687H4.53748Z"
-                    fill=""
+                    fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
                   />
                 </svg>
                 Meu Perfil
@@ -143,8 +147,15 @@ const DropdownUser = () => {
             </li>
            
           </ul>
-          {user && (
-            <button className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base" onClick={() => logout()} >
+          <div className={`px-4 py-2 border-t ${theme.palette.mode === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+            <button
+              onClick={logout}
+              className={`flex items-center gap-3.5 w-full px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 ${
+                theme.palette.mode === 'dark' 
+                  ? 'text-gray-200 hover:bg-gray-700 hover:text-red-400' 
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-red-600'
+              }`}
+            >
               <svg
                 className="fill-current"
                 width="22"
@@ -154,17 +165,33 @@ const DropdownUser = () => {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  d="M15.5375 0.618744H11.6531C10.7594 0.618744 10.0031 1.37499 10.0031 2.26874V4.64062C10.0031 5.05312 10.3469 5.39687 10.7594 5.39687C11.1719 5.39687 11.55 5.05312 11.55 4.64062V2.23437C11.55 2.16562 11.5844 2.13124 11.6531 2.13124H15.5375C16.3625 2.13124 17.0156 2.78437 17.0156 3.60937V18.3562C17.0156 19.1812 16.3625 19.8344 15.5375 19.8344H11.6531C11.5844 19.8344 11.55 19.8 11.55 19.7312V17.3594C11.55 16.9469 11.2062 16.6031 10.7594 16.6031C10.3125 16.6031 10.0031 16.9469 10.0031 17.3594V19.7312C10.0031 20.625 10.7594 21.3812 11.6531 21.3812H15.5375C17.2219 21.3812 18.5625 20.0062 18.5625 18.3562V3.64374C18.5625 1.95937 17.1875 0.618744 15.5375 0.618744Z"
-                  fill=""
+                  d="M15.5375 0.618744H11.6531C10.7594 0.618744 10.0031 1.37499 10.0031 2.26874V4.64062C10.0031 5.53437 10.7594 6.29062 11.6531 6.29062H15.5375C16.4313 6.29062 17.1875 5.53437 17.1875 4.64062V2.26874C17.1875 1.37499 16.4313 0.618744 15.5375 0.618744Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
                 />
                 <path
-                  d="M6.05001 11.7563H12.2031C12.6156 11.7563 12.9594 11.4125 12.9594 11C12.9594 10.5875 12.6156 10.2438 12.2031 10.2438H6.08439L8.21564 8.07813C8.52501 7.76875 8.52501 7.2875 8.21564 6.97812C7.90626 6.66875 7.42501 6.66875 7.11564 6.97812L3.67814 10.4844C3.36876 10.7938 3.36876 11.275 3.67814 11.5844L7.11564 15.0906C7.25314 15.2281 7.45939 15.3312 7.66564 15.3312C7.87189 15.3312 8.04376 15.2625 8.21564 15.125C8.52501 14.8156 8.52501 14.3344 8.21564 14.025L6.05001 11.7563Z"
-                  fill=""
+                  d="M15.5375 8.09375H11.6531C10.7594 8.09375 10.0031 8.85 10.0031 9.74375V12.1156C10.0031 13.0094 10.7594 13.7656 11.6531 13.7656H15.5375C16.4313 13.7656 17.1875 13.0094 17.1875 12.1156V9.74375C17.1875 8.85 16.4313 8.09375 15.5375 8.09375Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
+                />
+                <path
+                  d="M15.5375 15.5687H11.6531C10.7594 15.5687 10.0031 16.325 10.0031 17.2187V19.5906C10.0031 20.4844 10.7594 21.2406 11.6531 21.2406H15.5375C16.4313 21.2406 17.1875 20.4844 17.1875 19.5906V17.2187C17.1875 16.325 16.4313 15.5687 15.5375 15.5687Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
+                />
+                <path
+                  d="M4.3125 0.618744H0.428125C0.190625 0.618744 0 0.809369 0 1.04687V4.64062C0 4.87812 0.190625 5.06874 0.428125 5.06874H4.3125C4.55 5.06874 4.74063 4.87812 4.74063 4.64062V1.04687C4.74063 0.809369 4.55 0.618744 4.3125 0.618744Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
+                />
+                <path
+                  d="M4.3125 8.09375H0.428125C0.190625 8.09375 0 8.28437 0 8.52187V12.1156C0 12.3531 0.190625 12.5437 0.428125 12.5437H4.3125C4.55 12.5437 4.74063 12.3531 4.74063 12.1156V8.52187C4.74063 8.28437 4.55 8.09375 4.3125 8.09375Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
+                />
+                <path
+                  d="M4.3125 15.5687H0.428125C0.190625 15.5687 0 15.7594 0 15.9969V19.5906C0 19.8281 0.190625 20.0187 0.428125 20.0187H4.3125C4.55 20.0187 4.74063 19.8281 4.74063 19.5906V15.9969C4.74063 15.7594 4.55 15.5687 4.3125 15.5687Z"
+                  fill={theme.palette.mode === 'dark' ? '#fff' : '#374151'}
                 />
               </svg>
               Sair
-              </button>
-          )}
+            </button>
+          </div>
         </div>
       )}
       {/* <!-- Dropdown End --> */}

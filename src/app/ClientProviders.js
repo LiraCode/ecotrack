@@ -1,15 +1,17 @@
 'use client';
 
-import { ThemeProvider } from '@mui/material/styles';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
-import theme from './theme';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { useTheme } from '@/components/ThemeProvider';
+import theme, { darkTheme } from './theme';
 
 export default function ClientProviders({ children }) {
+  const { theme: darkMode } = useTheme();
+
   return (
-    <AppRouterCacheProvider>
-      <ThemeProvider theme={theme}>
-        {children}
-      </ThemeProvider>
-    </AppRouterCacheProvider>
+    <MuiThemeProvider theme={darkMode === 'dark' ? darkTheme : theme}>
+      <CssBaseline enableColorScheme />
+      {children}
+    </MuiThemeProvider>
   );
 }

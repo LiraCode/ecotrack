@@ -389,7 +389,7 @@ export default function GerenciamentoMetas() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              sx={{ color: "primary.main", fontWeight: "bold" }}
             >
               Gerenciamento de Metas
             </Typography>
@@ -424,7 +424,7 @@ export default function GerenciamentoMetas() {
           ) : (
             <TableContainer>
               <Table>
-                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableHead sx={{ backgroundColor: "background.paper" }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Título</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Período</TableCell>
@@ -506,7 +506,7 @@ export default function GerenciamentoMetas() {
         <Box sx={{ mt: 4 }}>
           <Typography
             variant="h6"
-            sx={{ mb: 2, color: "#2e7d32", fontWeight: "bold" }}
+            sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
             Sobre as Metas
           </Typography>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Typography, IconButton, Grid } from '@mui/material';
 import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 export default function Calendar({ 
   schedules, 
@@ -10,6 +11,7 @@ export default function Calendar({
   setSelectedFullDate,
   isMobile 
 }) {
+  const theme = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   
   // Função para formatar a data no formato DD/MM/YYYY
@@ -109,14 +111,32 @@ export default function Calendar({
             justifyContent: 'center',
             borderRadius: '50%',
             cursor: 'pointer',
-            backgroundColor: isToday ? '#e8f5e9' : hasEvent ? '#c8e6c9' : 'transparent',
-            border: isToday ? '2px solid #4caf50' : 'none',
+            backgroundColor: isToday 
+              ? theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.4)' : '#e8f5e9'
+              : hasEvent 
+                ? theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.3)' : '#c8e6c9'
+                : 'transparent',
+            border: isToday 
+              ? `2px solid ${theme.palette.mode === 'dark' ? '#4caf50' : '#4caf50'}`
+              : 'none',
+            outline: isToday 
+              ? `2px solid ${theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.5)' : 'rgba(76,175,80,0.3)'}`
+              : 'none',
+            outlineOffset: '2px',
             '&:hover': {
-              backgroundColor: '#e8f5e9'
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.3)' : '#e8f5e9'
             }
           }}
         >
-          <Typography variant="body2">{day}</Typography>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit',
+              fontWeight: isToday ? 'bold' : 'normal'
+            }}
+          >
+            {day}
+          </Typography>
         </Box>
       );
     }
@@ -136,10 +156,10 @@ export default function Calendar({
   return (
     <Box sx={{ 
       width: '100%',
-      backgroundColor: 'white',
+      backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white',
       borderRadius: '8px',
       padding: 2,
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      boxShadow: theme.palette.mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
       mb: 4
     }}>
       {/* Cabeçalho do calendário */}
@@ -149,15 +169,18 @@ export default function Calendar({
         alignItems: 'center',
         mb: 2
       }}>
-        <IconButton onClick={handlePrevMonth}>
+        <IconButton onClick={handlePrevMonth} sx={{ color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit' }}>
           <ArrowBackIos />
         </IconButton>
         
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+        <Typography variant="h6" sx={{ 
+          fontWeight: 'bold',
+          color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main'
+        }}>
           {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
         </Typography>
         
-        <IconButton onClick={handleNextMonth}>
+        <IconButton onClick={handleNextMonth} sx={{ color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit' }}>
           <ArrowForwardIos />
         </IconButton>
       </Box>
@@ -191,7 +214,8 @@ export default function Calendar({
           sx={{
             fontWeight: 'bold',
             textAlign: 'center',
-            width: '100%' // Garante ocupar toda a célula
+            width: '100%', // Garante ocupar toda a célula
+            color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main'
           }}
         >
           {day}
@@ -240,10 +264,17 @@ export default function Calendar({
             width: '12px', 
             height: '12px', 
             borderRadius: '50%', 
-            backgroundColor: '#e8f5e9',
-            border: '2px solid #4caf50'
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.4)' : '#e8f5e9',
+            border: `2px solid ${theme.palette.mode === 'dark' ? '#4caf50' : '#4caf50'}`,
+            outline: `2px solid ${theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.5)' : 'rgba(76,175,80,0.3)'}`,
+            outlineOffset: '2px'
           }} />
-          <Typography variant="caption">Hoje</Typography>
+          <Typography variant="caption" sx={{ 
+            color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit',
+            fontWeight: 'medium'
+          }}>
+            Hoje
+          </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -251,9 +282,14 @@ export default function Calendar({
             width: '12px', 
             height: '12px', 
             borderRadius: '50%', 
-            backgroundColor: '#c8e6c9'
+            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.3)' : '#c8e6c9'
           }} />
-          <Typography variant="caption">Com agendamento</Typography>
+          <Typography variant="caption" sx={{ 
+            color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit',
+            fontWeight: 'medium'
+          }}>
+            Com agendamento
+          </Typography>
         </Box>
       </Box>
     </Box>

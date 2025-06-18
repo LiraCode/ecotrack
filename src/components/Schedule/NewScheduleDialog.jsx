@@ -19,7 +19,8 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  CircularProgress
+  CircularProgress,
+  Chip
 } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -28,6 +29,7 @@ import 'dayjs/locale/pt-br'; // Importar localização pt-br
 import { LocalizationProvider, DatePicker, TimePicker } from "@mui/x-date-pickers";
 import WasteTypeSelector from '@/components/Waste/WasteTypeSelector';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@mui/material/styles';
 
 export default function NewScheduleDialog({ 
   open, 
@@ -52,6 +54,7 @@ export default function NewScheduleDialog({
   const [selectedTime, setSelectedTime] = useState(dayjs().hour(10).minute(0));
   const [timeError, setTimeError] = useState('');
   const [dateError, setDateError] = useState('');
+  const theme = useTheme();
 
   // Fetch eco-points and user addresses when component mounts
   useEffect(() => {
@@ -293,13 +296,16 @@ export default function NewScheduleDialog({
       fullScreen={isMobile}
     >
       <DialogTitle sx={{ 
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f5f5f5',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 'bold', 
+            color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main' 
+          }}>
             Novo Agendamento
           </Typography>
         </Box>
@@ -318,7 +324,6 @@ export default function NewScheduleDialog({
             <CircularProgress color="primary" />
           </Box>
         ) : (
-          
           <>
             <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="pt-br">
               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", my: 4 }}>
@@ -328,9 +333,15 @@ export default function NewScheduleDialog({
                   value={selectedDate}
                   onChange={handleDateChange}
                   format="DD/MM/YYYY"
-                  sx={{ mb: 2, width: '100%' }}
-                  disablePast={true} // This disables past dates in the calendar
-                  minDate={dayjs()} // Set minimum date to today
+                  sx={{ 
+                    mb: 2, 
+                    width: '100%',
+                    '& .MuiInputBase-root': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white'
+                    }
+                  }}
+                  disablePast={true}
+                  minDate={dayjs()}
                 />
                 
                 {dateError && (
@@ -344,8 +355,14 @@ export default function NewScheduleDialog({
                   label="Selecione um horário"
                   value={selectedTime}
                   onChange={handleTimeChange}
-                  ampm={false} // Desabilita AM/PM para usar formato 24h
-                  sx={{ mt: 2, width: '100%' }}
+                  ampm={false}
+                  sx={{ 
+                    mt: 2, 
+                    width: '100%',
+                    '& .MuiInputBase-root': {
+                      backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white'
+                    }
+                  }}
                 />
                 
                 {timeError && (
@@ -355,7 +372,10 @@ export default function NewScheduleDialog({
                 )}
                 
                 {selectedDate && selectedTime && (
-                  <Typography variant="body1" sx={{ mt: 2 }}>
+                  <Typography variant="body1" sx={{ 
+                    mt: 2,
+                    color: theme.palette.mode === 'dark' ? 'text.primary' : 'text.primary'
+                  }}>
                     Data e hora selecionadas: <strong>
                       {selectedDate.format("DD/MM/YYYY")} às {selectedTime.format("HH:mm")}
                     </strong>
@@ -364,115 +384,100 @@ export default function NewScheduleDialog({
               </Box>
             </LocalizationProvider>
             
-            {/* Eco-Point Selection - First step */}
-            <FormControl fullWidth error={!!ecoPointsError} sx={{ mb: ecoPointsError ? 1 : 2 }}>
-              <InputLabel id="eco-point-label">Eco Ponto</InputLabel>
+            {/* Eco-Point Selection */}
+            <FormControl fullWidth error={!!ecoPointsError} sx={{ mb: 2 }}>
+              <InputLabel>Eco Ponto</InputLabel>
               <Select
-                labelId="eco-point-label"
                 value={selectedEcoPoint}
                 onChange={handleEcoPointChange}
                 label="Eco Ponto"
+                sx={{
+                  backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white'
+                }}
               >
-                {ecoPoints.map((ecoPoint) => (
-                  <MenuItem key={ecoPoint._id} value={ecoPoint._id}>
-                    <Box>
-                      <Typography variant="body1">{ecoPoint.name}</Typography>
-                      <Typography variant="caption" color="textSecondary" display="block">
-                        {ecoPoint.address?.street}, {ecoPoint.address?.number} - {ecoPoint.address?.city}/{ecoPoint.address?.state}
-                      </Typography>
-                    </Box>
+                {ecoPoints.map((point) => (
+                  <MenuItem key={point._id} value={point._id}>
+                    {point.name}
                   </MenuItem>
                 ))}
               </Select>
-              {ecoPointsError && <FormHelperText>{ecoPointsError}</FormHelperText>}
+              {ecoPointsError && (
+                <FormHelperText>{ecoPointsError}</FormHelperText>
+              )}
             </FormControl>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {/* Material Type Selection - Only show after eco point is selected */}
-            {selectedEcoPoint && (
-              <>
-                <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
-                  Selecione os materiais que deseja descartar:
-                </Typography>
-                <FormControl fullWidth error={!!error} sx={{ mb: error ? 1 : 2 }}>
-                  <InputLabel id="materials-label">Tipos de Materiais</InputLabel>
-                  <Select
-                    labelId="materials-label"
-                    multiple
-                    value={selectedMaterials}
-                    onChange={handleMaterialChange}
-                    label="Tipos de Materiais"
-                    renderValue={(selected) => {
-                      const selectedNames = selected.map(id => {
-                        const material = availableWasteTypes.find(w => w._id === id);
-                        return material ? (material.name || material.type) : '';
-                      }).filter(Boolean);
-                      return selectedNames.join(', ');
-                    }}
-                  >
-                    {availableWasteTypes.map((waste) => (
-                      <MenuItem key={waste._id} value={waste._id}>
-                        <Checkbox checked={selectedMaterials.indexOf(waste._id) > -1} />
-                        <ListItemText 
-                          primary={waste.name || waste.type}
-                        />
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {error && <FormHelperText>{error}</FormHelperText>}
-                </FormControl>
-              </>
-            )}
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {/* User Address Selection */}
-            <FormControl fullWidth error={!!addressError} sx={{ mb: addressError ? 1 : 2 }}>
-              <InputLabel id="address-label">Endereço para Coleta</InputLabel>
+
+            {/* Address Selection */}
+            <FormControl fullWidth error={!!addressError} sx={{ mb: 2 }}>
+              <InputLabel>Endereço</InputLabel>
               <Select
-                labelId="address-label"
                 value={selectedAddress}
                 onChange={handleAddressChange}
-                label="Endereço para Coleta"
+                label="Endereço"
+                sx={{
+                  backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white'
+                }}
               >
-                {userAddresses.length > 0 ? (
-                  userAddresses.map((address) => (
-                    <MenuItem key={address._id} value={address._id}>
-                      <Box>
-                        <Typography variant="body1">
-                          {address.street}, {address.number}
-                          {address.complement ? ` - ${address.complement}` : ''}
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary" display="block">
-                          {address.neighborhood} - {address.city}/{address.state} - CEP: {address.zipCode}
-                        </Typography>
-                      </Box>
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled value="">
-                    <Typography variant="body2" color="text.secondary">
-                      Nenhum endereço cadastrado
-                    </Typography>
+                {userAddresses.map((address) => (
+                  <MenuItem key={address._id} value={address._id}>
+                    {`${address.street}, ${address.number} - ${address.neighborhood}`}
                   </MenuItem>
-                )}
+                ))}
               </Select>
-              {addressError && <FormHelperText>{addressError}</FormHelperText>}
-              {userAddresses.length === 0 && (
-                <FormHelperText>
-                  Você precisa cadastrar um endereço antes de fazer um agendamento
-                </FormHelperText>
+              {addressError && (
+                <FormHelperText>{addressError}</FormHelperText>
+              )}
+            </FormControl>
+
+            {/* Material Selection */}
+            <FormControl fullWidth error={!!error} sx={{ mb: 2 }}>
+              <InputLabel>Tipos de Resíduos</InputLabel>
+              <Select
+                multiple
+                value={selectedMaterials}
+                onChange={handleMaterialChange}
+                label="Tipos de Resíduos"
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => {
+                      const material = availableWasteTypes.find(w => w._id === value);
+                      return (
+                        <Chip 
+                          key={value} 
+                          label={material ? material.name : value}
+                          sx={{
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(76,175,80,0.2)' : '#e8f5e9',
+                            color: theme.palette.mode === 'dark' ? 'success.light' : '#2e7d32'
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                )}
+                sx={{
+                  backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white'
+                }}
+              >
+                {availableWasteTypes.map((waste) => (
+                  <MenuItem key={waste._id} value={waste._id}>
+                    <Checkbox checked={selectedMaterials.indexOf(waste._id) > -1} />
+                    <ListItemText primary={waste.name} />
+                  </MenuItem>
+                ))}
+              </Select>
+              {error && (
+                <FormHelperText>{error}</FormHelperText>
               )}
             </FormControl>
           </>
         )}
       </DialogContent>
-      
+
       <DialogActions sx={{ p: 2, pt: 0 }}>
         <Button 
           onClick={handleClose}
-          sx={{ color: '#666' }}
+          sx={{ 
+            color: theme.palette.mode === 'dark' ? 'text.secondary' : '#666' 
+          }}
           disabled={loading || fetchLoading}
         >
           Cancelar
@@ -481,9 +486,9 @@ export default function NewScheduleDialog({
           onClick={handleSubmit}
           variant="contained"
           sx={{ 
-            backgroundColor: '#2e7d32',
+            backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : 'primary.main',
             '&:hover': {
-              backgroundColor: '#1b5e20',
+              backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark',
             }
           }}
           disabled={loading || fetchLoading || userAddresses.length === 0}

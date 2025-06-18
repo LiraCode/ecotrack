@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Grid, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Grid, Paper, CircularProgress, useTheme } from '@mui/material';
 import { 
   Delete as DeleteIcon, 
   Scale as ScaleIcon, 
@@ -8,6 +8,7 @@ import {
 
 const ImpactStats = ({ impactStats }) => {
   const { wasteCount, totalWeight, collectionsCount, loading } = impactStats;
+  const theme = useTheme();
 
   // Função para formatar números grandes com separadores de milhar
   const formatNumber = (num) => {
@@ -51,12 +52,12 @@ const ImpactStats = ({ impactStats }) => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f1f8e9',
+              backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f1f8e9',
               transition: 'transform 0.3s',
               mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                boxShadow: theme.palette.mode === 'dark' ? '0 8px 16px rgba(0,0,0,0.2)' : '0 8px 16px rgba(0,0,0,0.1)'
               }
             }}
           >
@@ -83,12 +84,12 @@ const ImpactStats = ({ impactStats }) => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f1f8e9',
+              backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f1f8e9',
               transition: 'transform 0.3s',
               mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                boxShadow: theme.palette.mode === 'dark' ? '0 8px 16px rgba(0,0,0,0.2)' : '0 8px 16px rgba(0,0,0,0.1)'
               }
             }}
           >
@@ -115,12 +116,12 @@ const ImpactStats = ({ impactStats }) => {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#f1f8e9',
+              backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f1f8e9',
               transition: 'transform 0.3s',
               mx: { xs: 'auto', sm: 0 },
               '&:hover': {
                 transform: 'translateY(-5px)',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                boxShadow: theme.palette.mode === 'dark' ? '0 8px 16px rgba(0,0,0,0.2)' : '0 8px 16px rgba(0,0,0,0.1)'
               }
             }}
           >

@@ -173,10 +173,6 @@
   width: 100%;
 }
 
-.postHeader {
-  padding: 1.5rem 1.5rem 0;
-}
-
 .postTitle {
   font-size: 1.8rem;
   color: #1b5e20;
@@ -504,4 +500,34 @@
     font-size: 1rem;
     margin-bottom: 1rem;
   }
+}
+
+/* Dark mode */
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postCard {
+  background: #1e1e1e;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postTitle {
+  color: #4caf50;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postSubtitle {
+  color: #81c784;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postPreview {
+  color: #e0e0e0;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postFooter {
+  border-top: 1px solid #333;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .postDate {
+  color: #bdbdbd;
+}
+
+:global(.MuiThemeProvider-root[data-mui-theme="dark"]) .categoryTag {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #81c784;
 }

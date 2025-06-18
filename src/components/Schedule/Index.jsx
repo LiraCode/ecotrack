@@ -128,7 +128,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
   return (
     <Box sx={{ 
       p: isMobile ? 1 : 3,
-      backgroundColor: 'gray.50',
+      backgroundColor: theme.palette.mode === 'dark' ? 'background.default' : 'gray.50',
       width: '100%',
       maxWidth: '1200px',
       margin: '0 auto',
@@ -150,7 +150,7 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
         <Typography 
           variant={isMobile ? 'h4' : 'h3'} 
           sx={{ 
-            color: '#2e7d32', 
+            color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main', 
             fontWeight: 'bold',
             textAlign: 'center',
             display: 'flex',
@@ -189,9 +189,9 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
           startIcon={<Add />}
           onClick={handleOpenNewDialog}
           sx={{ 
-            backgroundColor: '#2e7d32',
+            backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : 'primary.main',
             '&:hover': {
-              backgroundColor: '#1b5e20',
+              backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark',
             },
             mb: 4,
             px: 3,
@@ -213,11 +213,12 @@ export default function AgendamentoPage({ sidebarOpen = false }) {
             color="primary"
             onClick={() => setShowPastSchedules(!showPastSchedules)}
             sx={{ 
-              borderColor: '#2e7d32',
-              color: '#2e7d32',
+              borderColor: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main',
+              color: theme.palette.mode === 'dark' ? 'primary.light' : 'primary.main',
               '&:hover': {
-                borderColor: '#1b5e20',
-                backgroundColor: '#f1f8e9'
+                borderColor: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark',
+                backgroundColor: theme.palette.mode === 'dark' ? 'action.hover' : 'primary.light',
+                color: theme.palette.mode === 'dark' ? 'primary.main' : 'primary.dark'
               }
             }}
           >

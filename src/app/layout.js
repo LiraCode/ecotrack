@@ -8,6 +8,7 @@ import ClientProviders from './ClientProviders';
 import { AuthContextProvider } from '@/context/AuthContext';
 import { MetasProvider } from '@/context/metas/MetasContext';
 import { Toaster } from "@/components/ui/toaster"
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const cabinSketch = Cabin_Sketch({
   variable: '--font-cabin',
@@ -38,23 +39,26 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-
 export default function RootLayout({
   children
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="theme-transition">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cabinSketch.variable} ${crimsonPro.variable} ${roboto.variable} antialiased min-h-screen`}
       >
-        <AuthContextProvider>
-          <MetasProvider>
-            <ClientProviders>
-              {children}
-            </ClientProviders>
-            <Toaster />
-          </MetasProvider>
-        </AuthContextProvider>
+        <ThemeProvider>
+          <AuthContextProvider>
+            <MetasProvider>
+              <ClientProviders>
+                <main className="min-h-screen">
+                  {children}
+                </main>
+              </ClientProviders>
+              <Toaster />
+            </MetasProvider>
+          </AuthContextProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

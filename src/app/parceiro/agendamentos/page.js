@@ -748,6 +748,7 @@ export default function AgendamentosManagement() {
                         p: 3,
                         borderRadius: 2,
                         boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+                        bgcolor: 'background.paper'
                     }}
                 >
                     <Box
@@ -761,7 +762,10 @@ export default function AgendamentosManagement() {
                         <Typography
                             variant="h5"
                             component="h1"
-                            sx={{ color: "#2e7d32", fontWeight: "bold" }}
+                            sx={{ 
+                                color: 'primary.main',
+                                fontWeight: "bold" 
+                            }}
                         >
                             Gerenciamento de Agendamentos
                         </Typography>
@@ -925,6 +929,7 @@ export default function AgendamentosManagement() {
                             p: 3,
                             borderRadius: 2,
                             boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+                            bgcolor: 'background.paper'
                         }}
                     >
                         <Typography variant="body1" paragraph>
@@ -943,7 +948,7 @@ export default function AgendamentosManagement() {
             {/* Dialog para editar agendamento */}
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
                 <DialogTitle
-                    sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
+                    sx={{ bgcolor: 'background.paper', color: 'primary.main', fontWeight: 'bold' }}
                 >
                     {formData.status === 'Coletado' ? 'Registrar Coleta' : 'Editar Agendamento'}
                 </DialogTitle>
@@ -952,7 +957,7 @@ export default function AgendamentosManagement() {
                     <Grid container spacing={3}>
                         {/* Informações do Agendamento */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+                            <Typography variant="h6" sx={{ color: 'primary.main', mb: 2 }}>
                                 Informações do Agendamento
                             </Typography>
                             
@@ -1063,7 +1068,7 @@ export default function AgendamentosManagement() {
                         
                         {/* Seção de Resíduos */}
                         <Grid item xs={12}>
-                            <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, mt: 2 }}>
+                            <Typography variant="h6" sx={{ color: 'primary.main', mb: 2, mt: 2 }}>
                                 Resíduos Coletados
                             </Typography>
                             
@@ -1120,7 +1125,7 @@ export default function AgendamentosManagement() {
                     </Grid>
                 </DialogContent>
 
-                <DialogActions sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+                <DialogActions sx={{ p: 2, bgcolor: 'background.paper' }}>
                     <Button onClick={handleClose} variant="outlined" color="secondary">
                         Cancelar
                     </Button>

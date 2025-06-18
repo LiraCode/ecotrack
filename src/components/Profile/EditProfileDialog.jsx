@@ -27,6 +27,7 @@ import { storage } from '@/config/firebase/firebase';
 import { data } from 'autoprefixer';
 import { formatPhone, validatePhone } from '@/utils/validators';
 import { toast } from '@/components/ui/use-toast';
+import { useTheme } from '@mui/material/styles';
 
 
 
@@ -54,6 +55,7 @@ export default function EditProfileDialog({
   const [photoURL, setPhotoURL] = useState('');
   const fileInputRef = useRef(null);
   const [phoneError, setPhoneError] = useState('');
+  const theme = useTheme();
 
   // Buscar dados do usuário quando o diálogo é aberto
   useEffect(() => {
@@ -369,26 +371,39 @@ export default function EditProfileDialog({
       fullScreen={isMobile}
     >
       <DialogTitle sx={{
-        backgroundColor: '#f5f5f5',
+        backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f5f5f5',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        borderBottom: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'divider' : 'transparent'
       }}>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+          <Typography variant="h6" sx={{ 
+            fontWeight: 'bold', 
+            color: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32' 
+          }}>
             Editar Perfil
           </Typography>
         </Box>
         <Button
           onClick={handleClose}
-          sx={{ minWidth: 'auto', p: 0.5 }}
+          sx={{ 
+            minWidth: 'auto', 
+            p: 0.5,
+            color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit'
+          }}
           disabled={loading}
         >
           <Close />
         </Button>
       </DialogTitle>
 
-      <DialogContent sx={{ pt: 2, mt: 1 }}>
+      <DialogContent sx={{ 
+        pt: 2, 
+        mt: 1,
+        backgroundColor: theme.palette.mode === 'dark' ? 'background.default' : 'inherit'
+      }}>
         {fetchLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
             <CircularProgress color="primary" />
@@ -412,7 +427,17 @@ export default function EditProfileDialog({
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+              sx={{ 
+                mb: 3, 
+                borderBottom: 1, 
+                borderColor: 'divider',
+                '& .MuiTab-root': {
+                  color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                  '&.Mui-selected': {
+                    color: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32'
+                  }
+                }
+              }}
             >
               <Tab label="Dados Pessoais" />
               <Tab label="Endereços" />
@@ -430,8 +455,9 @@ export default function EditProfileDialog({
                       sx={{
                         width: 120,
                         height: 120,
-                        border: '3px solid #2e7d32',
-                        boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                        border: '3px solid',
+                        borderColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                        boxShadow: theme.palette.mode === 'dark' ? '0 4px 8px rgba(0,0,0,0.3)' : '0 4px 8px rgba(0,0,0,0.1)'
                       }}
                     />
                     <IconButton
@@ -439,12 +465,12 @@ export default function EditProfileDialog({
                         position: 'absolute',
                         bottom: 0,
                         right: 0,
-                        backgroundColor: '#2e7d32',
+                        backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
                         color: 'white',
                         '&:hover': {
-                          backgroundColor: '#1b5e20',
+                          backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : '#1b5e20',
                         },
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        boxShadow: theme.palette.mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.3)' : '0 2px 4px rgba(0,0,0,0.2)'
                       }}
                       onClick={handlePhotoButtonClick}
                       disabled={photoLoading}
@@ -471,6 +497,25 @@ export default function EditProfileDialog({
                       onChange={handleInputChange}
                       margin="normal"
                       variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme.palette.mode === 'dark' ? 'text.primary' : 'text.primary',
+                        },
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -482,7 +527,26 @@ export default function EditProfileDialog({
                       onChange={handleInputChange}
                       margin="normal"
                       variant="outlined"
-                      disabled={userData.cpf} // Desabilitar edição de CPF se já existir
+                      disabled={userData.cpf}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme.palette.mode === 'dark' ? 'text.primary' : 'text.primary',
+                        },
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -494,7 +558,26 @@ export default function EditProfileDialog({
                       onChange={handleInputChange}
                       margin="normal"
                       variant="outlined"
-                      disabled={true} // Email não pode ser alterado diretamente
+                      disabled={true}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme.palette.mode === 'dark' ? 'text.primary' : 'text.primary',
+                        },
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={6}>
@@ -512,55 +595,65 @@ export default function EditProfileDialog({
                       inputProps={{
                         maxLength: 15
                       }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.23)' : 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: theme.palette.mode === 'dark' ? 'text.primary' : 'text.primary',
+                        },
+                      }}
                     />
                   </Grid>
                 </Grid>
-
-
               </Box>
             )}
 
             {/* Aba de Endereços */}
             {activeTab === 1 && (
               <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => {
+                      setEditingAddress(null);
+                      setShowAddressForm(true);
+                    }}
+                    sx={{
+                      backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+                      '&:hover': {
+                        backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : '#1b5e20',
+                      },
+                    }}
+                  >
+                    Adicionar Endereço
+                  </Button>
+                </Box>
+
                 {showAddressForm ? (
                   <AddressForm
-                    initialData={editingAddress}
-                    onSubmit={handleAddressFormSubmit}
+                    onSave={handleAddressFormSubmit}
                     onCancel={handleCancelAddressForm}
-                    loading={loading}
+                    initialData={editingAddress}
                   />
                 ) : (
-                  <>
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                      <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={handleAddAddress}
-                        sx={{
-                          backgroundColor: '#2e7d32',
-                          '&:hover': {
-                            backgroundColor: '#1b5e20',
-                          }
-                        }}
-                      >
-                        Adicionar Endereço
-                      </Button>
-                    </Box>
-
-                    {addresses.length > 0 ? (
-                      <AddressList
-                        addresses={addresses}
-                        onEdit={handleEditAddress}
-                        onDelete={handleDeleteAddress}
-                        loading={loading}
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                        Você ainda não possui endereços cadastrados.
-                      </Typography>
-                    )}
-                  </>
+                  <AddressList
+                    addresses={addresses}
+                    onEdit={handleEditAddress}
+                    onDelete={handleDeleteAddress}
+                  />
                 )}
               </Box>
             )}
@@ -568,38 +661,36 @@ export default function EditProfileDialog({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, pt: 0 }}>
+      <DialogActions sx={{ 
+        p: 2,
+        backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : '#f5f5f5',
+        borderTop: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'divider' : 'transparent'
+      }}>
         <Button
           onClick={handleClose}
-          sx={{ color: '#666' }}
-          disabled={loading || photoLoading}
+          sx={{
+            color: theme.palette.mode === 'dark' ? 'text.secondary' : 'text.primary',
+            '&:hover': {
+              backgroundColor: theme.palette.mode === 'dark' ? 'action.hover' : 'rgba(0, 0, 0, 0.04)',
+            },
+          }}
         >
           Cancelar
         </Button>
-
-        {/* Mostrar botão de salvar apenas na aba de Dados Pessoais e quando não estiver mostrando o formulário de endereço */}
-        {activeTab === 0 && (
-          <Button
-            onClick={handleSubmitProfile}
-            variant="contained"
-            sx={{
-              backgroundColor: '#2e7d32',
-              '&:hover': {
-                backgroundColor: '#1b5e20',
-              }
-            }}
-            disabled={loading || photoLoading}
-          >
-            {loading ? (
-              <>
-                <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
-                Salvando...
-              </>
-            ) : 'Salvar Alterações'}
-          </Button>
-        )}
-
-        {/* Não mostrar botões adicionais na aba de Endereços, pois o AddressForm já deve ter seus próprios botões */}
+        <Button
+          onClick={handleSubmitProfile}
+          variant="contained"
+          disabled={loading}
+          sx={{
+            backgroundColor: theme.palette.mode === 'dark' ? 'primary.main' : '#2e7d32',
+            '&:hover': {
+              backgroundColor: theme.palette.mode === 'dark' ? 'primary.dark' : '#1b5e20',
+            },
+          }}
+        >
+          {loading ? <CircularProgress size={24} /> : 'Salvar'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

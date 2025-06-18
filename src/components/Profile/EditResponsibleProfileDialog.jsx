@@ -228,24 +228,28 @@ export default function EditResponsibleProfileDialog({
             maxWidth="md"
             fullScreen={isMobile}
         >
-            <DialogTitle sx={{
-                backgroundColor: '#f5f5f5',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-            }}>
+            <DialogTitle
+                sx={{
+                    bgcolor: "background.paper",
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    borderBottom: 1,
+                    borderColor: "divider"
+                }}
+            >
                 <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                        Editar Perfil
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        Editar Responsável
                     </Typography>
                 </Box>
-                <Button
+                <IconButton
                     onClick={handleClose}
-                    sx={{ minWidth: 'auto', p: 0.5 }}
-                    disabled={loading}
+                    size="small"
+                    sx={{ color: 'text.secondary' }}
                 >
                     <Close />
-                </Button>
+                </IconButton>
             </DialogTitle>
 
             <DialogContent sx={{ pt: 2, mt: 1 }}>
@@ -368,10 +372,17 @@ export default function EditResponsibleProfileDialog({
                 )}
             </DialogContent>
 
-            <DialogActions sx={{ p: 2, pt: 0 }}>
+            <DialogActions
+                sx={{ 
+                    bgcolor: "background.paper",
+                    borderTop: 1,
+                    borderColor: "divider",
+                    p: 2
+                }}
+            >
                 <Button
                     onClick={handleClose}
-                    sx={{ color: '#666' }}
+                    color="inherit"
                     disabled={loading || photoLoading}
                 >
                     Cancelar
@@ -379,11 +390,10 @@ export default function EditResponsibleProfileDialog({
 
                 <Button
                     onClick={handleSubmitProfile}
-                    variant="contained"
-                    sx={{
-                        backgroundColor: '#2e7d32',
-                        '&:hover': {
-                            backgroundColor: '#1b5e20',
+                    sx={{ 
+                        bgcolor: "primary.main",
+                        "&:hover": { 
+                            bgcolor: "primary.dark" 
                         }
                     }}
                     disabled={loading || photoLoading}

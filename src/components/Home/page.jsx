@@ -311,12 +311,25 @@ export default function HomePage() {
                 padding: { xs: '12px 16px', sm: '12px 24px' },
                 fontSize: { xs: '0.875rem', sm: '1rem' },
                 minWidth: { xs: 'auto', sm: 120 },
-                color: '#555',
-                '&.Mui-selected': { color: '#2e8b57' }
+                color: 'text.primary',
+                '&.Mui-selected': { 
+                  color: 'primary.main',
+                  '@media (prefers-color-scheme: dark)': {
+                    color: 'primary.light'
+                  }
+                }
               },
-              '& .MuiTabs-indicator': { backgroundColor: '#2e8b57' },
+              '& .MuiTabs-indicator': { 
+                backgroundColor: 'primary.main',
+                '@media (prefers-color-scheme: dark)': {
+                  backgroundColor: 'primary.light'
+                }
+              },
               '& .MuiTabs-scrollButtons': {
-                color: '#2e8b57',
+                color: 'primary.main',
+                '@media (prefers-color-scheme: dark)': {
+                  color: 'primary.light'
+                },
                 '&.Mui-disabled': { opacity: 0.3 }
               }
             }}

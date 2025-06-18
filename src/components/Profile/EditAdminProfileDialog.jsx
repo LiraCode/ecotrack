@@ -225,24 +225,28 @@ export default function EditAdminProfileDialog({
       maxWidth="md"
       fullScreen={isMobile}
     >
-      <DialogTitle sx={{
-        backgroundColor: '#f5f5f5',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
+      <DialogTitle
+        sx={{
+          bgcolor: "background.paper",
+          borderBottom: 1,
+          borderColor: "divider",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#2e7d32' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
             Editar Perfil
           </Typography>
         </Box>
-        <Button
+        <IconButton
           onClick={handleClose}
-          sx={{ minWidth: 'auto', p: 0.5 }}
-          disabled={loading}
+          size="small"
+          sx={{ color: 'text.secondary' }}
         >
           <Close />
-        </Button>
+        </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ pt: 2, mt: 1 }}>
@@ -364,10 +368,12 @@ export default function EditAdminProfileDialog({
         )}
       </DialogContent>
 
-      <DialogActions sx={{ p: 2, pt: 0 }}>
+      <DialogActions
+        sx={{ bgcolor: "background.paper", borderTop: 1, borderColor: "divider" }}
+      >
         <Button
           onClick={handleClose}
-          sx={{ color: '#666' }}
+          color="inherit"
           disabled={loading || photoLoading}
         >
           Cancelar
@@ -376,12 +382,7 @@ export default function EditAdminProfileDialog({
         <Button
           onClick={handleSubmitProfile}
           variant="contained"
-          sx={{
-            backgroundColor: '#2e7d32',
-            '&:hover': {
-              backgroundColor: '#1b5e20',
-            }
-          }}
+          sx={{ bgcolor: "primary.main", "&:hover": { bgcolor: "primary.dark" } }}
           disabled={loading || photoLoading}
         >
           {loading ? (

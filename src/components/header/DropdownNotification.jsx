@@ -19,6 +19,9 @@ import InfoIcon from '@mui/icons-material/Info';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import ErrorIcon from '@mui/icons-material/Error';
+import Link from "next/link";
+import ClickOutside from "@/components/ClickOutside";
+import { useTheme } from '@mui/material/styles';
 
 // Configurações
 const NOTIFICATION_REFRESH_INTERVAL = 60 * 1000; // 1 minuto em milissegundos
@@ -63,6 +66,8 @@ const DropdownNotification = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const theme = useTheme();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -159,107 +164,83 @@ const DropdownNotification = () => {
   };
 
   return (
-    <>
-      <IconButton
-        onClick={handleClick}
-        size="large"
-        sx={{
-          color: 'white',
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          },
-        }}
+    <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
+      <Link
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className={`relative flex h-8.5 w-8.5 items-center justify-center rounded-lg hover:bg-green-950/60 dark:hover:bg-green-950/70 transition-colors`}
+        href="#"
       >
-        <Badge color="error" variant="dot" invisible={!notifying}>
-          <NotificationsIcon />
-        </Badge>
-      </IconButton>
-
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        PaperProps={{
-          sx: {
-            width: 360,
-            maxHeight: '70vh',
-            overflowY: 'auto'
-          }
-        }}
-      >
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Notificações</Typography>
-        </Box>
-
-        <Divider />
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Box sx={{ p: 2 }}>
-            <Typography color="error">{error}</Typography>
-          </Box>
-        ) : notifications.length === 0 ? (
-          <Box sx={{ p: 2 }}>
-            <Typography variant="body2" color="textSecondary">
-              Nenhuma notificação
-            </Typography>
-          </Box>
-        ) : (
-          <List sx={{ p: 0 }}>
-            {notifications.map((notification) => (
-              <Box key={notification._id}>
-                <ListItem
-                  sx={{
-                    py: 2,
-                    px: 2.5,
-                    ...(notification.read && {
-                      bgcolor: 'action.hover'
-                    })
-                  }}
-                >
-                  <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
-                    <NotificationIcon type={notification.type} />
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="subtitle2"
-                        color={notificationConfig[notification.type]?.color || 'info.main'}
-                      >
-                        {notification.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="textPrimary"
-                        sx={{ mb: 0.5, mt: 0.5 }}
-                      >
-                        {notification.content}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        color="textSecondary"
-                      >
-                        {formatDate(notification.createdAt)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </ListItem>
-                <Divider />
-              </Box>
-            ))}
-          </List>
+        {notifying && (
+          <span className="absolute -top-0.5 -right-0.5 z-1 h-4 w-4 rounded-full bg-red-500 dark:bg-red-600">
+            <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-red-400 dark:bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex h-4 w-4 items-center justify-center rounded-full bg-red-500 dark:bg-red-600 text-[10px] font-medium text-white">
+              {notifications.filter(n => !n.read).length}
+            </span>
+          </span>
         )}
-      </Popover>
-    </>
+
+        <NotificationsIcon className={`${theme.palette.mode === 'dark' ? 'text-gray-200' : 'text-gray-100'}`} />
+      </Link>
+
+      {dropdownOpen && (
+        <div
+          className={`absolute right-0 mt-4 flex w-75 flex-col rounded-lg border shadow-lg ${
+            theme.palette.mode === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'
+          }`}
+        >
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <h5 className={`text-sm font-semibold ${
+              theme.palette.mode === 'dark' ? 'text-gray-200' : 'text-gray-900'
+            }`}>
+              Notificações
+            </h5>
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {notifications.length === 0 ? (
+              <div className={`p-4 text-center ${
+                theme.palette.mode === 'dark' ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                Nenhuma notificação
+              </div>
+            ) : (
+              notifications.map((notification) => (
+                <div key={notification._id} className="p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      theme.palette.mode === 'dark' ? 'bg-green-900' : 'bg-green-100'
+                    }`}>
+                      <NotificationIcon type={notification.type} className={`${
+                        theme.palette.mode === 'dark' ? 'text-green-300' : 'text-green-500'
+                      }`} />
+                    </div>
+                    <div className="flex-1">
+                      <h6 className={`mb-0.5 text-sm font-medium ${
+                        theme.palette.mode === 'dark' ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        {notification.title}
+                      </h6>
+                      <p className={`text-xs ${
+                        theme.palette.mode === 'dark' ? 'text-gray-400' : 'text-gray-700'
+                      }`}>
+                        {notification.content}
+                      </p>
+                      <p className={`text-xs mt-1 ${
+                        theme.palette.mode === 'dark' ? 'text-gray-500' : 'text-gray-500'
+                      }`}>
+                        {formatDate(notification.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </ClickOutside>
   );
 };
 

@@ -72,8 +72,9 @@ const MetasPage = () => {
         sx={{
           p: { xs: 1, sm: 2, md: 3 },
           width: '100%',
-          maxWidth: { xs: '95vw', md: '1600px' },
+          maxWidth: { xs: '95vw', md: '85vw' },
           margin: '0 auto',
+          ml: { xs: '0', md: '8vw' },
           flexGrow: 1,
           overflow: 'auto',
         }}

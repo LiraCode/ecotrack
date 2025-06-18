@@ -312,6 +312,7 @@ export default function ResponsiblePage() {
             p: 3,
             borderRadius: 2,
             boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+            bgcolor: 'background.paper'
           }}
         >
           <Box
@@ -325,7 +326,10 @@ export default function ResponsiblePage() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              sx={{ 
+                color: 'primary.main',
+                fontWeight: "bold" 
+              }}
             >
               Gerenciamento de Responsáveis
             </Typography>
@@ -389,7 +393,7 @@ export default function ResponsiblePage() {
         <Box sx={{ mt: 4 }}>
           <Typography
             variant="h6"
-            sx={{ mb: 2, color: "#2e7d32", fontWeight: "bold" }}
+            sx={{ mb: 2, color: 'primary.main', fontWeight: "bold" }}
           >
             Sobre os Responsáveis
           </Typography>
@@ -398,6 +402,7 @@ export default function ResponsiblePage() {
               p: 3,
               borderRadius: 2,
               boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
+              bgcolor: 'background.paper'
             }}
           >
             <Typography variant="body1" paragraph>
@@ -420,7 +425,11 @@ export default function ResponsiblePage() {
       {/* Dialog para adicionar/editar responsável */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle
-          sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
+          sx={{ 
+            bgcolor: 'background.paper',
+            color: 'primary.main',
+            fontWeight: "bold" 
+          }}
         >
           {editMode ? "Editar Responsável" : "Novo Responsável"}
         </DialogTitle>
@@ -429,7 +438,7 @@ export default function ResponsiblePage() {
           <Grid container spacing={3}>
             {/* Seção: Informações Básicas */}
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+              <Typography variant="h6" sx={{ color: 'primary.main', mb: 2 }}>
                 Informações Básicas
               </Typography>
               <Grid container spacing={2}>
@@ -484,7 +493,7 @@ export default function ResponsiblePage() {
             {/* Seção: Senha (apenas para novos responsáveis) */}
             {!editMode && (
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+                <Typography variant="h6" sx={{ color: 'primary.main', mb: 2 }}>
                   Credenciais de Acesso
                 </Typography>
                 <Grid container spacing={2}>

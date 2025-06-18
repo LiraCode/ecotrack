@@ -1,5 +1,6 @@
 import { Box, Typography, List, ListItem, ListItemText, Divider, Button } from '@mui/material';
 import { CheckCircle, Cancel, AccessTime, AutoDelete } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 export default function ScheduleList({ 
   title = "Próximos Agendamentos",
@@ -9,6 +10,8 @@ export default function ScheduleList({
   onViewSchedule,
   isPastList = false
 }) {
+  const theme = useTheme();
+
   const formatTime = (isoTime) => {
     try {
       const timeObj = new Date(isoTime);
@@ -29,10 +32,14 @@ export default function ScheduleList({
         width: "100%",
         mt: isPastList ? 2 : 4,
         mb: 4,
-        backgroundColor: isPastList ? "#DBECCF" : "#fff",
+        backgroundColor: theme.palette.mode === 'dark' 
+          ? (isPastList ? 'rgba(76, 175, 80, 0.1)' : 'background.paper')
+          : (isPastList ? "#DBECCF" : "#fff"),
         borderRadius: "8px",
         padding: isMobile ? 1.5 : 2,
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: theme.palette.mode === 'dark' 
+          ? '0 2px 4px rgba(0,0,0,0.2)'
+          : '0 2px 4px rgba(0,0,0,0.1)',
         maxWidth: { xs: '100%', sm: '800px' },
         margin: '0 auto'
       }}
@@ -42,8 +49,10 @@ export default function ScheduleList({
         sx={{
           fontWeight: "bold",
           mb: 2,
-          color: isPastList ? "#757575" : "#2e7d32",
-          borderBottom: "2px solid #e0e0e0",
+          color: theme.palette.mode === 'dark'
+            ? (isPastList ? 'text.secondary' : 'primary.light')
+            : (isPastList ? "#757575" : "#2e7d32"),
+          borderBottom: `2px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e0e0'}`,
           paddingBottom: 1,
           textAlign: 'left',
           fontSize: isMobile ? '1.1rem' : '1.25rem'
@@ -52,111 +61,77 @@ export default function ScheduleList({
         {title}
       </Typography>
 
-      <List sx={{ width: "100%", padding: 0 }}>
+      <List>
         {schedules.length > 0 ? (
           schedules.map((schedule, index) => (
-            <Box key={index}>
-              <ListItem sx={{ p: isMobile ? 0 : 1 }}>
-                <Button
-                  onClick={() => onViewSchedule(schedule.date)}
+            <Box key={schedule.id || index}>
+              <ListItem
+                button
+                onClick={() => onViewSchedule(schedule.date)}
+                sx={{
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'background.paper'
+                    : 'transparent',
+                  borderRadius: '4px',
+                  mb: 1,
+                  '&:hover': {
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'action.hover'
+                      : 'rgba(0,0,0,0.04)'
+                  }
+                }}
+              >
+                <ListItemText
+                  primary={schedule.name}
+                  secondary={
+                    <Typography
+                      variant="subtitle2"
+                      color="textSecondary"
+                      sx={{ 
+                        whiteSpace: "pre-line", 
+                        mt: isMobile ? 1.5 : 1, 
+                        textAlign: 'left',
+                        fontSize: isMobile ? '0.875rem' : '1rem',
+                        '& .date-label': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : '#666',
+                          fontWeight: '500'
+                        },
+                        '& .status-label': {
+                          color: theme.palette.mode === 'dark' ? 'text.secondary' : '#666',
+                          fontWeight: '500'
+                        }
+                      }}
+                    >
+                      {`Data: ${schedule.date}\nHorário: ${formatTime(schedule.time)}\nStatus: ${schedule.status}`}
+                    </Typography>
+                  }
                   sx={{
-                    width: '100%',
-                    textAlign: 'left',
-                    borderRadius: "4px",
-                    "&:hover": {
-                      backgroundColor: isPastList ? "#eeeeee" : "#f0f7f0",
+                    "& .MuiListItemText-primary": {
+                      fontWeight: "bold",
+                      color: theme.palette.mode === 'dark'
+                        ? (isPastList ? 'text.secondary' : 'text.primary')
+                        : (isPastList ? "#757575" : "#333"),
+                      textDecoration: schedule.completed
+                        ? "line-through"
+                        : "none",
                     },
-                    mb: isMobile ? 0.5 : 1,
-                    opacity: isPastList ? 0.8 : 1,
-                    p: isMobile ? 1.5 : 2
                   }}
-                >
-                  <ListItemText
-                    primary={
-                      <>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            whiteSpace: "pre-line", 
-                            textAlign: 'left',
-                            fontSize: isMobile ? '1rem' : '1.25rem',
-                            fontWeight: 'bold',
-                            color: '#2e7d32'
-                          }}
-                        >
-                          {`${schedule.name} \n`}
-                        </Typography>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ 
-                            whiteSpace: "pre-line", 
-                            textAlign: 'left',
-                            fontSize: isMobile ? '0.875rem' : '1rem',
-                            color: '#666',
-                            mt: 0.5
-                          }}
-                        >
-                          {` Tipos de Resíduos: `}
-                        </Typography>
-                        <Typography
-                          variant="p"
-                          sx={{ 
-                            whiteSpace: "pre-line", 
-                            textAlign: 'left',
-                            fontSize: isMobile ? '0.875rem' : '1rem',
-                            color: '#333',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {`${schedule.type}`}
-                        </Typography>
-                      </>
-                    }
-                    secondary={
-                      <Typography
-                        variant="subtitle2"
-                        color="textSecondary"
-                        sx={{ 
-                          whiteSpace: "pre-line", 
-                          mt: isMobile ? 1.5 : 1, 
-                          textAlign: 'left',
-                          fontSize: isMobile ? '0.875rem' : '1rem',
-                          '& .date-label': {
-                            color: '#666',
-                            fontWeight: '500'
-                          },
-                          '& .status-label': {
-                            color: '#666',
-                            fontWeight: '500'
-                          }
-                        }}
-                      >
-                        {`Data: ${schedule.date}\nHorário: ${formatTime(schedule.time)}\nStatus: ${schedule.status}`}
-                      </Typography>
-                    }
-                    sx={{
-                      "& .MuiListItemText-primary": {
-                        fontWeight: "bold",
-                        color: isPastList ? "#757575" : "#333",
-                        textDecoration: schedule.completed
-                          ? "line-through"
-                          : "none",
-                      },
-                    }}
-                  />
-                  {schedule.status === "Coletado" ? (
-                    <CheckCircle sx={{ color: "#4caf50", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
-                  ) : schedule.status === "Cancelado" ? (
-                    <Cancel sx={{ color: "#f44336", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
-                  ) : schedule.status === "Confirmado" ? (
-                    <AutoDelete sx={{ color: "#007bff", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
-                  ) : (
-                    <AccessTime sx={{ color: "orange", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
-                  )}
-                </Button>
+                />
+                {schedule.status === "Coletado" ? (
+                  <CheckCircle sx={{ color: "#4caf50", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
+                ) : schedule.status === "Cancelado" ? (
+                  <Cancel sx={{ color: "#f44336", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
+                ) : schedule.status === "Confirmado" ? (
+                  <AutoDelete sx={{ color: "#007bff", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
+                ) : (
+                  <AccessTime sx={{ color: "orange", ml: 2, fontSize: isMobile ? '1.5rem' : '2rem' }} />
+                )}
               </ListItem>
               {index < schedules.length - 1 && (
-                <Divider sx={{ my: isMobile ? 0.5 : 1 }} />
+                <Divider sx={{ 
+                  my: isMobile ? 0.5 : 1,
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                }} />
               )}
             </Box>
           ))
@@ -165,7 +140,7 @@ export default function ScheduleList({
             variant="body1"
             sx={{ 
               textAlign: "center", 
-              color: "#666", 
+              color: theme.palette.mode === 'dark' ? 'text.secondary' : '#666', 
               py: 2,
               fontSize: isMobile ? '0.875rem' : '1rem'
             }}

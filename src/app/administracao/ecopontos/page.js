@@ -458,7 +458,7 @@ export default function EcopontoManagement() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              sx={{ color: "primary.main", fontWeight: "bold" }}
             >
               Gerenciamento de Ecopontos
             </Typography>
@@ -537,7 +537,7 @@ export default function EcopontoManagement() {
         <Box sx={{ mt: 4 }}>
           <Typography
             variant="h6"
-            sx={{ mb: 2, color: "#2e7d32", fontWeight: "bold" }}
+            sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
             Sobre os Ecopontos
           </Typography>
@@ -570,7 +570,7 @@ export default function EcopontoManagement() {
       {/* Dialog para adicionar/editar ecoponto */}
       <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
         <DialogTitle
-          sx={{ bgcolor: "#f5f5f5", color: "#2e7d32", fontWeight: "bold" }}
+          sx={{ bgcolor: "background.paper", color: "primary.main", fontWeight: "bold" }}
         >
           {editMode ? "Editar Ecoponto" : "Novo Ecoponto"}
         </DialogTitle>
@@ -579,7 +579,7 @@ export default function EcopontoManagement() {
           <Grid container spacing={3}>
             {/* Seção: Informações Básicas */}
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+              <Typography variant="h6" sx={{ color: "primary.main", mb: 2 }}>
                 Informações Básicas
               </Typography>
               <Grid container spacing={2}>
@@ -626,7 +626,7 @@ export default function EcopontoManagement() {
 
             {/* Seção: Responsável e Tipos de Resíduos */}
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+              <Typography variant="h6" sx={{ color: "primary.main", mb: 2 }}>
                 Responsável e Tipos de Resíduos
               </Typography>
               <Grid container spacing={2}>
@@ -678,7 +678,7 @@ export default function EcopontoManagement() {
 
             {/* Seção: Endereço */}
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+              <Typography variant="h6" sx={{ color: "primary.main", mb: 2 }}>
                 Endereço
               </Typography>
               <Grid container spacing={2}>
@@ -785,7 +785,7 @@ export default function EcopontoManagement() {
 
             {/* Seção: Coordenadas */}
             <Grid item xs={12}>
-              <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2 }}>
+              <Typography variant="h6" sx={{ color: "primary.main", mb: 2 }}>
                 Localização (Coordenadas)
               </Typography>
               <Grid container spacing={2} alignItems="center">
@@ -862,7 +862,7 @@ export default function EcopontoManagement() {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+        <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
           <Button onClick={handleClose} variant="outlined" color="secondary">
             Cancelar
           </Button>

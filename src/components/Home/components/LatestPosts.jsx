@@ -1,5 +1,5 @@
 'use client';
-import { Box, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, CircularProgress } from "@mui/material";
+import { Box, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, CircularProgress, useTheme } from "@mui/material";
 import { Article as ArticleIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import DOMPurify from 'dompurify';
@@ -24,6 +24,8 @@ import DOMPurify from 'dompurify';
   };
 
 export default function LatestPosts({ post, loading }) {
+  const theme = useTheme();
+
   // Mostrar indicador de carregamento
   if (loading) {
     return (
@@ -95,9 +97,10 @@ export default function LatestPosts({ post, loading }) {
                 display: "flex",
                 flexDirection: "column",
                 transition: "transform 0.3s, box-shadow 0.3s",
+                backgroundColor: theme.palette.mode === 'dark' ? 'background.paper' : 'white',
                 "&:hover": {
                   transform: "translateY(-5px)",
-                  boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+                  boxShadow: theme.palette.mode === 'dark' ? '0 10px 20px rgba(0,0,0,0.2)' : '0 10px 20px rgba(0,0,0,0.1)',
                 },
               }}
             >
@@ -116,6 +119,7 @@ export default function LatestPosts({ post, loading }) {
                     sx={{
                       fontWeight: "bold",
                       textAlign: "center",
+                      color: theme.palette.mode === 'dark' ? 'text.primary' : 'inherit'
                     }}
                   >
                     {post.title || "Sem título"}
@@ -197,7 +201,7 @@ export default function LatestPosts({ post, loading }) {
                 borderColor: "#2e8b57",
                 "&:hover": {
                   borderColor: "#1f6b47",
-                  backgroundColor: "#e8f5e9",
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(46, 139, 87, 0.1)' : '#e8f5e9',
                 },
               }}
             >

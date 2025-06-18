@@ -42,6 +42,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
 
 // Importar React-Quill-New dinamicamente para evitar problemas de SSR
 const ReactQuill = dynamic(() => import('react-quill-new'), { 
@@ -393,7 +394,7 @@ export default function AdminPosts() {
             <Typography
               variant="h5"
               component="h1"
-              sx={{ color: "#2e7d32", fontWeight: "bold" }}
+              sx={{ color: "primary.main", fontWeight: "bold" }}
             >
               Gerenciamento de Posts
             </Typography>
@@ -425,7 +426,7 @@ export default function AdminPosts() {
           ) : (
             <TableContainer>
               <Table>
-                <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                <TableHead sx={{ backgroundColor: 'background.paper' }}>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>Título</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Categoria</TableCell>
@@ -448,7 +449,7 @@ export default function AdminPosts() {
                                   key={index} 
                                   label={cat} 
                                   size="small" 
-                                  sx={{ bgcolor: '#e8f5e9', color: '#2e7d32' }}
+                                  sx={{ bgcolor: 'action.hover', color: 'primary.main' }}
                                 />
                               ))}
                             </Box>
@@ -498,7 +499,7 @@ export default function AdminPosts() {
         <Box sx={{ mt: 4 }}>
           <Typography
             variant="h6"
-            sx={{ mb: 2, color: "#2e7d32", fontWeight: "bold" }}
+            sx={{ mb: 2, color: "primary.main", fontWeight: "bold" }}
           >
             Sobre os Posts
           </Typography>
@@ -538,13 +539,14 @@ export default function AdminPosts() {
       >
         <DialogTitle
           sx={{ 
-            bgcolor: "#f5f5f5", 
-            color: "#2e7d32", 
+            bgcolor: "background.paper", 
+            color: "primary.main", 
             fontWeight: "bold",
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #e0e0e0',
+            borderBottom: 1,
+            borderColor: 'divider',
             py: 2
           }}
         >
@@ -558,8 +560,8 @@ export default function AdminPosts() {
           <Grid container spacing={4}>
             {/* Coluna da esquerda - Informações básicas e imagem */}
             <Grid item xs={12} md={4}>
-              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2, mb: 3 }}>
-                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+              <Paper elevation={0} sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2, mb: 3 }}>
+                <Typography variant="h6" sx={{ color: "primary.main", mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                   Informações Básicas
                 </Typography>
                 
@@ -637,8 +639,8 @@ export default function AdminPosts() {
               </Paper>
               
               {/* Seção de imagem */}
-              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+              <Paper elevation={0} sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ color: "primary.main", mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                   Imagem de Capa
                 </Typography>
                 
@@ -679,11 +681,14 @@ export default function AdminPosts() {
                       height: 'auto',
                       borderRadius: 1,
                       overflow: 'hidden',
-                      border: '1px solid #ddd'
+                      border: 1,
+                      borderColor: 'divider'
                     }}>
-                      <img
+                      <Image
                         src={imagePreview}
                         alt="Preview"
+                        width={500}
+                        height={300}
                         style={{
                           width: '100%',
                           height: 'auto',
@@ -699,9 +704,10 @@ export default function AdminPosts() {
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    border: '1px dashed #ccc',
-                    borderRadius: 1,
-                    bgcolor: '#f9f9f9'
+                    border: 1,
+                    borderColor: 'divider',
+                    borderStyle: 'dashed',
+                    bgcolor: 'background.paper'
                   }}>
                     <Typography variant="body2" color="text.secondary">
                       Nenhuma imagem selecionada
@@ -713,8 +719,8 @@ export default function AdminPosts() {
             
             {/* Coluna da direita - Editor de conteúdo */}
             <Grid item xs={12} md={8}>
-              <Paper elevation={0} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 2 }}>
-                <Typography variant="h6" sx={{ color: "#2e7d32", mb: 2, borderBottom: '1px solid #e0e0e0', pb: 1 }}>
+              <Paper elevation={0} sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ color: "primary.main", mb: 2, borderBottom: 1, borderColor: 'divider', pb: 1 }}>
                   Conteúdo
                 </Typography>
                 
@@ -731,7 +737,7 @@ export default function AdminPosts() {
                     },
                     '.ql-toolbar': {
                       borderRadius: '4px 4px 0 0',
-                      backgroundColor: '#f9f9f9'
+                      backgroundColor: 'background.paper'
                     },
                     '.ql-container': {
                       borderRadius: '0 0 4px 4px'
@@ -748,8 +754,8 @@ export default function AdminPosts() {
                   />
                 </Box>
                 
-                <Box sx={{ mt: 3, p: 2, bgcolor: '#f9f9f9', borderRadius: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: '#2e7d32' }}>
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
                     Dicas para o editor:
                   </Typography>
                   <Grid container spacing={2}>
@@ -776,7 +782,7 @@ export default function AdminPosts() {
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between', borderTop: '1px solid #e0e0e0' }}>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between', borderTop: 1, borderColor: 'divider' }}>
           <Button 
             onClick={handleClose} 
             color="inherit"

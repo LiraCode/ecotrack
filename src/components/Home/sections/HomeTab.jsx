@@ -61,7 +61,7 @@ const HomeTab = ({
             sx={{ 
               p: { xs: 2, sm: 3 }, 
               textAlign: 'center', 
-              bgcolor: '#f9f9f9', 
+              bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#f9f9f9', 
               mb: 3,
               mx: { xs: 2, sm: 0 }
             }}
@@ -85,7 +85,10 @@ const HomeTab = ({
               sx={{ 
                 borderColor: '#2e8b57', 
                 color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
+                '&:hover': { 
+                  borderColor: '#1b5e20', 
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(46, 139, 87, 0.1)' : 'rgba(46, 139, 87, 0.04)' 
+                },
                 fontSize: { xs: '0.75rem', sm: '0.875rem' }
               }}
             >
@@ -108,7 +111,7 @@ const HomeTab = ({
             sx={{ 
               p: { xs: 2, sm: 3 }, 
               textAlign: 'center', 
-              bgcolor: '#f9f9f9',
+              bgcolor: theme.palette.mode === 'dark' ? 'background.paper' : '#f9f9f9',
               mx: { xs: 2, sm: 0 }
             }}
           >
@@ -131,7 +134,10 @@ const HomeTab = ({
               sx={{ 
                 borderColor: '#2e8b57', 
                 color: '#2e8b57',
-                '&:hover': { borderColor: '#1b5e20', backgroundColor: 'rgba(46, 139, 87, 0.04)' },
+                '&:hover': { 
+                  borderColor: '#1b5e20', 
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(46, 139, 87, 0.1)' : 'rgba(46, 139, 87, 0.04)' 
+                },
                 fontSize: { xs: '0.75rem', sm: '0.875rem' }
               }}
             >
