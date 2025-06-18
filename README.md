@@ -6,7 +6,7 @@
 
 **EcoTrack** é uma plataforma inovadora que conecta ecopontos a usuários, facilitando a coleta seletiva e promovendo a educação ambiental. Nosso objetivo é tornar a reciclagem mais acessível e conscientizar a população sobre práticas sustentáveis.
 
-Criado para disciplina **Programação 3** (web) no curso de ciência da computação -** UFAL**
+Criado para disciplina **Programação 3** (web) no curso de ciência da computação - **UFAL**
 
 **por: Antônio Guilherme, Efraim Lopes, Felipe Lira, Jhenyfer Kyria, Sthefany Barboza.**
 
