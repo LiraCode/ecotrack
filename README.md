@@ -4,13 +4,15 @@ EcoTrack é uma plataforma inovadora que conecta ecopontos a usuários, facilita
 
 Criado para disciplina Programação 3 (web) no curso de ciência da computação - UFAL
 
-por:  Felipe L., Sthefany B., A. Guilherme, Jhenyfer K., Efraim L.
+### por: Antônio Guilherme, Efraim Lopes, Felipe Lira, Jhenyfer Kyria, Sthefany Barboza.
 
 ## 🚀 Tecnologias
 
-- [Next.js 15.3](https://nextjs.org) - Framework React usado no front e no back
-- [MUI](https://mui.com/) - biblioteca de componentes de interface de usuário para React
-- [Tailwind CSS](https://tailwindcss.com) - Framework CSS utilitário
+- [Next.js 15.3](https://nextjs.org) - Framework React usado no front e no back.
+- [MUI](https://mui.com/) - biblioteca de componentes de interface de usuário para React.
+- [Tailwind CSS](https://tailwindcss.com) - Framework CSS utilitário.
+- [Firebase](https://firebase.google.com/) - gerenciar autenticação, contas de email e senhas e upload de imagens.
+- [MongoDB](https://www.mongodb.com/) - Banco de dados noSQL usado para armazenar os demais dados.
 
 ## 📋 Pré-requisitos
 
@@ -36,6 +38,34 @@ yarn install
 ```bash
 cp .env
 ```
+variaveis
+
+MONGODB_URI =
+
+NEXT_PUBLIC_FIREBASE_API_KEY =
+
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = 
+
+NEXT_PUBLIC_FIREBASE_PROJECT_ID = 
+
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET =
+
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = 
+
+NEXT_PUBLIC_FIREBASE_APP_ID = 
+
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID =  
+
+FIREBASE_SERVICE_ACCOUNT_KEY =
+
+EMAIL_USER=
+
+EMAIL_PASS=
+
+NEXT_PUBLIC_API_URL=
+
+
+
 
 4. Inicie o servidor de desenvolvimento:
 ```bash
@@ -58,7 +88,7 @@ Acesse [http://localhost:3000](http://localhost:3000) para ver a aplicação.
 Para mais informações sobre as tecnologias utilizadas:
 
 - [Documentação Next.js](https://nextjs.org/docs)
-- [Documentação React](https://reactjs.org/docs)
+- [Documentação MUI](https://mui.com/material-ui/getting-started/)
 - [Documentação Tailwind CSS](https://tailwindcss.com/docs)
 
 
